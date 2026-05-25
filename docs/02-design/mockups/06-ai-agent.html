@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>꽃순이김치 MES - AI Agent 통합관리</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root {
+  --bg-main:#0a1628; --bg-sidebar:#0f2044; --bg-card:#162035; --bg-card2:#1a2a45;
+  --accent-blue:#1a73e8; --accent-cyan:#00b4d8; --accent-green:#00c853;
+  --accent-orange:#ff9800; --accent-red:#f44336; --accent-purple:#9c27b0;
+  --text-primary:#e8eaf6; --text-secondary:#8899bb; --text-muted:#556688;
+  --border:#1e3a5f; --sidebar-w:220px; --header-h:56px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',sans-serif;background:var(--bg-main);color:var(--text-primary);height:100vh;display:grid;grid-template-columns:var(--sidebar-w) 1fr;grid-template-rows:var(--header-h) 1fr;overflow:hidden;}
+
+/* Header */
+.header{grid-column:1/-1;background:var(--bg-sidebar);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:16px;z-index:10;}
+.logo{font-size:18px;font-weight:700;color:var(--accent-cyan);white-space:nowrap;}
+.logo span{color:var(--text-secondary);font-size:12px;font-weight:400;margin-left:8px;}
+.header-tabs{display:flex;gap:4px;margin-left:20px;}
+.htab{padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;color:var(--text-secondary);border:none;background:none;}
+.htab.active{background:var(--accent-blue);color:#fff;}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:12px;}
+.badge{background:var(--accent-red);color:#fff;border-radius:10px;padding:2px 7px;font-size:11px;}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--accent-blue);display:flex;align-items:center;justify-content:center;font-size:13px;}
+
+/* Sidebar */
+.sidebar{background:var(--bg-sidebar);border-right:1px solid var(--border);overflow-y:auto;padding:12px 0;}
+.sidebar-section{font-size:10px;color:var(--text-muted);padding:8px 16px 4px;text-transform:uppercase;letter-spacing:.8px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 16px;font-size:13px;color:var(--text-secondary);cursor:pointer;border-left:3px solid transparent;}
+.nav-item:hover{background:rgba(26,115,232,.1);color:var(--text-primary);}
+.nav-item.active{background:rgba(26,115,232,.15);color:var(--accent-cyan);border-left-color:var(--accent-cyan);}
+.nav-item i{width:16px;text-align:center;font-size:13px;}
+
+/* Content */
+.content{overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;}
+.tab-bar{display:flex;gap:6px;flex-wrap:wrap;}
+.tab-btn{padding:7px 16px;border-radius:6px;font-size:13px;cursor:pointer;border:1px solid var(--border);background:var(--bg-card2);color:var(--text-secondary);}
+.tab-btn.active{background:var(--accent-blue);border-color:var(--accent-blue);color:#fff;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* Cards */
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:16px;}
+.card-title{font-size:14px;font-weight:600;color:var(--accent-cyan);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+
+/* AI Chat UI */
+.chat-layout{display:grid;grid-template-columns:1fr 300px;gap:16px;height:calc(100vh - 200px);}
+.chat-main{display:flex;flex-direction:column;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.chat-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.chat-header .status-dot{width:8px;height:8px;border-radius:50%;background:var(--accent-green);}
+.chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;}
+.msg{max-width:75%;display:flex;gap:8px;}
+.msg.user{align-self:flex-end;flex-direction:row-reverse;}
+.msg-bubble{padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.5;}
+.msg.ai .msg-bubble{background:var(--bg-card2);color:var(--text-primary);border-radius:4px 12px 12px 12px;}
+.msg.user .msg-bubble{background:var(--accent-blue);color:#fff;border-radius:12px 4px 12px 12px;}
+.msg-avatar{width:32px;height:32px;border-radius:50%;background:var(--accent-cyan);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;align-self:flex-end;}
+.msg-avatar.user-av{background:var(--accent-blue);}
+.msg-time{font-size:10px;color:var(--text-muted);margin-top:4px;text-align:right;}
+.msg.ai .msg-time{text-align:left;}
+.chat-input-area{padding:12px 16px;border-top:1px solid var(--border);}
+.quick-btns{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+.quick-btn{padding:4px 10px;border-radius:16px;font-size:12px;border:1px solid var(--border);background:transparent;color:var(--text-secondary);cursor:pointer;}
+.quick-btn:hover{border-color:var(--accent-cyan);color:var(--accent-cyan);}
+.input-row{display:flex;gap:8px;}
+.chat-input{flex:1;background:var(--bg-card2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text-primary);font-size:13px;outline:none;}
+.chat-input:focus{border-color:var(--accent-blue);}
+.send-btn{padding:10px 18px;background:var(--accent-blue);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;}
+
+/* Chat Sidebar Panel */
+.chat-side{display:flex;flex-direction:column;gap:12px;overflow-y:auto;}
+.routing-card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px;}
+.routing-card .card-title{font-size:13px;}
+.route-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.route-item:last-child{border-bottom:none;}
+.route-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.route-dot.active{background:var(--accent-green);}
+.route-dot.idle{background:var(--text-muted);}
+.route-dot.busy{background:var(--accent-orange);}
+.route-name{color:var(--text-secondary);}
+.route-status{margin-left:auto;font-size:11px;}
+.context-card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px;}
+.context-item{display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid var(--border);}
+.context-item:last-child{border-bottom:none;}
+.context-label{color:var(--text-muted);}
+.context-val{color:var(--text-primary);}
+
+/* Tables */
+.tbl{width:100%;border-collapse:collapse;font-size:13px;}
+.tbl th{background:var(--bg-card2);padding:9px 12px;text-align:left;color:var(--text-secondary);font-weight:500;border-bottom:1px solid var(--border);}
+.tbl td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text-primary);}
+.tbl tr:hover td{background:rgba(26,115,232,.06);}
+.badge-s{padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500;}
+.badge-danger{background:rgba(244,67,54,.15);color:var(--accent-red);}
+.badge-warn{background:rgba(255,152,0,.15);color:var(--accent-orange);}
+.badge-ok{background:rgba(0,200,83,.15);color:var(--accent-green);}
+.badge-info{background:rgba(0,180,216,.15);color:var(--accent-cyan);}
+.badge-purple{background:rgba(156,39,176,.15);color:var(--accent-purple);}
+
+/* Alert Feed */
+.alert-filter{display:flex;gap:6px;margin-bottom:12px;}
+.alert-filter-btn{padding:5px 14px;border-radius:16px;font-size:12px;border:1px solid var(--border);background:transparent;color:var(--text-secondary);cursor:pointer;}
+.alert-filter-btn.active{background:var(--accent-blue);border-color:var(--accent-blue);color:#fff;}
+.alert-item{display:flex;gap:12px;padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card2);margin-bottom:8px;}
+.alert-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.alert-danger .alert-icon{background:rgba(244,67,54,.15);color:var(--accent-red);}
+.alert-warn .alert-icon{background:rgba(255,152,0,.15);color:var(--accent-orange);}
+.alert-info .alert-icon{background:rgba(0,180,216,.15);color:var(--accent-cyan);}
+.alert-rec .alert-icon{background:rgba(0,200,83,.15);color:var(--accent-green);}
+.alert-title{font-size:13px;font-weight:600;margin-bottom:4px;}
+.alert-desc{font-size:12px;color:var(--text-secondary);}
+.alert-time{font-size:11px;color:var(--text-muted);margin-left:auto;flex-shrink:0;}
+.rec-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px;}
+.rec-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.rec-item:last-child{border-bottom:none;}
+.rec-num{width:24px;height:24px;border-radius:50%;background:var(--accent-blue);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+.rec-text{flex:1;color:var(--text-secondary);}
+.rec-action{padding:4px 10px;border:1px solid var(--accent-blue);border-radius:6px;font-size:11px;color:var(--accent-blue);cursor:pointer;}
+
+/* Decision support */
+.decision-layout{display:grid;grid-template-columns:1fr 340px;gap:16px;}
+.action-item{display:flex;gap:12px;padding:14px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card2);margin-bottom:10px;}
+.action-priority{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+.p1{background:rgba(244,67,54,.2);color:var(--accent-red);}
+.p2{background:rgba(255,152,0,.2);color:var(--accent-orange);}
+.p3{background:rgba(26,115,232,.2);color:var(--accent-blue);}
+.action-body{flex:1;}
+.action-title{font-size:13px;font-weight:600;margin-bottom:4px;}
+.action-detail{font-size:12px;color:var(--text-secondary);margin-bottom:8px;}
+.action-btns{display:flex;gap:6px;}
+.btn-approve{padding:4px 12px;background:var(--accent-green);border:none;border-radius:6px;color:#fff;font-size:12px;cursor:pointer;}
+.btn-reject{padding:4px 12px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text-secondary);font-size:12px;cursor:pointer;}
+.btn-defer{padding:4px 12px;background:transparent;border:1px solid var(--accent-orange);border-radius:6px;color:var(--accent-orange);font-size:12px;cursor:pointer;}
+.approval-flow{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px;}
+.flow-step{display:flex;align-items:center;gap:10px;padding:8px 0;}
+.flow-step+.flow-step{border-top:1px solid var(--border);}
+.step-circle{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+.step-done{background:var(--accent-green);color:#fff;}
+.step-cur{background:var(--accent-blue);color:#fff;}
+.step-wait{background:var(--bg-card2);color:var(--text-muted);border:1px solid var(--border);}
+.step-info{flex:1;}
+.step-name{font-size:12px;font-weight:600;}
+.step-sub{font-size:11px;color:var(--text-muted);}
+
+/* History detail panel */
+.history-layout{display:grid;grid-template-columns:1fr 320px;gap:16px;}
+.history-detail{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px;}
+.detail-field{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.detail-field:last-child{border-bottom:none;}
+.detail-label{color:var(--text-muted);}
+.detail-val{color:var(--text-primary);}
+.query-preview{background:var(--bg-card2);border-radius:6px;padding:10px;font-size:12px;color:var(--text-secondary);margin-top:8px;line-height:1.6;}
+.ans-preview{background:rgba(0,180,216,.07);border-left:3px solid var(--accent-cyan);padding:10px;border-radius:0 6px 6px 0;font-size:12px;color:var(--text-secondary);margin-top:8px;line-height:1.6;}
+
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:6px;}
+.kpi-card{background:var(--bg-card2);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;}
+.kpi-val{font-size:22px;font-weight:700;color:var(--accent-cyan);}
+.kpi-label{font-size:11px;color:var(--text-muted);margin-top:4px;}
+canvas{max-height:220px;}
+.section-title{font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:10px;}
+select,input{background:var(--bg-card2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text-primary);font-size:12px;}
+.filter-row{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
+.btn{padding:7px 14px;border-radius:6px;font-size:12px;cursor:pointer;border:none;}
+.btn-primary{background:var(--accent-blue);color:#fff;}
+.btn-secondary{background:var(--bg-card2);border:1px solid var(--border);color:var(--text-secondary);}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="logo">꽃순이김치 MES <span>스마트공장 통합관리</span></div>
+  <div class="header-tabs">
+    <button class="htab">AI 대시보드</button>
+    <button class="htab">원재료관리</button>
+    <button class="htab">숙성발효</button>
+    <button class="htab">포장출하</button>
+    <button class="htab">공정관리</button>
+    <button class="htab">데이터관리</button>
+    <button class="htab active">AI Agent</button>
+    <button class="htab">기준정보</button>
+    <button class="htab">사용자/시스템</button>
+    <button class="htab">KPI</button>
+  </div>
+  <div class="header-right">
+    <i class="fa fa-bell" style="color:var(--text-secondary)"></i>
+    <span class="badge">5</span>
+    <div class="avatar"><i class="fa fa-user" style="font-size:14px"></i></div>
+    <span style="font-size:13px;color:var(--text-secondary)">김관리</span>
+  </div>
+</header>
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="sidebar-section">AI Agent 통합관리</div>
+  <div class="nav-item active" onclick="showTab(1)"><i class="fa fa-comments"></i> 통합 AI 질의/채팅</div>
+  <div class="nav-item" onclick="showTab(2)"><i class="fa fa-chart-bar"></i> 생산/품질 분석</div>
+  <div class="nav-item" onclick="showTab(3)"><i class="fa fa-check-circle"></i> 의사결정 지원</div>
+  <div class="nav-item" onclick="showTab(4)"><i class="fa fa-bell"></i> 알림 및 추천</div>
+  <div class="nav-item" onclick="showTab(5)"><i class="fa fa-history"></i> 사용자 질문이력</div>
+
+  <div class="sidebar-section" style="margin-top:12px">시스템</div>
+  <div class="nav-item"><i class="fa fa-tachometer-alt"></i> AI 대시보드</div>
+  <div class="nav-item"><i class="fa fa-box"></i> 원재료관리</div>
+  <div class="nav-item"><i class="fa fa-flask"></i> 숙성발효관리</div>
+  <div class="nav-item"><i class="fa fa-truck"></i> 포장출하관리</div>
+  <div class="nav-item"><i class="fa fa-industry"></i> 공정관리</div>
+  <div class="nav-item"><i class="fa fa-database"></i> 데이터관리</div>
+  <div class="nav-item"><i class="fa fa-cog"></i> 기준정보관리</div>
+  <div class="nav-item"><i class="fa fa-users"></i> 사용자/시스템</div>
+  <div class="nav-item"><i class="fa fa-chart-line"></i> KPI관리</div>
+</nav>
+
+<!-- Content -->
+<div class="content">
+
+  <!-- Tab Bar -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="showTab(1)"><i class="fa fa-comments"></i> 통합 AI 질의/채팅</button>
+    <button class="tab-btn" onclick="showTab(2)"><i class="fa fa-chart-bar"></i> 생산/품질 분석</button>
+    <button class="tab-btn" onclick="showTab(3)"><i class="fa fa-check-circle"></i> 의사결정 지원</button>
+    <button class="tab-btn" onclick="showTab(4)"><i class="fa fa-bell"></i> 알림 및 추천</button>
+    <button class="tab-btn" onclick="showTab(5)"><i class="fa fa-history"></i> 사용자 질문이력</button>
+  </div>
+
+  <!-- Tab 1: AI 채팅 -->
+  <div class="tab-panel active" id="tab1">
+    <div class="chat-layout">
+      <!-- Chat Main -->
+      <div class="chat-main">
+        <div class="chat-header">
+          <div class="status-dot"></div>
+          <span style="font-size:14px;font-weight:600">꽃순이 AI Agent</span>
+          <span style="font-size:12px;color:var(--text-muted);margin-left:8px">LangGraph · RAG · ML 연동</span>
+          <span style="margin-left:auto;font-size:11px;color:var(--accent-green)">응답 대기 중</span>
+        </div>
+        <div class="chat-messages">
+          <!-- AI Message -->
+          <div class="msg ai">
+            <div class="msg-avatar"><i class="fa fa-robot"></i></div>
+            <div>
+              <div class="msg-bubble">안녕하세요! 꽃순이김치 AI Agent입니다.<br>발효 품질, 원재료 입고, 출하 승인, LOT 추적 등 다양한 공장 운영 질문에 답변드립니다.<br>무엇을 도와드릴까요?</div>
+              <div class="msg-time">09:00</div>
+            </div>
+          </div>
+          <!-- User Message -->
+          <div class="msg user">
+            <div class="msg-avatar user-av"><i class="fa fa-user"></i></div>
+            <div>
+              <div class="msg-bubble">현재 발효 중인 LOT 중 이상 징후가 있는 것 있어?</div>
+              <div class="msg-time">09:12</div>
+            </div>
+          </div>
+          <!-- AI Response -->
+          <div class="msg ai">
+            <div class="msg-avatar"><i class="fa fa-robot"></i></div>
+            <div>
+              <div class="msg-bubble">
+                현재 발효 진행 중인 LOT 12건 분석 결과입니다.<br><br>
+                <strong style="color:var(--accent-red)">⚠ 이상 징후 발견: 2건</strong><br>
+                • <strong>LOT-2026-0523-F03</strong>: pH 4.8 (기준 4.2~4.5 초과), 온도 13.2°C (±1.5°C 상한 초과). 과발효 위험 높음.<br>
+                • <strong>LOT-2026-0522-F07</strong>: 산도 변화율 이상 — 48시간 내 품질 저하 예상 (ML모델 신뢰도 87%).<br><br>
+                <strong style="color:var(--accent-orange)">주의 관찰: 1건</strong><br>
+                • <strong>LOT-2026-0523-F05</strong>: 온도 편차 ±2°C, 현재는 허용범위이나 모니터링 권장.<br><br>
+                나머지 9건은 정상 진행 중입니다. 상세 조치가 필요하면 말씀해주세요.
+              </div>
+              <div class="msg-time">09:12 · RAG+ML 복합 분석 · 응답시간 1.3초</div>
+            </div>
+          </div>
+          <!-- User Follow-up -->
+          <div class="msg user">
+            <div class="msg-avatar user-av"><i class="fa fa-user"></i></div>
+            <div>
+              <div class="msg-bubble">LOT-2026-0523-F03 조치 방법 알려줘</div>
+              <div class="msg-time">09:13</div>
+            </div>
+          </div>
+          <!-- AI Response 2 -->
+          <div class="msg ai">
+            <div class="msg-avatar"><i class="fa fa-robot"></i></div>
+            <div>
+              <div class="msg-bubble">
+                <strong>LOT-2026-0523-F03 조치 가이드</strong><br><br>
+                발효기준서(v2.3) 및 과발효 대응 매뉴얼 기반:<br><br>
+                <strong>즉시 조치:</strong><br>
+                1. 발효실 온도를 8~10°C로 낮춰 발효 속도 억제<br>
+                2. 30분 간격 pH 수동 측정 실시<br>
+                3. pH가 5.0 초과 시 품질팀장 즉시 보고<br><br>
+                <strong>판정 기준:</strong><br>
+                • pH 4.8~5.0 → 주의 관찰, 조건 조정 후 재사용 가능<br>
+                • pH 5.0 초과 → 격리 후 품질심사위원회 결정<br><br>
+                <strong>관련 문서:</strong> 발효관리기준서 §4.2, HACCP CCP-2 기록지
+              </div>
+              <div class="msg-time">09:13 · RAG 문서검색 3건 참조 · 응답시간 2.1초</div>
+            </div>
+          </div>
+        </div>
+        <!-- Input Area -->
+        <div class="chat-input-area">
+          <div class="quick-btns">
+            <button class="quick-btn">발효 현황 요약</button>
+            <button class="quick-btn">오늘 입고 LOT</button>
+            <button class="quick-btn">출하 대기 목록</button>
+            <button class="quick-btn">이상발효 경보</button>
+            <button class="quick-btn">KPI 현황</button>
+            <button class="quick-btn">LOT 추적</button>
+          </div>
+          <div class="input-row">
+            <input type="text" class="chat-input" placeholder="공장 운영 관련 질문을 입력하세요...">
+            <button class="send-btn"><i class="fa fa-paper-plane"></i> 전송</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Sidebar -->
+      <div class="chat-side">
+        <div class="routing-card">
+          <div class="card-title"><i class="fa fa-sitemap"></i> LangGraph 라우팅 상태</div>
+          <div class="route-item"><div class="route-dot active"></div><div class="route-name">발효관리 Agent</div><div class="route-status" style="color:var(--accent-green)">활성</div></div>
+          <div class="route-item"><div class="route-dot active"></div><div class="route-name">원재료 입고 Agent</div><div class="route-status" style="color:var(--accent-green)">활성</div></div>
+          <div class="route-item"><div class="route-dot busy"></div><div class="route-name">포장출하 Agent</div><div class="route-status" style="color:var(--accent-orange)">처리중</div></div>
+          <div class="route-item"><div class="route-dot idle"></div><div class="route-name">ML 예측 Agent</div><div class="route-status" style="color:var(--text-muted)">대기</div></div>
+          <div class="route-item"><div class="route-dot idle"></div><div class="route-name">문서검색 Agent</div><div class="route-status" style="color:var(--text-muted)">대기</div></div>
+          <div class="route-item"><div class="route-dot active"></div><div class="route-name">이상감지 Agent</div><div class="route-status" style="color:var(--accent-green)">활성</div></div>
+        </div>
+
+        <div class="context-card">
+          <div class="card-title" style="font-size:13px"><i class="fa fa-database"></i> 현재 컨텍스트</div>
+          <div class="context-item"><span class="context-label">세션 시작</span><span class="context-val">09:00</span></div>
+          <div class="context-item"><span class="context-label">질의 수</span><span class="context-val">3건</span></div>
+          <div class="context-item"><span class="context-label">RAG 참조 문서</span><span class="context-val">7건</span></div>
+          <div class="context-item"><span class="context-label">ML 예측 호출</span><span class="context-val">1회</span></div>
+          <div class="context-item"><span class="context-label">평균 응답시간</span><span class="context-val">1.8초</span></div>
+          <div class="context-item"><span class="context-label">현재 LOT 컨텍스트</span><span class="context-val">F03</span></div>
+        </div>
+
+        <div class="context-card">
+          <div class="card-title" style="font-size:13px"><i class="fa fa-bookmark"></i> Vector DB 검색 결과</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">최근 참조 문서</div>
+          <div style="font-size:12px;padding:5px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;"><span style="color:var(--text-secondary)">발효관리기준서 v2.3</span><span style="color:var(--accent-cyan)">0.94</span></div>
+          <div style="font-size:12px;padding:5px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;"><span style="color:var(--text-secondary)">과발효 대응 매뉴얼</span><span style="color:var(--accent-cyan)">0.91</span></div>
+          <div style="font-size:12px;padding:5px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;"><span style="color:var(--text-secondary)">HACCP CCP-2 관리기준</span><span style="color:var(--accent-cyan)">0.87</span></div>
+          <div style="font-size:12px;padding:5px 0;display:flex;justify-content:space-between;"><span style="color:var(--text-secondary)">품질기준서 §3.4</span><span style="color:var(--accent-cyan)">0.83</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 2: 생산/품질 분석 -->
+  <div class="tab-panel" id="tab2">
+    <div class="kpi-row">
+      <div class="kpi-card"><div class="kpi-val">3,012<span style="font-size:14px">kg/h</span></div><div class="kpi-label">시간당 생산량</div><div style="font-size:11px;color:var(--accent-green);margin-top:3px">▲ +9.5% vs 목표</div></div>
+      <div class="kpi-card"><div class="kpi-val" style="color:var(--accent-green)">0.98<span style="font-size:14px">%</span></div><div class="kpi-label">완제품 불량률</div><div style="font-size:11px;color:var(--accent-green);margin-top:3px">▼ -34.7% vs 기준</div></div>
+      <div class="kpi-card"><div class="kpi-val" style="color:var(--accent-orange)">87<span style="font-size:14px">%</span></div><div class="kpi-label">AI 예측 정확도</div><div style="font-size:11px;color:var(--accent-orange);margin-top:3px">목표: ≥80%</div></div>
+      <div class="kpi-card"><div class="kpi-val" style="color:var(--accent-cyan)">12<span style="font-size:14px">건</span></div><div class="kpi-label">발효 중 LOT</div><div style="font-size:11px;color:var(--accent-red);margin-top:3px">이상 2건 경보</div></div>
+    </div>
+    <div class="row2">
+      <div class="card">
+        <div class="card-title"><i class="fa fa-chart-bar"></i> 일별 생산량 vs 품질 불량률</div>
+        <canvas id="c2prod"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="fa fa-chart-line"></i> 발효 품질 예측 정확도 추이</div>
+        <canvas id="c2quality"></canvas>
+      </div>
+    </div>
+    <div class="row2" style="margin-top:16px">
+      <div class="card">
+        <div class="card-title"><i class="fa fa-spider"></i> 공정별 KPI 달성률</div>
+        <canvas id="c2radar"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="fa fa-exclamation-triangle"></i> AI 분석 결과 요약</div>
+        <div class="section-title">이번 주 주요 인사이트</div>
+        <div class="alert-item alert-danger" style="margin-bottom:8px">
+          <div class="alert-icon"><i class="fa fa-thermometer-full"></i></div>
+          <div><div class="alert-title">F03 LOT 온도 편차 과다</div><div class="alert-desc">발효실 3구역 냉각 효율 저하 감지. 즉시 설비 점검 권장.</div></div>
+        </div>
+        <div class="alert-item alert-warn" style="margin-bottom:8px">
+          <div class="alert-icon"><i class="fa fa-tint"></i></div>
+          <div><div class="alert-title">절임 염도 일관성 주의</div><div class="alert-desc">5월 20~22일 배추 염도 편차 ±0.8%. 원재료 LOT-0519-B02 영향.</div></div>
+        </div>
+        <div class="alert-item alert-info">
+          <div class="alert-icon"><i class="fa fa-arrow-trend-up"></i></div>
+          <div><div class="alert-title">포장 효율 개선 확인</div><div class="alert-desc">포장라인 1 시간당 처리량 112% 달성. 유지 권장.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 3: 의사결정 지원 -->
+  <div class="tab-panel" id="tab3">
+    <div class="decision-layout">
+      <div>
+        <div class="card-title"><i class="fa fa-tasks"></i> AI 권장 조치 목록 (우선순위 순)</div>
+
+        <div class="action-item">
+          <div class="action-priority p1">P1</div>
+          <div class="action-body">
+            <div class="action-title">LOT-2026-0523-F03 발효 중단 및 품질 심사</div>
+            <div class="action-detail">pH 4.8 초과, 온도 13.2°C — 과발효 위험 85% 확률 (XGBoost). 즉시 온도 낮추고 품질팀 심사 요청. 예상 손실 최소화 가능.</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">AI 신뢰도: 92% · 참조: 발효기준서 §4.2</div>
+            <div class="action-btns">
+              <button class="btn-approve">✓ 승인</button>
+              <button class="btn-defer">⏸ 보류</button>
+              <button class="btn-reject">✗ 거부</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-item">
+          <div class="action-priority p1">P1</div>
+          <div class="action-body">
+            <div class="action-title">발효실 3구역 냉각 설비 긴급 점검</div>
+            <div class="action-detail">3구역 평균 온도 +1.8°C 상승 추세 48시간 지속. 냉각 효율 저하로 현재 발효 중인 5개 LOT에 영향 가능성. 즉시 설비팀 투입 권장.</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">AI 신뢰도: 89% · 참조: 설비운영매뉴얼 §2.5</div>
+            <div class="action-btns">
+              <button class="btn-approve">✓ 승인</button>
+              <button class="btn-defer">⏸ 보류</button>
+              <button class="btn-reject">✗ 거부</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-item">
+          <div class="action-priority p2">P2</div>
+          <div class="action-body">
+            <div class="action-title">배추 공급처 A (대왕농산) 품질 재평가</div>
+            <div class="action-detail">5월 입고 배추 LOT 3건 염도 편차 평균 ±0.9% (기준 ±0.5%). 공급처 품질 기준 재협의 및 수입검사 강화 권장.</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">AI 신뢰도: 81% · 참조: 공급처평가이력 5건</div>
+            <div class="action-btns">
+              <button class="btn-approve">✓ 승인</button>
+              <button class="btn-defer">⏸ 보류</button>
+              <button class="btn-reject">✗ 거부</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-item">
+          <div class="action-priority p3">P3</div>
+          <div class="action-body">
+            <div class="action-title">포장라인 2 작업자 배치 최적화</div>
+            <div class="action-detail">라인 2 시간당 처리량 88% (목표 95%). 피크타임(14~16시) 작업자 1명 추가 배치 시 목표 달성 예상 (Prophet 시계열 예측).</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">AI 신뢰도: 78% · 참조: 생산실적 30일</div>
+            <div class="action-btns">
+              <button class="btn-approve">✓ 승인</button>
+              <button class="btn-defer">⏸ 보류</button>
+              <button class="btn-reject">✗ 거부</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Approval Flow -->
+      <div>
+        <div class="approval-flow" style="margin-bottom:16px">
+          <div class="card-title" style="font-size:13px"><i class="fa fa-stream"></i> 승인 워크플로우</div>
+          <div class="flow-step">
+            <div class="step-circle step-done"><i class="fa fa-check"></i></div>
+            <div class="step-info"><div class="step-name">AI 분석 완료</div><div class="step-sub">09:12 · LangGraph 처리</div></div>
+          </div>
+          <div class="flow-step">
+            <div class="step-circle step-cur">2</div>
+            <div class="step-info"><div class="step-name">현장책임자 검토</div><div class="step-sub">대기 중 · 김현장(공장장)</div></div>
+          </div>
+          <div class="flow-step">
+            <div class="step-circle step-wait">3</div>
+            <div class="step-info"><div class="step-name">품질팀 확인</div><div class="step-sub">대기</div></div>
+          </div>
+          <div class="flow-step">
+            <div class="step-circle step-wait">4</div>
+            <div class="step-info"><div class="step-name">최종 승인 & 실행</div><div class="step-sub">대기</div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title" style="font-size:13px"><i class="fa fa-history"></i> 최근 의사결정 이력</div>
+          <table class="tbl" style="font-size:12px">
+            <thead><tr><th>일시</th><th>내용</th><th>결과</th></tr></thead>
+            <tbody>
+              <tr><td>05-22 14:30</td><td>F01 발효 연장 권고</td><td><span class="badge-s badge-ok">승인</span></td></tr>
+              <tr><td>05-22 11:00</td><td>LOT-0521 출하 보류</td><td><span class="badge-s badge-ok">승인</span></td></tr>
+              <tr><td>05-21 09:15</td><td>공급처 B 입고 차단</td><td><span class="badge-s badge-danger">거부</span></td></tr>
+              <tr><td>05-20 16:45</td><td>레시피 염도 조정</td><td><span class="badge-s badge-warn">보류</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 4: 알림 및 추천 -->
+  <div class="tab-panel" id="tab4">
+    <div class="row2">
+      <div>
+        <div class="alert-filter">
+          <button class="alert-filter-btn active">전체 (12)</button>
+          <button class="alert-filter-btn">위험 (2)</button>
+          <button class="alert-filter-btn">경고 (4)</button>
+          <button class="alert-filter-btn">정보 (3)</button>
+          <button class="alert-filter-btn">권장 (3)</button>
+        </div>
+
+        <div class="alert-item alert-danger">
+          <div class="alert-icon"><i class="fa fa-exclamation-triangle"></i></div>
+          <div style="flex:1"><div class="alert-title" style="color:var(--accent-red)">이상발효 경보 — F03</div><div class="alert-desc">pH 4.8 초과, 온도 이상. 즉각 조치 필요.</div></div>
+          <div class="alert-time">09:10</div>
+        </div>
+        <div class="alert-item alert-danger">
+          <div class="alert-icon"><i class="fa fa-temperature-high"></i></div>
+          <div style="flex:1"><div class="alert-title" style="color:var(--accent-red)">발효실 3구역 온도 상한 초과</div><div class="alert-desc">현재 13.8°C (기준 ≤12°C). 설비 점검 요청.</div></div>
+          <div class="alert-time">09:05</div>
+        </div>
+        <div class="alert-item alert-warn">
+          <div class="alert-icon"><i class="fa fa-flask"></i></div>
+          <div style="flex:1"><div class="alert-title">F07 산도 변화율 주의</div><div class="alert-desc">48시간 내 품질 저하 예상. 모니터링 강화.</div></div>
+          <div class="alert-time">08:50</div>
+        </div>
+        <div class="alert-item alert-warn">
+          <div class="alert-icon"><i class="fa fa-box"></i></div>
+          <div style="flex:1"><div class="alert-title">원재료 재고 부족 예측</div><div class="alert-desc">배추 재고 2.3일분. 3일 후 발주 필요 예측.</div></div>
+          <div class="alert-time">08:30</div>
+        </div>
+        <div class="alert-item alert-info">
+          <div class="alert-icon"><i class="fa fa-truck"></i></div>
+          <div style="flex:1"><div class="alert-title">출하 일정 업데이트</div><div class="alert-desc">롯데마트 납품 LOT 4건 출하 승인 대기 중.</div></div>
+          <div class="alert-time">08:00</div>
+        </div>
+        <div class="alert-item alert-rec">
+          <div class="alert-icon"><i class="fa fa-lightbulb"></i></div>
+          <div style="flex:1"><div class="alert-title">절임 시간 최적화 권장</div><div class="alert-desc">현재 염도 조건에서 12시간이 최적 예측 (ML 모델).</div></div>
+          <div class="alert-time">07:30</div>
+        </div>
+      </div>
+
+      <!-- AI Recommendation Panel -->
+      <div>
+        <div class="rec-panel">
+          <div class="card-title"><i class="fa fa-robot"></i> AI 운영 추천</div>
+          <div class="rec-item">
+            <div class="rec-num">1</div>
+            <div class="rec-text">발효실 3구역 온도 설정값 9°C → 8°C로 낮춰 F03 품질 안정화</div>
+            <button class="rec-action">적용</button>
+          </div>
+          <div class="rec-item">
+            <div class="rec-num">2</div>
+            <div class="rec-text">대왕농산 다음 입고 시 염도 전수 검사 실시 (현재 샘플 10% → 100%)</div>
+            <button class="rec-action">적용</button>
+          </div>
+          <div class="rec-item">
+            <div class="rec-num">3</div>
+            <div class="rec-text">LOT-0523-F05 24시간 후 발효 완료 예측 — 출하 검사 사전 준비</div>
+            <button class="rec-action">확인</button>
+          </div>
+          <div class="rec-item">
+            <div class="rec-num">4</div>
+            <div class="rec-text">내일 오전 배추 800kg 발주 — Prophet 소비 예측 기반</div>
+            <button class="rec-action">발주</button>
+          </div>
+          <div class="rec-item">
+            <div class="rec-num">5</div>
+            <div class="rec-text">포장라인 2 피크타임 인력 배치 조정 (14~16시 +1명)</div>
+            <button class="rec-action">검토</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <div class="card-title" style="font-size:13px"><i class="fa fa-bell-slash"></i> 알림 설정</div>
+          <table class="tbl" style="font-size:12px">
+            <thead><tr><th>알림 유형</th><th>임계값</th><th>채널</th><th>상태</th></tr></thead>
+            <tbody>
+              <tr><td>이상발효</td><td>pH>4.5</td><td>SMS+앱</td><td><span class="badge-s badge-ok">활성</span></td></tr>
+              <tr><td>온도 이상</td><td>±2°C</td><td>앱+화면</td><td><span class="badge-s badge-ok">활성</span></td></tr>
+              <tr><td>재고 부족</td><td>3일분</td><td>이메일</td><td><span class="badge-s badge-ok">활성</span></td></tr>
+              <tr><td>출하 지연</td><td>D-1</td><td>SMS</td><td><span class="badge-s badge-warn">점검</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 5: 사용자 질문이력 -->
+  <div class="tab-panel" id="tab5">
+    <div class="history-layout">
+      <div>
+        <div class="filter-row">
+          <select><option>전체 사용자</option><option>김관리(관리자)</option><option>박공장(공장장)</option><option>이품질(품질담당)</option></select>
+          <select><option>전체 Agent</option><option>발효관리 Agent</option><option>원재료 Agent</option><option>출하 Agent</option></select>
+          <input type="date" value="2026-05-23">
+          <span>~</span>
+          <input type="date" value="2026-05-23">
+          <button class="btn btn-primary">조회</button>
+          <button class="btn btn-secondary">초기화</button>
+        </div>
+
+        <div class="card">
+          <div class="kpi-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px">
+            <div class="kpi-card"><div class="kpi-val" style="font-size:20px;color:var(--accent-cyan)">47</div><div class="kpi-label">오늘 총 질의</div></div>
+            <div class="kpi-card"><div class="kpi-val" style="font-size:20px;color:var(--accent-green)">1.8s</div><div class="kpi-label">평균 응답시간</div></div>
+            <div class="kpi-card"><div class="kpi-val" style="font-size:20px;color:var(--accent-orange)">94%</div><div class="kpi-label">사용자 만족도</div></div>
+            <div class="kpi-card"><div class="kpi-val" style="font-size:20px;color:var(--accent-purple)">3</div><div class="kpi-label">미해결 질의</div></div>
+          </div>
+
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>시간</th><th>사용자</th><th>질의 요약</th><th>Agent</th><th>응답시간</th><th>만족도</th><th>상태</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background:rgba(26,115,232,.06)" onclick="document.getElementById('hist-detail').style.display='block'">
+                <td>09:13</td><td>김관리</td><td>LOT-F03 조치 방법</td><td><span class="badge-s badge-info">발효관리</span></td><td>2.1s</td><td>⭐⭐⭐⭐⭐</td><td><span class="badge-s badge-ok">완료</span></td>
+              </tr>
+              <tr>
+                <td>09:12</td><td>김관리</td><td>이상 징후 발효 LOT 현황</td><td><span class="badge-s badge-info">발효관리</span></td><td>1.3s</td><td>⭐⭐⭐⭐⭐</td><td><span class="badge-s badge-ok">완료</span></td>
+              </tr>
+              <tr>
+                <td>08:55</td><td>이품질</td><td>오늘 입고 배추 품질 기준</td><td><span class="badge-s badge-purple">원재료</span></td><td>1.5s</td><td>⭐⭐⭐⭐</td><td><span class="badge-s badge-ok">완료</span></td>
+              </tr>
+              <tr>
+                <td>08:40</td><td>박공장</td><td>이번 주 생산량 KPI 분석</td><td><span class="badge-s badge-warn">ML분석</span></td><td>3.2s</td><td>⭐⭐⭐⭐</td><td><span class="badge-s badge-ok">완료</span></td>
+              </tr>
+              <tr>
+                <td>08:20</td><td>박공장</td><td>LOT-0522 출하 승인 조건</td><td><span class="badge-s badge-danger">출하</span></td><td>1.8s</td><td>⭐⭐⭐</td><td><span class="badge-s badge-warn">미흡</span></td>
+              </tr>
+              <tr>
+                <td>08:10</td><td>김관리</td><td>발효 완료 시점 예측</td><td><span class="badge-s badge-info">발효관리</span></td><td>2.5s</td><td>⭐⭐⭐⭐⭐</td><td><span class="badge-s badge-ok">완료</span></td>
+              </tr>
+              <tr>
+                <td>07:55</td><td>현장1</td><td>절임 염도 확인 방법</td><td><span class="badge-s badge-purple">원재료</span></td><td>1.2s</td><td>⭐⭐⭐⭐⭐</td><td><span class="badge-s badge-ok">완료</span></td>
+              </tr>
+              <tr>
+                <td>07:30</td><td>이품질</td><td>HACCP CCP-2 점검 절차</td><td><span class="badge-s badge-purple">문서검색</span></td><td>1.9s</td><td>⭐⭐⭐⭐</td><td><span class="badge-s badge-ok">완료</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Detail Panel -->
+      <div class="history-detail" id="hist-detail">
+        <div class="card-title" style="font-size:13px"><i class="fa fa-file-alt"></i> 질의 상세 내용</div>
+        <div class="detail-field"><span class="detail-label">질의 시간</span><span class="detail-val">2026-05-23 09:13</span></div>
+        <div class="detail-field"><span class="detail-label">사용자</span><span class="detail-val">김관리 (관리자)</span></div>
+        <div class="detail-field"><span class="detail-label">담당 Agent</span><span class="detail-val">발효관리 Agent</span></div>
+        <div class="detail-field"><span class="detail-label">응답 시간</span><span class="detail-val">2.1초</span></div>
+        <div class="detail-field"><span class="detail-label">RAG 참조</span><span class="detail-val">3건</span></div>
+        <div class="detail-field"><span class="detail-label">ML 호출</span><span class="detail-val">없음</span></div>
+        <div class="detail-field"><span class="detail-label">사용자 만족도</span><span class="detail-val">⭐⭐⭐⭐⭐ (5/5)</span></div>
+
+        <div style="margin-top:12px;font-size:12px;color:var(--text-muted)">사용자 질의</div>
+        <div class="query-preview">LOT-2026-0523-F03 조치 방법 알려줘</div>
+
+        <div style="margin-top:10px;font-size:12px;color:var(--text-muted)">AI 응답 요약</div>
+        <div class="ans-preview">발효기준서(v2.3) 및 과발효 대응 매뉴얼 기반: 발효실 온도 8~10°C로 낮추고 30분 간격 pH 수동 측정 실시. pH 5.0 초과 시 품질팀장 즉시 보고. [HACCP CCP-2 §4.2 참조]</div>
+
+        <div style="margin-top:10px;font-size:12px;color:var(--text-muted)">참조 문서</div>
+        <div style="font-size:12px;margin-top:6px">
+          <div style="padding:4px 0;border-bottom:1px solid var(--border);color:var(--text-secondary)">• 발효관리기준서 v2.3 (유사도: 0.94)</div>
+          <div style="padding:4px 0;border-bottom:1px solid var(--border);color:var(--text-secondary)">• 과발효 대응 매뉴얼 (유사도: 0.91)</div>
+          <div style="padding:4px 0;color:var(--text-secondary)">• HACCP CCP-2 관리기준 (유사도: 0.87)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let c2done = false;
+const navItems = document.querySelectorAll('.nav-item');
+const tabs = document.querySelectorAll('.tab-panel');
+const tabBtns = document.querySelectorAll('.tab-btn');
+
+function showTab(n) {
+  tabs.forEach((t,i) => t.classList.toggle('active', i===n-1));
+  tabBtns.forEach((b,i) => b.classList.toggle('active', i===n-1));
+  navItems.forEach((ni,i) => ni.classList.toggle('active', i===n-1));
+  if (n === 2 && !c2done) { initCharts2(); c2done = true; }
+}
+
+function initCharts2() {
+  const days = ['5/17','5/18','5/19','5/20','5/21','5/22','5/23'];
+  // Production + defect rate mixed chart
+  new Chart(document.getElementById('c2prod'), {
+    data: {
+      labels: days,
+      datasets: [
+        { type:'bar', label:'생산량(kg)', data:[22800,23500,21900,24200,23800,25100,18900], backgroundColor:'rgba(26,115,232,.6)', yAxisID:'y' },
+        { type:'line', label:'불량률(%)', data:[1.2,1.0,1.4,0.9,1.1,0.8,1.0], borderColor:'#f44336', backgroundColor:'transparent', tension:.4, yAxisID:'y1', pointRadius:4 }
+      ]
+    },
+    options: { responsive:true, scales: { y:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#8899bb'}}, y1:{position:'right',grid:{display:false},ticks:{color:'#f44336',callback:v=>v+'%'}} }, plugins:{legend:{labels:{color:'#8899bb',font:{size:11}}}} }
+  });
+  // AI accuracy line
+  new Chart(document.getElementById('c2quality'), {
+    type:'line',
+    data: { labels: days, datasets: [
+      { label:'품질예측 정확도', data:[82,85,84,87,86,88,87], borderColor:'#00c853', backgroundColor:'rgba(0,200,83,.1)', tension:.4, fill:true },
+      { label:'완료시점 예측(1-MAE/2h)', data:[78,80,79,83,82,85,84], borderColor:'#00b4d8', backgroundColor:'transparent', tension:.4 },
+      { label:'이상탐지 정확도', data:[88,87,89,90,91,89,90], borderColor:'#ff9800', backgroundColor:'transparent', tension:.4 }
+    ]},
+    options: { responsive:true, scales: { y:{min:70,max:100,grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#8899bb',callback:v=>v+'%'}}, x:{ticks:{color:'#8899bb'}} }, plugins:{legend:{labels:{color:'#8899bb',font:{size:11}}}} }
+  });
+  // Radar
+  new Chart(document.getElementById('c2radar'), {
+    type:'radar',
+    data: {
+      labels: ['입고품질','절임효율','발효품질','탈수효율','포장효율','출하적시성'],
+      datasets: [
+        { label:'달성률', data:[95,88,87,92,94,90], borderColor:'#1a73e8', backgroundColor:'rgba(26,115,232,.15)', pointBackgroundColor:'#1a73e8' },
+        { label:'목표', data:[90,90,90,90,90,90], borderColor:'#556688', backgroundColor:'transparent', borderDash:[5,5] }
+      ]
+    },
+    options: { responsive:true, scales:{r:{grid:{color:'rgba(255,255,255,.1)'},ticks:{color:'#8899bb',backdropColor:'transparent'},pointLabels:{color:'#8899bb',font:{size:11}}}}, plugins:{legend:{labels:{color:'#8899bb',font:{size:11}}}} }
+  });
+}
+</script>
+</body>
+</html>

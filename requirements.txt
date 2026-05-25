@@ -1,0 +1,43 @@
+# =====================================================================
+# 꽃순이김치 제조AI MES — Python 의존성 (버전 고정)
+# 프로젝트: SF26179540 / 로뎀솔루션 주식회사
+# 설치: pip install -r requirements.txt
+# =====================================================================
+
+# ── FastAPI 백엔드 ───────────────────────────────────────────────────
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+asyncpg==0.29.0
+pydantic==2.9.2
+python-multipart==0.0.12
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+httpx==0.27.2
+
+# ── ML / AI (발효 품질 예측 엔진) ────────────────────────────────────
+numpy==1.26.4
+pandas==2.2.2
+scikit-learn==1.5.2
+xgboost==2.1.1
+tensorflow==2.17.0
+shap==0.46.0
+prophet==1.1.5
+joblib==1.4.2
+
+# ── RAG Agent (LangChain / LangGraph + pgvector) ─────────────────────
+langchain==0.3.7
+langchain-openai==0.2.9
+langchain-community==0.3.7
+langgraph==0.2.39
+pgvector==0.3.2
+openai==1.51.2
+
+# ── 데이터 처리 ──────────────────────────────────────────────────────
+scipy==1.14.1
+
+# ── 설정 / 모니터링 ──────────────────────────────────────────────────
+python-dotenv==1.0.1
+
+# ── Streamlit UI / 시각화 ────────────────────────────────────────────
+streamlit==1.39.0
+plotly==5.24.1

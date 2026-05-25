@@ -1,0 +1,2466 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>꽃순이김치 제조AI MES — 관리자 대시보드</title>
+
+  <!-- Google Fonts: Noto Sans KR -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome 아이콘 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Chart.js 차트 라이브러리 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <style>
+    /* ===========================
+       디자인 토큰 (CSS 변수)
+       =========================== */
+    :root {
+      /* 배경 계열 */
+      --bg-main:      #0a1628;
+      --bg-sidebar:   #0f2044;
+      --bg-card:      #162035;
+      --bg-card-hover:#1a2a45;
+      --bg-table-row: #111d33;
+
+      /* 강조 색상 */
+      --accent-blue:  #1a73e8;
+      --accent-cyan:  #00b4d8;
+      --accent-ok:    #1a73e8;
+      --accent-warn:  #f59e0b;
+      --accent-error: #ef4444;
+      --accent-green: #10b981;
+
+      /* 텍스트 */
+      --text-primary:   #e2e8f0;
+      --text-secondary: #94a3b8;
+      --text-muted:     #5a7494;
+
+      /* 테두리 */
+      --border:       #1e3a5f;
+      --border-light: #243c60;
+
+      /* 사이드바 너비 */
+      --sidebar-w: 230px;
+
+      /* 헤더 높이 */
+      --header-h: 56px;
+
+      /* 폰트 */
+      --font: 'Noto Sans KR', sans-serif;
+    }
+
+    /* ===========================
+       리셋 & 기본 스타일
+       =========================== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      font-family: var(--font);
+      font-size: 14px;
+      background: var(--bg-main);
+      color: var(--text-primary);
+      overflow: hidden;
+    }
+
+    /* 스크롤바 스타일 */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-main); }
+    ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+
+    /* ===========================
+       앱 레이아웃 (사이드바 + 헤더 + 콘텐츠)
+       =========================== */
+    .app-layout {
+      display: grid;
+      grid-template-columns: var(--sidebar-w) 1fr;
+      grid-template-rows: var(--header-h) 1fr;
+      height: 100vh;
+    }
+
+    /* ===========================
+       사이드바
+       =========================== */
+    .sidebar {
+      grid-row: 1 / 3;
+      grid-column: 1;
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* 로고 영역 */
+    .sidebar-logo {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      height: var(--header-h);
+    }
+
+    .sidebar-logo .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .sidebar-logo .logo-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
+    }
+
+    .sidebar-logo .logo-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+      white-space: nowrap;
+    }
+
+    .sidebar-logo .logo-sub {
+      font-size: 10px;
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+
+    /* 메뉴 목록 */
+    .sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 0;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: all 0.15s ease;
+      color: var(--text-secondary);
+      font-size: 13.5px;
+      font-weight: 400;
+      user-select: none;
+    }
+
+    .nav-item:hover {
+      background: rgba(26, 115, 232, 0.08);
+      color: var(--text-primary);
+    }
+
+    .nav-item.active {
+      background: rgba(26, 115, 232, 0.15);
+      border-left-color: var(--accent-blue);
+      color: var(--accent-cyan);
+      font-weight: 600;
+    }
+
+    .nav-item .nav-icon {
+      width: 18px;
+      text-align: center;
+      font-size: 14px;
+      opacity: 0.85;
+    }
+
+    .nav-item .nav-badge {
+      margin-left: auto;
+      background: var(--accent-error);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 10px;
+    }
+
+    /* 사이드바 하단 사용자 정보 */
+    .sidebar-footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sidebar-footer .user-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1a73e8, #00b4d8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .sidebar-footer .user-info {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.3;
+    }
+
+    .sidebar-footer .user-name { font-size: 12px; font-weight: 600; }
+    .sidebar-footer .user-role { font-size: 10px; color: var(--text-secondary); }
+
+    /* ===========================
+       헤더
+       =========================== */
+    .header {
+      grid-column: 2;
+      background: var(--bg-sidebar);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 16px;
+    }
+
+    /* 탭 전환 버튼 (섹션 네비게이션) */
+    .header-tabs {
+      display: flex;
+      gap: 4px;
+      flex: 1;
+    }
+
+    .header-tab {
+      padding: 6px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .header-tab:hover {
+      background: rgba(26, 115, 232, 0.1);
+      color: var(--text-primary);
+    }
+
+    .header-tab.active {
+      background: rgba(26, 115, 232, 0.2);
+      border-color: var(--accent-blue);
+      color: var(--accent-cyan);
+    }
+
+    /* 헤더 우측 영역 */
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-left: auto;
+    }
+
+    .header-time {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .header-alarm {
+      position: relative;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 18px;
+      transition: color 0.15s;
+    }
+
+    .header-alarm:hover { color: var(--text-primary); }
+
+    .alarm-dot {
+      position: absolute;
+      top: -2px;
+      right: -3px;
+      width: 8px;
+      height: 8px;
+      background: var(--accent-error);
+      border-radius: 50%;
+      border: 2px solid var(--bg-sidebar);
+    }
+
+    /* ===========================
+       메인 콘텐츠 영역
+       =========================== */
+    .main-content {
+      grid-column: 2;
+      overflow-y: auto;
+      padding: 20px 24px;
+    }
+
+    /* 섹션 표시/숨김 */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* ===========================
+       공통 카드 컴포넌트
+       =========================== */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title i { color: var(--accent-cyan); font-size: 12px; }
+
+    /* ===========================
+       그리드 유틸리티
+       =========================== */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .gap-16 { gap: 16px; }
+    .mt-16 { margin-top: 16px; }
+    .mt-12 { margin-top: 12px; }
+
+    /* ===========================
+       페이지 타이틀
+       =========================== */
+    .page-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .page-title .title-badge {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 10px;
+      border-radius: 12px;
+      background: rgba(26, 115, 232, 0.2);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(0, 180, 216, 0.3);
+    }
+
+    /* ===========================
+       섹션 1: AI 대시보드
+       =========================== */
+
+    /* KPI 카드 4개 */
+    .kpi-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 18px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+
+    .kpi-card.ok::before { background: var(--accent-green); }
+    .kpi-card.warn::before { background: var(--accent-warn); }
+    .kpi-card.blue::before { background: var(--accent-blue); }
+    .kpi-card.cyan::before { background: var(--accent-cyan); }
+
+    .kpi-label {
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .kpi-value {
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 6px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .kpi-value.ok   { color: var(--accent-green); }
+    .kpi-value.warn { color: var(--accent-warn); }
+    .kpi-value.blue { color: #60a5fa; }
+    .kpi-value.cyan { color: var(--accent-cyan); }
+
+    .kpi-sub {
+      font-size: 11px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .kpi-sub .up   { color: var(--accent-green); }
+    .kpi-sub .down { color: var(--accent-error); }
+
+    .kpi-icon {
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 32px;
+      opacity: 0.07;
+    }
+
+    /* 공정 흐름 진행바 */
+    .process-flow {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 18px;
+    }
+
+    .process-flow-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 14px;
+    }
+
+    .process-steps {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+
+    .process-step {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    .process-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 14px;
+      right: -50%;
+      width: 100%;
+      height: 2px;
+      background: var(--border);
+      z-index: 0;
+    }
+
+    .process-step.done:not(:last-child)::after { background: var(--accent-green); }
+    .process-step.running:not(:last-child)::after { background: var(--accent-warn); }
+
+    .step-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: var(--bg-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      z-index: 1;
+      margin-bottom: 8px;
+      transition: all 0.3s;
+    }
+
+    .process-step.done   .step-dot { background: var(--accent-green); border-color: var(--accent-green); color: #fff; }
+    .process-step.running .step-dot { background: var(--accent-warn);  border-color: var(--accent-warn);  color: #fff; animation: pulse-step 1.5s infinite; }
+    .process-step.idle   .step-dot { background: var(--bg-card); border-color: var(--border-light); color: var(--text-muted); }
+
+    @keyframes pulse-step {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+      50%       { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+    }
+
+    .step-name {
+      font-size: 10.5px;
+      color: var(--text-secondary);
+      text-align: center;
+      line-height: 1.3;
+    }
+
+    .process-step.done   .step-name { color: var(--accent-green); }
+    .process-step.running .step-name { color: var(--accent-warn); font-weight: 600; }
+
+    /* 하단 2열 그리드 */
+    .dashboard-bottom {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .dashboard-right {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* 발효 상태 요약 */
+    .ferment-summary-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .ferment-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--bg-table-row);
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .ferment-item:hover { background: var(--bg-card-hover); }
+
+    .ferment-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .ferment-dot.ok   { background: var(--accent-green); box-shadow: 0 0 6px var(--accent-green); }
+    .ferment-dot.warn { background: var(--accent-warn);  box-shadow: 0 0 6px var(--accent-warn); }
+    .ferment-dot.error{ background: var(--accent-error); box-shadow: 0 0 6px var(--accent-error); animation: blink 1s infinite; }
+
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    .ferment-info { flex: 1; min-width: 0; }
+    .ferment-lot  { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+    .ferment-meta { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+
+    .ferment-status {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .ferment-status.ok    { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
+    .ferment-status.warn  { background: rgba(245, 158, 11, 0.15);  color: var(--accent-warn); }
+    .ferment-status.error { background: rgba(239, 68, 68, 0.15);   color: var(--accent-error); }
+
+    /* 최근 알림 목록 */
+    .alert-list { display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow-y: auto; }
+
+    .alert-item {
+      display: flex;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--bg-table-row);
+      border-radius: 7px;
+      border-left: 3px solid var(--border);
+    }
+
+    .alert-item.error { border-left-color: var(--accent-error); }
+    .alert-item.warn  { border-left-color: var(--accent-warn);  }
+    .alert-item.info  { border-left-color: var(--accent-blue);  }
+    .alert-item.ok    { border-left-color: var(--accent-green);  }
+
+    .alert-icon { font-size: 14px; margin-top: 1px; flex-shrink: 0; }
+    .alert-item.error .alert-icon { color: var(--accent-error); }
+    .alert-item.warn  .alert-icon { color: var(--accent-warn);  }
+    .alert-item.info  .alert-icon { color: var(--accent-blue);  }
+    .alert-item.ok    .alert-icon { color: var(--accent-green);  }
+
+    .alert-text { font-size: 12.5px; color: var(--text-primary); line-height: 1.4; }
+    .alert-time { font-size: 10.5px; color: var(--text-secondary); margin-top: 3px; }
+
+    /* ===========================
+       섹션 2: 발효 모니터링
+       =========================== */
+
+    /* 이상 발효 경보 배너 */
+    .alert-banner {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      border-radius: 8px;
+      padding: 12px 18px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: banner-pulse 2s infinite;
+    }
+
+    @keyframes banner-pulse {
+      0%, 100% { border-color: rgba(239, 68, 68, 0.4); }
+      50%       { border-color: rgba(239, 68, 68, 0.8); }
+    }
+
+    .alert-banner i { color: var(--accent-error); font-size: 18px; }
+    .alert-banner-text { flex: 1; }
+    .alert-banner-title { font-size: 13.5px; font-weight: 700; color: var(--accent-error); }
+    .alert-banner-sub   { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    .alert-banner-btn {
+      background: var(--accent-error);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: var(--font);
+      white-space: nowrap;
+    }
+
+    /* 발효 배치 테이블 */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .data-table th {
+      text-align: left;
+      padding: 10px 14px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-main);
+      position: sticky;
+      top: 0;
+      white-space: nowrap;
+    }
+
+    .data-table td {
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-primary);
+      white-space: nowrap;
+    }
+
+    .data-table tbody tr {
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+
+    .data-table tbody tr:hover { background: rgba(26, 115, 232, 0.06); }
+    .data-table tbody tr.selected { background: rgba(26, 115, 232, 0.12); }
+
+    /* 상태 뱃지 */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 9px;
+      border-radius: 10px;
+      font-size: 11.5px;
+      font-weight: 600;
+    }
+
+    .badge.ok    { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
+    .badge.warn  { background: rgba(245, 158, 11, 0.15);  color: var(--accent-warn); }
+    .badge.error { background: rgba(239, 68, 68, 0.15);   color: var(--accent-error); }
+    .badge.info  { background: rgba(26, 115, 232, 0.15);  color: #60a5fa; }
+    .badge.wait  { background: rgba(148, 163, 184, 0.15); color: var(--text-secondary); }
+
+    /* 모니터링 상세 패널 */
+    .monitor-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .monitor-left { display: flex; flex-direction: column; gap: 16px; }
+    .monitor-right { display: flex; flex-direction: column; gap: 16px; }
+
+    /* 센서 게이지 4개 */
+    .gauge-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .gauge-card {
+      background: var(--bg-table-row);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .gauge-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 10px;
+    }
+
+    /* SVG 아크 게이지 */
+    .gauge-svg { width: 90px; height: 60px; }
+
+    .gauge-value-row {
+      margin-top: 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .gauge-value {
+      font-size: 20px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .gauge-unit {
+      font-size: 10px;
+      color: var(--text-secondary);
+      margin-top: 1px;
+    }
+
+    /* 발효 완료 카운트다운 */
+    .countdown-card {
+      background: linear-gradient(135deg, rgba(26, 115, 232, 0.1), rgba(0, 180, 216, 0.08));
+      border: 1px solid rgba(0, 180, 216, 0.3);
+      border-radius: 8px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .countdown-icon { font-size: 28px; color: var(--accent-cyan); }
+
+    .countdown-info { flex: 1; }
+    .countdown-label { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
+    .countdown-time  { font-size: 22px; font-weight: 700; color: var(--accent-cyan); font-variant-numeric: tabular-nums; }
+    .countdown-sub   { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+
+    /* AI 품질 예측 결과 카드 */
+    .ai-result-card {
+      border-radius: 8px;
+      padding: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .ai-result-card.ok    { background: rgba(16, 185, 129, 0.08);  border-color: rgba(16, 185, 129, 0.3); }
+    .ai-result-card.warn  { background: rgba(245, 158, 11, 0.08);  border-color: rgba(245, 158, 11, 0.3); }
+    .ai-result-card.error { background: rgba(239, 68, 68, 0.08);   border-color: rgba(239, 68, 68, 0.3); }
+
+    .ai-result-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .ai-result-icon { font-size: 22px; }
+    .ai-result-title { font-size: 15px; font-weight: 700; }
+    .ai-result-card.ok    .ai-result-title { color: var(--accent-green); }
+    .ai-result-card.warn  .ai-result-title { color: var(--accent-warn); }
+    .ai-result-card.error .ai-result-title { color: var(--accent-error); }
+
+    .ai-confidence {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .confidence-label { font-size: 11px; color: var(--text-secondary); width: 60px; }
+
+    .confidence-bar {
+      flex: 1;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .confidence-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 1s ease;
+    }
+
+    .ai-result-card.ok   .confidence-fill { background: var(--accent-green); }
+    .ai-result-card.warn .confidence-fill { background: var(--accent-warn); }
+    .ai-result-card.error .confidence-fill { background: var(--accent-error); }
+
+    .confidence-val { font-size: 12px; font-weight: 600; width: 36px; text-align: right; }
+
+    .ai-result-detail { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+
+    /* ===========================
+       섹션 3: AI 품질 예측 + SHAP
+       =========================== */
+
+    /* 예측 요약 카드 3개 */
+    .predict-summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .predict-sum-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .predict-sum-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .predict-sum-icon.ok    { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
+    .predict-sum-icon.warn  { background: rgba(245, 158, 11, 0.15);  color: var(--accent-warn); }
+    .predict-sum-icon.error { background: rgba(239, 68, 68, 0.15);   color: var(--accent-error); }
+
+    .predict-sum-count { font-size: 30px; font-weight: 700; line-height: 1; }
+    .predict-sum-count.ok    { color: var(--accent-green); }
+    .predict-sum-count.warn  { color: var(--accent-warn); }
+    .predict-sum-count.error { color: var(--accent-error); }
+
+    .predict-sum-label { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+    /* SHAP 바 차트 */
+    .shap-bar-list { display: flex; flex-direction: column; gap: 12px; }
+
+    .shap-item { display: flex; align-items: center; gap: 12px; }
+    .shap-name { width: 100px; font-size: 12.5px; color: var(--text-primary); text-align: right; flex-shrink: 0; }
+    .shap-bar-wrap { flex: 1; height: 22px; background: var(--border); border-radius: 4px; overflow: hidden; position: relative; }
+    .shap-bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 8px; font-size: 11px; font-weight: 600; color: #fff; transition: width 1.2s ease; }
+    .shap-pct { width: 40px; font-size: 12px; font-weight: 600; color: var(--text-secondary); text-align: right; }
+
+    /* 최적 조건 추천 카드 */
+    .recommend-card {
+      background: linear-gradient(135deg, rgba(26, 115, 232, 0.1), rgba(0, 180, 216, 0.06));
+      border: 1px solid rgba(26, 115, 232, 0.3);
+      border-radius: 10px;
+      padding: 18px;
+    }
+
+    .recommend-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .recommend-header i { color: var(--accent-cyan); font-size: 16px; }
+    .recommend-header span { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .recommend-header .ai-tag {
+      margin-left: auto;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: rgba(0, 180, 216, 0.2);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(0, 180, 216, 0.3);
+    }
+
+    .recommend-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .recommend-item {
+      background: var(--bg-table-row);
+      border-radius: 7px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+    }
+
+    .recommend-item-label { font-size: 10.5px; color: var(--text-secondary); margin-bottom: 4px; }
+    .recommend-item-value { font-size: 16px; font-weight: 700; color: var(--accent-cyan); }
+    .recommend-item-unit  { font-size: 10px; color: var(--text-secondary); }
+
+    .recommend-footer {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .recommend-note { flex: 1; font-size: 11.5px; color: var(--text-secondary); line-height: 1.4; }
+
+    .btn-primary {
+      background: var(--accent-blue);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      padding: 8px 18px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-primary:hover { background: #1557b0; }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 7px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+    }
+
+    /* 발효 이력 필터 */
+    .filter-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .filter-label { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+
+    .filter-select, .filter-input {
+      background: var(--bg-table-row);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 12.5px;
+      color: var(--text-primary);
+      font-family: var(--font);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .filter-select:focus, .filter-input:focus { border-color: var(--accent-blue); }
+
+    /* 표 래퍼 (스크롤 가능) */
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    /* 프로그레스 바 */
+    .progress-bar {
+      width: 80px;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 3px;
+    }
+
+    .progress-fill.ok   { background: var(--accent-green); }
+    .progress-fill.warn { background: var(--accent-warn); }
+    .progress-fill.error { background: var(--accent-error); }
+
+    /* 반응형 보조 (최소 1280px 기준) */
+    @media (max-width: 1400px) {
+      .kpi-cards { grid-template-columns: repeat(2, 1fr); }
+      .monitor-layout { grid-template-columns: 1fr; }
+    }
+
+    /* 차트 컨테이너 */
+    .chart-wrap {
+      position: relative;
+      height: 180px;
+    }
+
+    .chart-wrap-tall {
+      position: relative;
+      height: 220px;
+    }
+
+    /* 토스트 알림 (인터랙션 피드백) */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 18px;
+      font-size: 13px;
+      color: var(--text-primary);
+      z-index: 9999;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.3s ease;
+      max-width: 320px;
+    }
+
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* 로딩 스피너 (차트 영역) */
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent-blue);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: auto;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* 구분선 */
+    .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+    /* 인라인 스타일 보조 */
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-8 { gap: 8px; }
+    .gap-12 { gap: 12px; }
+    .w-full { width: 100%; }
+    .text-right { text-align: right; }
+    .font-bold { font-weight: 700; }
+    .text-sm { font-size: 12px; }
+    .text-xs { font-size: 11px; }
+    .text-muted { color: var(--text-secondary); }
+    .text-cyan { color: var(--accent-cyan); }
+    .text-green { color: var(--accent-green); }
+    .text-warn { color: var(--accent-warn); }
+    .text-error { color: var(--accent-error); }
+  </style>
+</head>
+<body>
+
+<!-- ==========================================
+     앱 전체 레이아웃
+     ========================================== -->
+<div class="app-layout">
+
+  <!-- ==============================
+       사이드바 — 로고 + 10개 메뉴
+       ============================== -->
+  <aside class="sidebar">
+    <!-- 로고 -->
+    <div class="sidebar-logo">
+      <div class="logo-icon"><i class="fa-solid fa-seedling" style="color:#fff;"></i></div>
+      <div class="logo-text">
+        <span class="logo-title">꽃순이김치 MES</span>
+        <span class="logo-sub">스마트팩토리 AI 시스템</span>
+      </div>
+    </div>
+
+    <!-- 메뉴 내비게이션 -->
+    <nav class="sidebar-nav">
+      <!-- 1. AI 대시보드 (활성) -->
+      <div class="nav-item active" onclick="activateSection('s1'); setActiveNav(this)">
+        <i class="fa-solid fa-chart-line nav-icon"></i>
+        AI 대시보드
+      </div>
+      <!-- 2. 원재료관리 -->
+      <div class="nav-item" onclick="setActiveNav(this); showToast('원재료관리 화면은 별도 파일로 구현 예정입니다.')">
+        <i class="fa-solid fa-box-open nav-icon"></i>
+        원재료관리
+      </div>
+      <!-- 3. 숙성발효관리 (탭 2,3 으로 연결) -->
+      <div class="nav-item" onclick="activateSection('s2'); setActiveNav(this)">
+        <i class="fa-solid fa-temperature-half nav-icon"></i>
+        숙성발효관리
+        <span class="nav-badge">1</span>
+      </div>
+      <!-- 4. 포장출하관리 -->
+      <div class="nav-item" onclick="setActiveNav(this); showToast('포장출하관리 화면은 별도 파일로 구현 예정입니다.')">
+        <i class="fa-solid fa-boxes-stacked nav-icon"></i>
+        포장출하관리
+      </div>
+      <!-- 5. 공정관리 -->
+      <div class="nav-item" onclick="setActiveNav(this); showToast('공정관리 화면은 별도 파일로 구현 예정입니다.')">
+        <i class="fa-solid fa-gear nav-icon"></i>
+        공정관리
+      </div>
+      <!-- 6. 데이터관리 -->
+      <div class="nav-item" onclick="setActiveNav(this); showToast('데이터관리 화면은 별도 파일로 구현 예정입니다.')">
+        <i class="fa-solid fa-database nav-icon"></i>
+        데이터관리
+      </div>
+      <!-- 7. AI Agent 통합관리 -->
+      <div class="nav-item" onclick="setActiveNav(this); showToast('AI Agent 통합관리 화면은 별도 파일로 구현 예정입니다.')">
+        <i class="fa-solid fa-robot nav-icon"></i>
+        AI Agent 통합관리
+      </div>
+      <!-- 8. 기준정보관리 -->
+      <div class="nav-item" onclick="setActiveNav(this); showToast('기준정보관리 화면은 별도 파일로 구현 예정입니다.')">
+        <i class="fa-solid fa-list-check nav-icon"></i>
+        기준정보관리
+      </div>
+      <!-- 9. 사용자/시스템관리 -->
+      <div class="nav-item" onclick="setActiveNav(this); showToast('사용자/시스템관리 화면은 별도 파일로 구현 예정입니다.')">
+        <i class="fa-solid fa-users-gear nav-icon"></i>
+        사용자/시스템관리
+      </div>
+      <!-- 10. KPI관리 -->
+      <div class="nav-item" onclick="setActiveNav(this); showToast('KPI관리 화면은 별도 파일로 구현 예정입니다.')">
+        <i class="fa-solid fa-chart-bar nav-icon"></i>
+        KPI관리
+      </div>
+    </nav>
+
+    <!-- 사이드바 하단 사용자 영역 -->
+    <div class="sidebar-footer">
+      <div class="user-avatar">박</div>
+      <div class="user-info">
+        <span class="user-name">박지훈 생산관리자</span>
+        <span class="user-role">꽃순이김치 평창공장</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ==============================
+       상단 헤더 — 탭 + 시각 + 알림
+       ============================== -->
+  <header class="header">
+    <!-- 섹션 전환 탭 -->
+    <div class="header-tabs">
+      <button class="header-tab active" onclick="activateSection('s1'); setActiveTab(this)">
+        <i class="fa-solid fa-chart-line" style="margin-right:5px;font-size:11px;"></i>
+        AI 대시보드
+      </button>
+      <button class="header-tab" onclick="activateSection('s2'); setActiveTab(this)">
+        <i class="fa-solid fa-flask" style="margin-right:5px;font-size:11px;"></i>
+        발효 모니터링
+      </button>
+      <button class="header-tab" onclick="activateSection('s3'); setActiveTab(this)">
+        <i class="fa-solid fa-brain" style="margin-right:5px;font-size:11px;"></i>
+        AI 품질 예측 · SHAP
+      </button>
+    </div>
+
+    <!-- 우측 — 시각 / 알림 / 사용자 -->
+    <div class="header-right">
+      <!-- 시스템 상태 표시 -->
+      <div style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--accent-green);">
+        <span style="width:7px;height:7px;border-radius:50%;background:var(--accent-green);display:inline-block;box-shadow:0 0 6px var(--accent-green);"></span>
+        시스템 정상
+      </div>
+      <!-- 현재 시각 -->
+      <div class="header-time" id="clock">2026-05-23 09:41:22</div>
+      <!-- 알림 벨 -->
+      <div class="header-alarm" title="미확인 알림 1건">
+        <i class="fa-solid fa-bell"></i>
+        <span class="alarm-dot"></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==============================
+       메인 콘텐츠 — 3개 섹션
+       ============================== -->
+  <main class="main-content">
+
+    <!-- =====================================================
+         섹션 1: AI 대시보드 (메인 레이아웃)
+         ===================================================== -->
+    <section id="s1" class="section active">
+
+      <div class="page-title">
+        <i class="fa-solid fa-chart-line" style="color:var(--accent-cyan);"></i>
+        AI 대시보드
+        <span class="title-badge">실시간 Live</span>
+      </div>
+
+      <!-- KPI 카드 4개 -->
+      <div class="kpi-cards">
+        <!-- 시간당 생산량 -->
+        <div class="kpi-card ok">
+          <div class="kpi-label"><i class="fa-solid fa-industry"></i> 시간당 생산량</div>
+          <div class="kpi-value ok">2,980</div>
+          <div class="kpi-sub">
+            <span>kg/h &nbsp;|&nbsp; 목표 3,000</span>
+            <span class="up"><i class="fa-solid fa-arrow-up"></i> +8.4%</span>
+          </div>
+          <i class="fa-solid fa-industry kpi-icon"></i>
+        </div>
+        <!-- 완제품 불량률 -->
+        <div class="kpi-card warn">
+          <div class="kpi-label"><i class="fa-solid fa-triangle-exclamation"></i> 완제품 불량률</div>
+          <div class="kpi-value warn">1.12</div>
+          <div class="kpi-sub">
+            <span>% &nbsp;|&nbsp; 목표 1.0%</span>
+            <span class="down"><i class="fa-solid fa-arrow-down"></i> -25.3%</span>
+          </div>
+          <i class="fa-solid fa-triangle-exclamation kpi-icon"></i>
+        </div>
+        <!-- 발효 완료율 -->
+        <div class="kpi-card blue">
+          <div class="kpi-label"><i class="fa-solid fa-flask"></i> 발효 완료율</div>
+          <div class="kpi-value blue">87.5</div>
+          <div class="kpi-sub">
+            <span>% &nbsp;|&nbsp; 16배치 중 14건</span>
+            <span class="up"><i class="fa-solid fa-arrow-up"></i> +5.2%</span>
+          </div>
+          <i class="fa-solid fa-flask kpi-icon"></i>
+        </div>
+        <!-- 오늘 출하량 -->
+        <div class="kpi-card cyan">
+          <div class="kpi-label"><i class="fa-solid fa-truck"></i> 오늘 출하량</div>
+          <div class="kpi-value cyan">18,240</div>
+          <div class="kpi-sub">
+            <span>kg &nbsp;|&nbsp; 계획 20,000</span>
+            <span class="up"><i class="fa-solid fa-check"></i> 91.2%</span>
+          </div>
+          <i class="fa-solid fa-truck kpi-icon"></i>
+        </div>
+      </div>
+
+      <!-- 공정 흐름 진행바 -->
+      <div class="process-flow">
+        <div class="process-flow-title">
+          <i class="fa-solid fa-arrows-spin" style="color:var(--accent-cyan);margin-right:6px;"></i>
+          제조 공정 흐름 — 실시간 현황
+        </div>
+        <div class="process-steps">
+          <div class="process-step done">
+            <div class="step-dot"><i class="fa-solid fa-check"></i></div>
+            <div class="step-name">입고/<br>보관</div>
+          </div>
+          <div class="process-step done">
+            <div class="step-dot"><i class="fa-solid fa-check"></i></div>
+            <div class="step-name">절단/<br>전처리</div>
+          </div>
+          <div class="process-step done">
+            <div class="step-dot"><i class="fa-solid fa-check"></i></div>
+            <div class="step-name">세척/<br>절임</div>
+          </div>
+          <div class="process-step done">
+            <div class="step-dot"><i class="fa-solid fa-check"></i></div>
+            <div class="step-name">세척/<br>선별</div>
+          </div>
+          <div class="process-step done">
+            <div class="step-dot"><i class="fa-solid fa-check"></i></div>
+            <div class="step-name">탈수</div>
+          </div>
+          <div class="process-step done">
+            <div class="step-dot"><i class="fa-solid fa-check"></i></div>
+            <div class="step-name">혼합</div>
+          </div>
+          <!-- 숙성/발효 — 현재 진행 중 -->
+          <div class="process-step running">
+            <div class="step-dot"><i class="fa-solid fa-spinner fa-spin"></i></div>
+            <div class="step-name">숙성/<br>발효 ★</div>
+          </div>
+          <div class="process-step idle">
+            <div class="step-dot"><i class="fa-solid fa-circle-dot"></i></div>
+            <div class="step-name">금속<br>검출</div>
+          </div>
+          <div class="process-step idle">
+            <div class="step-dot"><i class="fa-solid fa-circle-dot"></i></div>
+            <div class="step-name">포장/<br>출하</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 하단: 생산 차트 + 발효 요약 + 알림 -->
+      <div class="dashboard-bottom">
+        <!-- 실시간 생산 차트 -->
+        <div class="card">
+          <div class="card-title"><i class="fa-solid fa-chart-area"></i> 금일 시간대별 생산량 추이 (kg/h)</div>
+          <div class="chart-wrap-tall">
+            <canvas id="productionChart"></canvas>
+          </div>
+        </div>
+
+        <!-- 우측: 발효 상태 요약 + 최근 알림 -->
+        <div class="dashboard-right">
+          <!-- 발효 배치 상태 요약 -->
+          <div class="card" style="flex:1;">
+            <div class="card-title"><i class="fa-solid fa-flask"></i> 발효 배치 현황</div>
+            <div class="ferment-summary-list">
+              <div class="ferment-item" onclick="activateSection('s2'); setActiveTab(document.querySelectorAll('.header-tab')[1])">
+                <div class="ferment-dot ok"></div>
+                <div class="ferment-info">
+                  <div class="ferment-lot">LOT-2605-001</div>
+                  <div class="ferment-meta">입조 06:00 · 잔여 14시간</div>
+                </div>
+                <span class="ferment-status ok">정상</span>
+              </div>
+              <div class="ferment-item" onclick="activateSection('s2'); setActiveTab(document.querySelectorAll('.header-tab')[1])">
+                <div class="ferment-dot ok"></div>
+                <div class="ferment-info">
+                  <div class="ferment-lot">LOT-2605-002</div>
+                  <div class="ferment-meta">입조 06:30 · 잔여 16시간</div>
+                </div>
+                <span class="ferment-status ok">정상</span>
+              </div>
+              <div class="ferment-item" onclick="activateSection('s2'); setActiveTab(document.querySelectorAll('.header-tab')[1])">
+                <div class="ferment-dot warn"></div>
+                <div class="ferment-info">
+                  <div class="ferment-lot">LOT-2605-003</div>
+                  <div class="ferment-meta">입조 05:00 · 잔여 11시간</div>
+                </div>
+                <span class="ferment-status warn">주의</span>
+              </div>
+              <div class="ferment-item" onclick="activateSection('s2'); setActiveTab(document.querySelectorAll('.header-tab')[1])">
+                <div class="ferment-dot error"></div>
+                <div class="ferment-info">
+                  <div class="ferment-lot">LOT-2605-004</div>
+                  <div class="ferment-meta">입조 04:30 · 이상발효 탐지</div>
+                </div>
+                <span class="ferment-status error">이상</span>
+              </div>
+              <div class="ferment-item" onclick="activateSection('s2'); setActiveTab(document.querySelectorAll('.header-tab')[1])">
+                <div class="ferment-dot ok"></div>
+                <div class="ferment-info">
+                  <div class="ferment-lot">LOT-2605-005</div>
+                  <div class="ferment-meta">입조 07:00 · 잔여 18시간</div>
+                </div>
+                <span class="ferment-status ok">정상</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 최근 알림/경보 -->
+          <div class="card" style="flex:1;">
+            <div class="card-title"><i class="fa-solid fa-bell"></i> 최근 알림 · 경보</div>
+            <div class="alert-list">
+              <div class="alert-item error">
+                <i class="fa-solid fa-circle-exclamation alert-icon"></i>
+                <div>
+                  <div class="alert-text">LOT-2605-004 이상발효 탐지 — pH 4.1 (기준 4.5 미만)</div>
+                  <div class="alert-time">09:38 &nbsp;·&nbsp; AI 자동 경보</div>
+                </div>
+              </div>
+              <div class="alert-item warn">
+                <i class="fa-solid fa-triangle-exclamation alert-icon"></i>
+                <div>
+                  <div class="alert-text">LOT-2605-003 산도 주의 — 0.68% (기준 0.6~0.8%)</div>
+                  <div class="alert-time">09:21 &nbsp;·&nbsp; AI 모니터링</div>
+                </div>
+              </div>
+              <div class="alert-item info">
+                <i class="fa-solid fa-circle-info alert-icon"></i>
+                <div>
+                  <div class="alert-text">LOT-2605-001 발효 완료 예상 — 오늘 23:40 (AI 예측)</div>
+                  <div class="alert-time">09:00 &nbsp;·&nbsp; AI 예측 알림</div>
+                </div>
+              </div>
+              <div class="alert-item ok">
+                <i class="fa-solid fa-circle-check alert-icon"></i>
+                <div>
+                  <div class="alert-text">원재료 LOT-2605-A12 입고 검수 완료 — 품질 적합</div>
+                  <div class="alert-time">08:44 &nbsp;·&nbsp; 입고 담당자</div>
+                </div>
+              </div>
+              <div class="alert-item warn">
+                <i class="fa-solid fa-triangle-exclamation alert-icon"></i>
+                <div>
+                  <div class="alert-text">발효실 3구역 온도 소폭 상승 — 현재 7.8°C</div>
+                  <div class="alert-time">08:30 &nbsp;·&nbsp; 센서 자동 감지</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================
+         섹션 2: 숙성발효관리 — 발효 모니터링
+         ===================================================== -->
+    <section id="s2" class="section">
+
+      <div class="page-title">
+        <i class="fa-solid fa-flask" style="color:var(--accent-cyan);"></i>
+        숙성발효관리 — 발효 모니터링
+        <span class="title-badge">AI 실시간 감시 중</span>
+      </div>
+
+      <!-- 이상 발효 경보 배너 -->
+      <div class="alert-banner">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <div class="alert-banner-text">
+          <div class="alert-banner-title">이상발효 경보 — LOT-2605-004</div>
+          <div class="alert-banner-sub">pH 4.1 (기준 4.5 미만), 산도 0.92% (기준 초과) · AI 탐지 시각: 09:38 · 담당자 확인 필요</div>
+        </div>
+        <button class="alert-banner-btn" onclick="showToast('담당자 알림이 전송되었습니다.')">담당자 알림 전송</button>
+      </div>
+
+      <!-- 발효 배치 목록 테이블 -->
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-table-list"></i> 발효 배치 목록 (클릭 시 상세 모니터링)</div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>배치번호</th>
+                <th>LOT 번호</th>
+                <th>입조 시간</th>
+                <th>목표 완료</th>
+                <th>경과 시간</th>
+                <th>온도 (°C)</th>
+                <th>pH</th>
+                <th>염도 (%)</th>
+                <th>현재 상태</th>
+                <th>AI 예측</th>
+                <th>발효 진행</th>
+              </tr>
+            </thead>
+            <tbody id="batchTableBody">
+              <!-- JavaScript로 채워짐 -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 선택된 배치 상세 모니터링 패널 -->
+      <div class="monitor-layout" id="monitorPanel">
+        <!-- 좌측: 게이지 + 카운트다운 + AI 예측 -->
+        <div class="monitor-left">
+          <!-- 실시간 센서 게이지 4개 -->
+          <div class="card">
+            <div class="card-title"><i class="fa-solid fa-gauge-high"></i> 실시간 센서 게이지 — <span id="detailLot" style="color:var(--accent-cyan);">LOT-2605-001</span></div>
+            <div class="gauge-grid">
+              <!-- 온도 게이지 -->
+              <div class="gauge-card">
+                <div class="gauge-label">온도 (°C)</div>
+                <svg class="gauge-svg" viewBox="0 0 90 55">
+                  <!-- 배경 아크 -->
+                  <path d="M 10 50 A 35 35 0 0 1 80 50" fill="none" stroke="#1e3a5f" stroke-width="8" stroke-linecap="round"/>
+                  <!-- 값 아크 (id로 JS에서 제어) -->
+                  <path id="gaugeTemp" d="M 10 50 A 35 35 0 0 1 80 50" fill="none" stroke="#10b981" stroke-width="8" stroke-linecap="round"
+                        stroke-dasharray="110" stroke-dashoffset="30"/>
+                  <text x="45" y="52" text-anchor="middle" font-size="13" font-weight="bold" fill="#10b981" id="gaugeTempVal">6.8</text>
+                </svg>
+                <div class="gauge-unit">기준: 4~10°C</div>
+              </div>
+              <!-- pH 게이지 -->
+              <div class="gauge-card">
+                <div class="gauge-label">pH</div>
+                <svg class="gauge-svg" viewBox="0 0 90 55">
+                  <path d="M 10 50 A 35 35 0 0 1 80 50" fill="none" stroke="#1e3a5f" stroke-width="8" stroke-linecap="round"/>
+                  <path id="gaugePh" d="M 10 50 A 35 35 0 0 1 80 50" fill="none" stroke="#1a73e8" stroke-width="8" stroke-linecap="round"
+                        stroke-dasharray="110" stroke-dashoffset="20"/>
+                  <text x="45" y="52" text-anchor="middle" font-size="13" font-weight="bold" fill="#60a5fa" id="gaugePhVal">4.8</text>
+                </svg>
+                <div class="gauge-unit">기준: 4.5~5.5</div>
+              </div>
+              <!-- 산도 게이지 -->
+              <div class="gauge-card">
+                <div class="gauge-label">산도 (%)</div>
+                <svg class="gauge-svg" viewBox="0 0 90 55">
+                  <path d="M 10 50 A 35 35 0 0 1 80 50" fill="none" stroke="#1e3a5f" stroke-width="8" stroke-linecap="round"/>
+                  <path id="gaugeAcid" d="M 10 50 A 35 35 0 0 1 80 50" fill="none" stroke="#10b981" stroke-width="8" stroke-linecap="round"
+                        stroke-dasharray="110" stroke-dashoffset="44"/>
+                  <text x="45" y="52" text-anchor="middle" font-size="13" font-weight="bold" fill="#10b981" id="gaugeAcidVal">0.62</text>
+                </svg>
+                <div class="gauge-unit">기준: 0.6~0.8%</div>
+              </div>
+              <!-- 염도 게이지 -->
+              <div class="gauge-card">
+                <div class="gauge-label">염도 (%)</div>
+                <svg class="gauge-svg" viewBox="0 0 90 55">
+                  <path d="M 10 50 A 35 35 0 0 1 80 50" fill="none" stroke="#1e3a5f" stroke-width="8" stroke-linecap="round"/>
+                  <path id="gaugeSalt" d="M 10 50 A 35 35 0 0 1 80 50" fill="none" stroke="#00b4d8" stroke-width="8" stroke-linecap="round"
+                        stroke-dasharray="110" stroke-dashoffset="33"/>
+                  <text x="45" y="52" text-anchor="middle" font-size="13" font-weight="bold" fill="#00b4d8" id="gaugeSaltVal">2.3</text>
+                </svg>
+                <div class="gauge-unit">기준: 2.0~2.5%</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 발효 완료 예상 시점 카운트다운 -->
+          <div class="countdown-card">
+            <i class="fa-regular fa-clock countdown-icon"></i>
+            <div class="countdown-info">
+              <div class="countdown-label">AI 발효 완료 예상 시점</div>
+              <div class="countdown-time" id="countdownTimer">14:22:08</div>
+              <div class="countdown-sub">오늘 23:40 완료 예상 · MAE ≤ 2시간</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:11px;color:var(--text-secondary);">AI 신뢰도</div>
+              <div style="font-size:18px;font-weight:700;color:var(--accent-cyan);">91.3%</div>
+            </div>
+          </div>
+
+          <!-- AI 품질 예측 결과 카드 -->
+          <div class="ai-result-card ok" id="aiResultCard">
+            <div class="ai-result-header">
+              <i class="fa-solid fa-circle-check ai-result-icon" style="color:var(--accent-green);"></i>
+              <div>
+                <div class="ai-result-title">정상 발효 진행 중</div>
+                <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">XGBoost 품질 분류 · 최종 업데이트 09:40</div>
+              </div>
+            </div>
+            <div class="ai-confidence">
+              <span class="confidence-label">정상</span>
+              <div class="confidence-bar"><div class="confidence-fill" style="width:88%;"></div></div>
+              <span class="confidence-val">88%</span>
+            </div>
+            <div class="ai-confidence">
+              <span class="confidence-label">주의</span>
+              <div class="confidence-bar" style="background:rgba(245,158,11,0.2);">
+                <div class="confidence-fill" style="width:10%;background:var(--accent-warn);"></div>
+              </div>
+              <span class="confidence-val" style="color:var(--accent-warn);">10%</span>
+            </div>
+            <div class="ai-confidence">
+              <span class="confidence-label">이상</span>
+              <div class="confidence-bar" style="background:rgba(239,68,68,0.1);">
+                <div class="confidence-fill" style="width:2%;background:var(--accent-error);"></div>
+              </div>
+              <span class="confidence-val" style="color:var(--accent-error);">2%</span>
+            </div>
+            <div class="ai-result-detail" style="margin-top:10px;">
+              현재 온도, pH, 염도 모두 기준 범위 내에서 안정적으로 유지되고 있습니다.
+              LSTM 예측 기준 발효 진행률 38% 달성, 정상 궤도로 판단됩니다.
+            </div>
+          </div>
+        </div>
+
+        <!-- 우측: 시계열 트렌드 차트 -->
+        <div class="monitor-right">
+          <div class="card" style="flex:1;">
+            <div class="card-title"><i class="fa-solid fa-chart-line"></i> 최근 24시간 발효 트렌드</div>
+            <div class="chart-wrap-tall">
+              <canvas id="trendChart"></canvas>
+            </div>
+          </div>
+          <!-- 숙성 진행 정보 -->
+          <div class="card">
+            <div class="card-title"><i class="fa-solid fa-info-circle"></i> 배치 상세 정보</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div>
+                <div class="text-xs text-muted" style="margin-bottom:3px;">원재료 LOT</div>
+                <div style="font-size:13px;font-weight:600;">LOT-2605-A09</div>
+              </div>
+              <div>
+                <div class="text-xs text-muted" style="margin-bottom:3px;">배추 원산지</div>
+                <div style="font-size:13px;font-weight:600;">강원도 평창</div>
+              </div>
+              <div>
+                <div class="text-xs text-muted" style="margin-bottom:3px;">배추 등급</div>
+                <div style="font-size:13px;font-weight:600;">1등급 (A)</div>
+              </div>
+              <div>
+                <div class="text-xs text-muted" style="margin-bottom:3px;">함수율</div>
+                <div style="font-size:13px;font-weight:600;">92.3%</div>
+              </div>
+              <div>
+                <div class="text-xs text-muted" style="margin-bottom:3px;">절임 시간</div>
+                <div style="font-size:13px;font-weight:600;">12시간</div>
+              </div>
+              <div>
+                <div class="text-xs text-muted" style="margin-bottom:3px;">절임 염도</div>
+                <div style="font-size:13px;font-weight:600;">10.2%</div>
+              </div>
+              <div>
+                <div class="text-xs text-muted" style="margin-bottom:3px;">발효 구역</div>
+                <div style="font-size:13px;font-weight:600;">1구역 3번 탱크</div>
+              </div>
+              <div>
+                <div class="text-xs text-muted" style="margin-bottom:3px;">담당자</div>
+                <div style="font-size:13px;font-weight:600;">김민준 (발효팀)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================
+         섹션 3: AI 품질 예측 + SHAP 분석
+         ===================================================== -->
+    <section id="s3" class="section">
+
+      <div class="page-title">
+        <i class="fa-solid fa-brain" style="color:var(--accent-cyan);"></i>
+        숙성발효관리 — AI 품질 예측 · SHAP 분석
+        <span class="title-badge">XGBoost · SHAP</span>
+      </div>
+
+      <!-- 예측 요약 카드 3개 -->
+      <div class="predict-summary">
+        <div class="predict-sum-card">
+          <div class="predict-sum-icon ok"><i class="fa-solid fa-circle-check"></i></div>
+          <div>
+            <div class="predict-sum-count ok">12</div>
+            <div class="predict-sum-label">정상 예측 배치</div>
+          </div>
+        </div>
+        <div class="predict-sum-card">
+          <div class="predict-sum-icon warn"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          <div>
+            <div class="predict-sum-count warn">3</div>
+            <div class="predict-sum-label">주의 예측 배치</div>
+          </div>
+        </div>
+        <div class="predict-sum-card">
+          <div class="predict-sum-icon error"><i class="fa-solid fa-circle-xmark"></i></div>
+          <div>
+            <div class="predict-sum-count error">1</div>
+            <div class="predict-sum-label">이상 예측 배치</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2 mt-16">
+        <!-- SHAP 영향 요인 바 차트 -->
+        <div class="card">
+          <div class="card-title"><i class="fa-solid fa-chart-bar"></i> SHAP 품질 영향 요인 분석</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-bottom:14px;">
+            XGBoost 모델 기준 · 현재 배치 LOT-2605-004 이상 발효 원인 분석
+          </div>
+          <div class="shap-bar-list" id="shapBars">
+            <!-- JavaScript로 채워짐 -->
+          </div>
+          <div class="divider"></div>
+          <!-- SHAP 도넛 차트 -->
+          <div style="display:flex;align-items:center;gap:20px;">
+            <div style="width:150px;height:150px;position:relative;flex-shrink:0;">
+              <canvas id="shapDonut"></canvas>
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">영향 요인 비중</div>
+              <div id="shapLegend" style="display:flex;flex-direction:column;gap:7px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 최적 발효 조건 추천 + 발효 이력 필터 -->
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <!-- AI 최적 조건 추천 -->
+          <div class="recommend-card">
+            <div class="recommend-header">
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+              <span>AI 최적 발효 조건 추천</span>
+              <span class="ai-tag">AI RECOMMEND</span>
+            </div>
+            <div style="font-size:11.5px;color:var(--text-secondary);margin-bottom:12px;">
+              SHAP 분석 결과 기반 · LOT-2605-004 이상 발효 교정 권고
+            </div>
+            <div class="recommend-grid">
+              <div class="recommend-item">
+                <div class="recommend-item-label">권장 발효 온도</div>
+                <div class="recommend-item-value">5.5<span class="recommend-item-unit"> °C</span></div>
+              </div>
+              <div class="recommend-item">
+                <div class="recommend-item-label">권장 pH 범위</div>
+                <div class="recommend-item-value">4.6<span class="recommend-item-unit">~5.2</span></div>
+              </div>
+              <div class="recommend-item">
+                <div class="recommend-item-label">권장 절임 염도</div>
+                <div class="recommend-item-value">9.8<span class="recommend-item-unit"> %</span></div>
+              </div>
+              <div class="recommend-item">
+                <div class="recommend-item-label">최적 숙성 시간</div>
+                <div class="recommend-item-value">36<span class="recommend-item-unit"> h</span></div>
+              </div>
+              <div class="recommend-item">
+                <div class="recommend-item-label">목표 산도</div>
+                <div class="recommend-item-value">0.65<span class="recommend-item-unit"> %</span></div>
+              </div>
+              <div class="recommend-item">
+                <div class="recommend-item-label">기대 품질 점수</div>
+                <div class="recommend-item-value">92<span class="recommend-item-unit"> 점</span></div>
+              </div>
+            </div>
+            <div class="recommend-footer">
+              <div class="recommend-note">
+                <i class="fa-solid fa-circle-info" style="color:var(--accent-cyan);margin-right:4px;"></i>
+                AI 추천 조건은 담당자 검토 후 적용됩니다. 파일럿 검증 단계에서는 반드시 책임자 승인이 필요합니다.
+              </div>
+              <button class="btn-secondary" onclick="showToast('추천 조건이 검토 요청으로 등록되었습니다.')">검토 요청</button>
+              <button class="btn-primary" onclick="showToast('담당 책임자에게 승인 요청이 전송되었습니다.')">승인 요청</button>
+            </div>
+          </div>
+
+          <!-- 발효 이력 조회 -->
+          <div class="card" style="flex:1;">
+            <div class="card-title"><i class="fa-solid fa-clock-rotate-left"></i> 발효 이력 조회</div>
+            <!-- 필터 영역 -->
+            <div class="filter-row">
+              <span class="filter-label">기간</span>
+              <input type="date" class="filter-input" value="2026-05-16">
+              <span class="filter-label">~</span>
+              <input type="date" class="filter-input" value="2026-05-23">
+              <span class="filter-label">상태</span>
+              <select class="filter-select">
+                <option>전체</option>
+                <option>정상</option>
+                <option>주의</option>
+                <option>이상</option>
+              </select>
+              <span class="filter-label">LOT</span>
+              <input type="text" class="filter-input" placeholder="LOT 번호 검색" style="width:140px;">
+              <button class="btn-primary" onclick="showToast('조회 조건으로 이력을 검색합니다.')">조회</button>
+            </div>
+
+            <!-- 이력 테이블 -->
+            <div class="table-wrap" style="max-height:280px;overflow-y:auto;">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>발효 LOT</th>
+                    <th>입조 일시</th>
+                    <th>완료 일시</th>
+                    <th>숙성 시간</th>
+                    <th>최종 pH</th>
+                    <th>최종 산도</th>
+                    <th>품질 결과</th>
+                    <th>AI 예측</th>
+                    <th>정확도</th>
+                  </tr>
+                </thead>
+                <tbody id="historyTableBody">
+                  <!-- JavaScript로 채워짐 -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 발효 품질 예측 정확도 차트 -->
+      <div class="card mt-16">
+        <div class="card-title"><i class="fa-solid fa-chart-area"></i> AI 발효 품질 예측 정확도 추이 (주간)</div>
+        <div style="display:flex;gap:16px;align-items:flex-start;">
+          <div style="flex:1;">
+            <div class="chart-wrap">
+              <canvas id="accuracyChart"></canvas>
+            </div>
+          </div>
+          <!-- 모델 성능 지표 -->
+          <div style="width:200px;display:flex;flex-direction:column;gap:10px;">
+            <div style="background:var(--bg-table-row);border:1px solid var(--border);border-radius:8px;padding:12px;">
+              <div class="text-xs text-muted" style="margin-bottom:4px;">품질 예측 정확도</div>
+              <div style="font-size:20px;font-weight:700;color:var(--accent-green);">84.2%</div>
+              <div class="text-xs" style="color:var(--accent-green);">목표 ≥ 80% 달성</div>
+            </div>
+            <div style="background:var(--bg-table-row);border:1px solid var(--border);border-radius:8px;padding:12px;">
+              <div class="text-xs text-muted" style="margin-bottom:4px;">완료 시점 MAE</div>
+              <div style="font-size:20px;font-weight:700;color:var(--accent-cyan);">1.4h</div>
+              <div class="text-xs" style="color:var(--accent-cyan);">목표 ≤ 2h 달성</div>
+            </div>
+            <div style="background:var(--bg-table-row);border:1px solid var(--border);border-radius:8px;padding:12px;">
+              <div class="text-xs text-muted" style="margin-bottom:4px;">이상 탐지 정확도</div>
+              <div style="font-size:20px;font-weight:700;color:var(--accent-green);">88.6%</div>
+              <div class="text-xs" style="color:var(--accent-green);">목표 ≥ 85% 달성</div>
+            </div>
+            <div style="background:var(--bg-table-row);border:1px solid var(--border);border-radius:8px;padding:12px;">
+              <div class="text-xs text-muted" style="margin-bottom:4px;">회귀 성능 R²</div>
+              <div style="font-size:20px;font-weight:700;color:var(--accent-warn);">0.862</div>
+              <div class="text-xs" style="color:var(--accent-warn);">목표 ≥ 0.85 달성</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main><!-- /.main-content -->
+</div><!-- /.app-layout -->
+
+<!-- 토스트 알림 컴포넌트 -->
+<div class="toast" id="toastEl"></div>
+
+<!-- ==========================================
+     JavaScript — 인터랙션 + 차트 + 더미 데이터
+     ========================================== -->
+<script>
+  /* ==============================
+     더미 데이터 — 발효 배치 목록
+     ============================== */
+  const batchData = [
+    {
+      no: 1,
+      batch: 'BT-2605-001',
+      lot: 'LOT-2605-001',
+      startTime: '05-23 06:00',
+      targetTime: '05-24 06:00',
+      elapsed: '3h 41m',
+      temp: 6.8,
+      ph: 4.82,
+      salt: 2.3,
+      status: 'ok',
+      statusText: '정상',
+      aiPredict: '정상',
+      aiStatus: 'ok',
+      progress: 15
+    },
+    {
+      no: 2,
+      batch: 'BT-2605-002',
+      lot: 'LOT-2605-002',
+      startTime: '05-23 06:30',
+      targetTime: '05-24 06:30',
+      elapsed: '3h 11m',
+      temp: 7.1,
+      ph: 4.91,
+      salt: 2.2,
+      status: 'ok',
+      statusText: '정상',
+      aiPredict: '정상',
+      aiStatus: 'ok',
+      progress: 13
+    },
+    {
+      no: 3,
+      batch: 'BT-2605-003',
+      lot: 'LOT-2605-003',
+      startTime: '05-23 05:00',
+      targetTime: '05-23 21:00',
+      elapsed: '4h 41m',
+      temp: 8.2,
+      ph: 4.68,
+      salt: 2.4,
+      status: 'warn',
+      statusText: '주의',
+      aiPredict: '주의',
+      aiStatus: 'warn',
+      progress: 31
+    },
+    {
+      no: 4,
+      batch: 'BT-2605-004',
+      lot: 'LOT-2605-004',
+      startTime: '05-23 04:30',
+      targetTime: '05-23 20:00',
+      elapsed: '5h 11m',
+      temp: 9.4,
+      ph: 4.10,
+      salt: 2.7,
+      status: 'error',
+      statusText: '이상',
+      aiPredict: '이상',
+      aiStatus: 'error',
+      progress: 38
+    },
+    {
+      no: 5,
+      batch: 'BT-2605-005',
+      lot: 'LOT-2605-005',
+      startTime: '05-23 07:00',
+      targetTime: '05-24 07:00',
+      elapsed: '2h 41m',
+      temp: 6.5,
+      ph: 5.01,
+      salt: 2.1,
+      status: 'ok',
+      statusText: '정상',
+      aiPredict: '정상',
+      aiStatus: 'ok',
+      progress: 11
+    },
+    {
+      no: 6,
+      batch: 'BT-2605-006',
+      lot: 'LOT-2605-006',
+      startTime: '05-22 20:00',
+      targetTime: '05-23 14:00',
+      elapsed: '13h 41m',
+      temp: 5.9,
+      ph: 4.55,
+      salt: 2.3,
+      status: 'ok',
+      statusText: '정상',
+      aiPredict: '정상',
+      aiStatus: 'ok',
+      progress: 68
+    }
+  ];
+
+  /* ==============================
+     더미 데이터 — 발효 이력
+     ============================== */
+  const historyData = [
+    { lot:'LOT-2605-H01', start:'05-22 06:00', end:'05-23 06:00', duration:'24h', ph:4.72, acid:'0.68%', result:'ok',  resultText:'정상', aiPredict:'정상', accuracy:'94.2%' },
+    { lot:'LOT-2605-H02', start:'05-22 07:00', end:'05-23 07:30', duration:'24.5h', ph:4.65, acid:'0.71%', result:'ok',  resultText:'정상', aiPredict:'정상', accuracy:'91.8%' },
+    { lot:'LOT-2605-H03', start:'05-22 08:00', end:'05-23 05:00', duration:'21h', ph:4.48, acid:'0.85%', result:'warn', resultText:'주의', aiPredict:'주의', accuracy:'87.3%' },
+    { lot:'LOT-2605-H04', start:'05-21 06:00', end:'05-22 06:00', duration:'24h', ph:4.80, acid:'0.63%', result:'ok',  resultText:'정상', aiPredict:'정상', accuracy:'92.1%' },
+    { lot:'LOT-2605-H05', start:'05-21 07:30', end:'05-22 08:00', duration:'24.5h', ph:4.92, acid:'0.60%', result:'ok',  resultText:'정상', aiPredict:'정상', accuracy:'89.7%' },
+    { lot:'LOT-2605-H06', start:'05-20 06:00', end:'05-21 05:30', duration:'23.5h', ph:4.12, acid:'0.94%', result:'error', resultText:'이상', aiPredict:'이상', accuracy:'96.4%' },
+    { lot:'LOT-2605-H07', start:'05-20 07:00', end:'05-21 07:00', duration:'24h', ph:4.75, acid:'0.66%', result:'ok',  resultText:'정상', aiPredict:'정상', accuracy:'90.2%' },
+    { lot:'LOT-2605-H08', start:'05-19 06:00', end:'05-20 06:00', duration:'24h', ph:4.68, acid:'0.70%', result:'ok',  resultText:'정상', aiPredict:'정상', accuracy:'88.9%' },
+  ];
+
+  /* ==============================
+     SHAP 데이터
+     ============================== */
+  const shapData = [
+    { name: '발효 온도', pct: 42, color: '#ef4444' },
+    { name: '절임 염도', pct: 28, color: '#f59e0b' },
+    { name: 'pH 수치',  pct: 18, color: '#1a73e8' },
+    { name: '숙성 시간', pct: 7,  color: '#10b981' },
+    { name: '원재료 등급', pct: 3, color: '#8b5cf6' },
+    { name: '함수율',   pct: 2,  color: '#06b6d4' },
+  ];
+
+  /* ==============================
+     탭 전환 로직
+     ============================== */
+  function activateSection(id) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    // 사이드바 메뉴 활성화
+    if (id === 's1') {
+      document.querySelectorAll('.nav-item')[0].classList.add('active');
+      document.querySelectorAll('.nav-item')[2].classList.remove('active');
+    } else if (id === 's2' || id === 's3') {
+      document.querySelectorAll('.nav-item')[0].classList.remove('active');
+      document.querySelectorAll('.nav-item')[2].classList.add('active');
+    }
+    // 해당 섹션의 헤더 탭 활성화
+    const tabs = document.querySelectorAll('.header-tab');
+    if (id === 's1') setActiveTab(tabs[0]);
+    if (id === 's2') setActiveTab(tabs[1]);
+    if (id === 's3') setActiveTab(tabs[2]);
+  }
+
+  function setActiveTab(el) {
+    document.querySelectorAll('.header-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function setActiveNav(el) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  /* ==============================
+     토스트 알림 표시
+     ============================== */
+  let toastTimer;
+  function showToast(msg) {
+    const el = document.getElementById('toastEl');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+  }
+
+  /* ==============================
+     시계 업데이트
+     ============================== */
+  function updateClock() {
+    const now = new Date();
+    const fmt = (n) => String(n).padStart(2, '0');
+    document.getElementById('clock').textContent =
+      `${now.getFullYear()}-${fmt(now.getMonth()+1)}-${fmt(now.getDate())} ` +
+      `${fmt(now.getHours())}:${fmt(now.getMinutes())}:${fmt(now.getSeconds())}`;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  /* ==============================
+     카운트다운 타이머
+     ============================== */
+  let remaining = 14 * 3600 + 22 * 60 + 8; // 초
+  function updateCountdown() {
+    if (remaining <= 0) return;
+    remaining--;
+    const h = Math.floor(remaining / 3600);
+    const m = Math.floor((remaining % 3600) / 60);
+    const s = remaining % 60;
+    document.getElementById('countdownTimer').textContent =
+      `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }
+  setInterval(updateCountdown, 1000);
+
+  /* ==============================
+     배치 테이블 렌더링
+     ============================== */
+  function renderBatchTable() {
+    const tbody = document.getElementById('batchTableBody');
+    tbody.innerHTML = batchData.map((b, i) => `
+      <tr onclick="selectBatch(${i})" id="brow-${i}" ${i === 0 ? 'class="selected"' : ''}>
+        <td style="color:var(--text-muted);font-size:12px;">${b.no}</td>
+        <td style="font-weight:600;">${b.batch}</td>
+        <td style="color:var(--accent-cyan);">${b.lot}</td>
+        <td>${b.startTime}</td>
+        <td>${b.targetTime}</td>
+        <td>${b.elapsed}</td>
+        <td style="font-variant-numeric:tabular-nums;">${b.temp}°C</td>
+        <td style="font-variant-numeric:tabular-nums;">${b.ph}</td>
+        <td style="font-variant-numeric:tabular-nums;">${b.salt}%</td>
+        <td><span class="badge ${b.status}">${b.statusText}</span></td>
+        <td><span class="badge ${b.aiStatus}"><i class="fa-solid fa-robot" style="font-size:10px;"></i> ${b.aiPredict}</span></td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="progress-bar"><div class="progress-fill ${b.status}" style="width:${b.progress}%;"></div></div>
+            <span style="font-size:11px;color:var(--text-secondary);">${b.progress}%</span>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  /* ==============================
+     배치 선택 시 상세 패널 업데이트
+     ============================== */
+  function selectBatch(idx) {
+    document.querySelectorAll('[id^="brow-"]').forEach(r => r.classList.remove('selected'));
+    document.getElementById(`brow-${idx}`).classList.add('selected');
+    const b = batchData[idx];
+    document.getElementById('detailLot').textContent = b.lot;
+    // 게이지 값 업데이트
+    document.getElementById('gaugeTempVal').textContent = b.temp;
+    document.getElementById('gaugePhVal').textContent = b.ph;
+    document.getElementById('gaugeAcidVal').textContent = '0.62';
+    document.getElementById('gaugeSaltVal').textContent = b.salt;
+    // 게이지 색상 변경
+    const tempColor = b.temp > 9 ? 'var(--accent-error)' : b.temp > 8 ? 'var(--accent-warn)' : 'var(--accent-green)';
+    const phColor   = b.ph < 4.5 ? 'var(--accent-error)' : b.ph > 5.0 ? 'var(--accent-warn)' : '#60a5fa';
+    document.getElementById('gaugeTempVal').style.fill = tempColor;
+    document.getElementById('gaugePhVal').style.fill   = phColor;
+    // AI 결과 카드 업데이트
+    const card = document.getElementById('aiResultCard');
+    card.className = `ai-result-card ${b.aiStatus}`;
+    const iconEl = card.querySelector('.ai-result-icon');
+    const titleEl = card.querySelector('.ai-result-title');
+    if (b.aiStatus === 'ok') {
+      iconEl.className = 'fa-solid fa-circle-check ai-result-icon';
+      iconEl.style.color = 'var(--accent-green)';
+      titleEl.textContent = '정상 발효 진행 중';
+    } else if (b.aiStatus === 'warn') {
+      iconEl.className = 'fa-solid fa-triangle-exclamation ai-result-icon';
+      iconEl.style.color = 'var(--accent-warn)';
+      titleEl.textContent = '주의 — 발효 조건 점검 필요';
+    } else {
+      iconEl.className = 'fa-solid fa-circle-xmark ai-result-icon';
+      iconEl.style.color = 'var(--accent-error)';
+      titleEl.textContent = '이상 발효 감지 — 즉시 확인 필요';
+    }
+    showToast(`${b.lot} 상세 정보가 업데이트되었습니다.`);
+  }
+
+  /* ==============================
+     발효 이력 테이블 렌더링
+     ============================== */
+  function renderHistoryTable() {
+    const tbody = document.getElementById('historyTableBody');
+    tbody.innerHTML = historyData.map(h => `
+      <tr>
+        <td style="color:var(--accent-cyan);font-weight:600;">${h.lot}</td>
+        <td>${h.start}</td>
+        <td>${h.end}</td>
+        <td>${h.duration}</td>
+        <td style="font-variant-numeric:tabular-nums;">${h.ph}</td>
+        <td style="font-variant-numeric:tabular-nums;">${h.acid}</td>
+        <td><span class="badge ${h.result}">${h.resultText}</span></td>
+        <td><span class="badge ${h.result}"><i class="fa-solid fa-robot" style="font-size:10px;"></i> ${h.aiPredict}</span></td>
+        <td style="font-weight:600;color:var(--accent-green);">${h.accuracy}</td>
+      </tr>
+    `).join('');
+  }
+
+  /* ==============================
+     SHAP 바 차트 렌더링
+     ============================== */
+  function renderShapBars() {
+    const container = document.getElementById('shapBars');
+    container.innerHTML = shapData.map(d => `
+      <div class="shap-item">
+        <span class="shap-name">${d.name}</span>
+        <div class="shap-bar-wrap">
+          <div class="shap-bar-fill" style="width:${d.pct}%;background:${d.color};">
+            ${d.pct >= 15 ? d.pct + '%' : ''}
+          </div>
+        </div>
+        <span class="shap-pct">${d.pct}%</span>
+      </div>
+    `).join('');
+  }
+
+  /* ==============================
+     Chart.js — 생산량 차트 (섹션 1)
+     ============================== */
+  function initProductionChart() {
+    // 6시~10시 15분 단위 더미 데이터
+    const labels = ['06:00','06:15','06:30','06:45','07:00','07:15','07:30','07:45',
+                    '08:00','08:15','08:30','08:45','09:00','09:15','09:30','09:41'];
+    const data   = [2580,2620,2700,2750,2810,2870,2920,2950,2980,2990,2975,2960,2980,2990,2985,2978];
+    const target = new Array(labels.length).fill(3000);
+
+    const ctx = document.getElementById('productionChart').getContext('2d');
+    // Chart.js 그라디언트
+    const grad = ctx.createLinearGradient(0, 0, 0, 200);
+    grad.addColorStop(0, 'rgba(26, 115, 232, 0.35)');
+    grad.addColorStop(1, 'rgba(26, 115, 232, 0)');
+
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: '실시간 생산량 (kg/h)',
+            data,
+            borderColor: '#1a73e8',
+            backgroundColor: grad,
+            borderWidth: 2,
+            pointRadius: 3,
+            pointBackgroundColor: '#1a73e8',
+            fill: true,
+            tension: 0.4
+          },
+          {
+            label: '목표 생산량',
+            data: target,
+            borderColor: 'rgba(245,158,11,0.6)',
+            borderWidth: 1.5,
+            borderDash: [6, 3],
+            pointRadius: 0,
+            fill: false,
+            tension: 0
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            labels: { color: '#94a3b8', font: { family: 'Noto Sans KR', size: 11 } }
+          },
+          tooltip: {
+            backgroundColor: '#162035',
+            borderColor: '#1e3a5f',
+            borderWidth: 1,
+            titleColor: '#e2e8f0',
+            bodyColor: '#94a3b8',
+            padding: 10
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: '#5a7494', font: { size: 10 } },
+            grid: { color: 'rgba(30,58,95,0.5)' }
+          },
+          y: {
+            min: 2500,
+            max: 3100,
+            ticks: { color: '#5a7494', font: { size: 10 } },
+            grid: { color: 'rgba(30,58,95,0.5)' }
+          }
+        }
+      }
+    });
+  }
+
+  /* ==============================
+     Chart.js — 발효 트렌드 차트 (섹션 2)
+     ============================== */
+  function initTrendChart() {
+    // 24시간 1시간 단위 더미 데이터
+    const labels = [];
+    for (let h = 10; h <= 24; h++) labels.push(`${String(h % 24).padStart(2,'0')}:00`);
+    for (let h = 1; h <= 9;  h++) labels.push(`${String(h).padStart(2,'0')}:00`);
+
+    const tempData = [6.5,6.6,6.7,6.7,6.8,6.9,6.8,6.8,6.9,7.0,7.1,7.0,6.9,6.8,6.9,7.0,6.8,6.8,6.9,7.0,7.1,7.0,6.8,6.8];
+    const phData   = [5.10,5.05,5.00,4.98,4.95,4.92,4.88,4.85,4.84,4.82,4.80,4.82,4.85,4.83,4.82,4.80,4.81,4.82,4.83,4.82,4.82,4.83,4.82,4.82];
+    const acidData = [0.35,0.38,0.41,0.43,0.46,0.48,0.50,0.52,0.54,0.56,0.58,0.59,0.60,0.61,0.62,0.62,0.63,0.62,0.62,0.63,0.62,0.62,0.62,0.62];
+
+    const ctx = document.getElementById('trendChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: '온도 (°C)',
+            data: tempData,
+            borderColor: '#10b981',
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            pointRadius: 2,
+            yAxisID: 'y1',
+            tension: 0.3
+          },
+          {
+            label: 'pH',
+            data: phData,
+            borderColor: '#60a5fa',
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            pointRadius: 2,
+            yAxisID: 'y2',
+            tension: 0.3
+          },
+          {
+            label: '산도 (%)',
+            data: acidData,
+            borderColor: '#f59e0b',
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            pointRadius: 2,
+            yAxisID: 'y2',
+            tension: 0.3
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            labels: { color: '#94a3b8', font: { family: 'Noto Sans KR', size: 11 }, boxWidth: 20 }
+          },
+          tooltip: {
+            backgroundColor: '#162035',
+            borderColor: '#1e3a5f',
+            borderWidth: 1,
+            titleColor: '#e2e8f0',
+            bodyColor: '#94a3b8',
+            padding: 10
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: '#5a7494', font: { size: 10 }, maxTicksLimit: 8 },
+            grid: { color: 'rgba(30,58,95,0.5)' }
+          },
+          y1: {
+            position: 'left',
+            min: 4, max: 12,
+            ticks: { color: '#10b981', font: { size: 10 } },
+            grid: { color: 'rgba(30,58,95,0.5)' },
+            title: { display: true, text: '온도 (°C)', color: '#5a7494', font: { size: 10 } }
+          },
+          y2: {
+            position: 'right',
+            min: 0, max: 7,
+            ticks: { color: '#60a5fa', font: { size: 10 } },
+            grid: { display: false },
+            title: { display: true, text: 'pH / 산도', color: '#5a7494', font: { size: 10 } }
+          }
+        }
+      }
+    });
+  }
+
+  /* ==============================
+     Chart.js — SHAP 도넛 차트 (섹션 3)
+     ============================== */
+  function initShapDonut() {
+    const ctx = document.getElementById('shapDonut').getContext('2d');
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: shapData.map(d => d.name),
+        datasets: [{
+          data: shapData.map(d => d.pct),
+          backgroundColor: shapData.map(d => d.color),
+          borderColor: '#0a1628',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        cutout: '68%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#162035',
+            borderColor: '#1e3a5f',
+            borderWidth: 1,
+            titleColor: '#e2e8f0',
+            bodyColor: '#94a3b8',
+            callbacks: {
+              label: ctx => ` ${ctx.label}: ${ctx.raw}%`
+            }
+          }
+        }
+      }
+    });
+
+    // 도넛 범례 렌더링
+    const legend = document.getElementById('shapLegend');
+    legend.innerHTML = shapData.map(d => `
+      <div style="display:flex;align-items:center;gap:7px;font-size:11.5px;">
+        <span style="width:10px;height:10px;border-radius:2px;background:${d.color};flex-shrink:0;display:inline-block;"></span>
+        <span style="color:var(--text-secondary);">${d.name}</span>
+        <span style="margin-left:auto;font-weight:600;color:var(--text-primary);">${d.pct}%</span>
+      </div>
+    `).join('');
+  }
+
+  /* ==============================
+     Chart.js — 예측 정확도 추이 (섹션 3)
+     ============================== */
+  function initAccuracyChart() {
+    const labels = ['5/17', '5/18', '5/19', '5/20', '5/21', '5/22', '5/23'];
+    const ctx = document.getElementById('accuracyChart').getContext('2d');
+    const grad = ctx.createLinearGradient(0, 0, 0, 160);
+    grad.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
+    grad.addColorStop(1, 'rgba(16, 185, 129, 0)');
+
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: '품질 예측 정확도 (%)',
+            data: [79.2, 81.4, 82.1, 83.0, 83.5, 84.0, 84.2],
+            borderColor: '#10b981',
+            backgroundColor: grad,
+            fill: true,
+            borderWidth: 2,
+            pointRadius: 4,
+            pointBackgroundColor: '#10b981',
+            tension: 0.4,
+            yAxisID: 'y1'
+          },
+          {
+            label: '이상 탐지 정확도 (%)',
+            data: [84.0, 85.1, 86.2, 87.0, 87.8, 88.2, 88.6],
+            borderColor: '#1a73e8',
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            pointRadius: 4,
+            pointBackgroundColor: '#1a73e8',
+            tension: 0.4,
+            yAxisID: 'y1'
+          },
+          {
+            label: '목표 정확도 (80%)',
+            data: new Array(7).fill(80),
+            borderColor: 'rgba(245,158,11,0.5)',
+            borderWidth: 1.5,
+            borderDash: [5, 3],
+            pointRadius: 0,
+            fill: false,
+            yAxisID: 'y1'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            labels: { color: '#94a3b8', font: { family: 'Noto Sans KR', size: 11 }, boxWidth: 20 }
+          },
+          tooltip: {
+            backgroundColor: '#162035',
+            borderColor: '#1e3a5f',
+            borderWidth: 1,
+            titleColor: '#e2e8f0',
+            bodyColor: '#94a3b8',
+            padding: 10
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: '#5a7494', font: { size: 11 } },
+            grid: { color: 'rgba(30,58,95,0.5)' }
+          },
+          y1: {
+            min: 75, max: 100,
+            ticks: { color: '#5a7494', font: { size: 10 }, callback: v => v + '%' },
+            grid: { color: 'rgba(30,58,95,0.5)' }
+          }
+        }
+      }
+    });
+  }
+
+  /* ==============================
+     실시간 센서 시뮬레이션 (±0.1 소폭 변동)
+     ============================== */
+  let sensorBase = { temp: 6.8, ph: 4.82, acid: 0.62, salt: 2.3 };
+  function simulateSensor() {
+    const jitter = (v, range) => +(v + (Math.random() - 0.5) * range).toFixed(2);
+    sensorBase.temp = Math.min(10, Math.max(4, jitter(sensorBase.temp, 0.2)));
+    sensorBase.ph   = Math.min(5.5, Math.max(4.2, jitter(sensorBase.ph, 0.04)));
+    sensorBase.acid = Math.min(0.9, Math.max(0.5, jitter(sensorBase.acid, 0.02)));
+    sensorBase.salt = Math.min(2.5, Math.max(2.0, jitter(sensorBase.salt, 0.05)));
+
+    document.getElementById('gaugeTempVal').textContent = sensorBase.temp;
+    document.getElementById('gaugePhVal').textContent   = sensorBase.ph;
+    document.getElementById('gaugeAcidVal').textContent = sensorBase.acid;
+    document.getElementById('gaugeSaltVal').textContent = sensorBase.salt;
+  }
+  setInterval(simulateSensor, 3000);
+
+  /* ==============================
+     초기화 — DOM 로드 후 실행
+     ============================== */
+  document.addEventListener('DOMContentLoaded', () => {
+    renderBatchTable();
+    renderHistoryTable();
+    renderShapBars();
+    initProductionChart();
+    initTrendChart();
+    initShapDonut();
+    initAccuracyChart();
+  });
+</script>
+
+</body>
+</html>

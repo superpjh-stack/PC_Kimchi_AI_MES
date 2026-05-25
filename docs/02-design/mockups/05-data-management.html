@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>꽃순이김치 MES — 데이터관리</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg-main:#0a1628;--bg-sidebar:#0f2044;--bg-card:#162035;--bg-card-hover:#1a2a45;--bg-table-row:#111d33;--accent-blue:#1a73e8;--accent-cyan:#00b4d8;--accent-warn:#f59e0b;--accent-error:#ef4444;--accent-green:#10b981;--text-primary:#e2e8f0;--text-secondary:#94a3b8;--text-muted:#5a7494;--border:#1e3a5f;--border-light:#243c60;--sidebar-w:230px;--header-h:56px;--font:'Noto Sans KR',sans-serif}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--font);font-size:14px;background:var(--bg-main);color:var(--text-primary);overflow:hidden}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg-main)}::-webkit-scrollbar-thumb{background:var(--border-light);border-radius:3px}
+.app{display:grid;grid-template-columns:var(--sidebar-w) 1fr;grid-template-rows:var(--header-h) 1fr;height:100vh}
+.sidebar{grid-row:1/3;background:var(--bg-sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.logo{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;height:var(--header-h)}
+.logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--accent-blue),var(--accent-cyan));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.logo-title{font-size:12.5px;font-weight:700;line-height:1.3}.logo-sub{font-size:10px;color:var(--text-secondary)}
+.nav{flex:1;overflow-y:auto;padding:10px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 18px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;color:var(--text-secondary);font-size:13px}
+.nav-item:hover{background:rgba(26,115,232,.08);color:var(--text-primary)}
+.nav-item.active{background:rgba(26,115,232,.15);border-left-color:var(--accent-blue);color:var(--accent-cyan);font-weight:600}
+.ico{width:17px;text-align:center;font-size:13px}
+.nav-badge{margin-left:auto;background:var(--accent-error);color:#fff;font-size:10px;padding:1px 6px;border-radius:10px}
+.sidebar-footer{padding:12px 18px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#1a73e8,#00b4d8);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.u-name{font-size:12px;font-weight:600}.u-role{font-size:10px;color:var(--text-secondary)}
+.header{grid-column:2;background:var(--bg-sidebar);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:14px}
+.header-tabs{display:flex;gap:3px;flex:1}
+.htab{padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12.5px;font-weight:500;color:var(--text-secondary);border:1px solid transparent;transition:all .15s}
+.htab:hover{background:rgba(26,115,232,.1);color:var(--text-primary)}
+.htab.active{background:rgba(26,115,232,.2);border-color:var(--accent-blue);color:var(--accent-cyan)}
+.header-right{display:flex;align-items:center;gap:12px;color:var(--text-secondary);font-size:12px}
+.content{grid-column:2;overflow-y:auto;padding:20px}
+.tab-panel{display:none}.tab-panel.active{display:block}
+.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.kpi-row-2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:20px}
+.kpi-card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:16px}
+.kpi-label{font-size:11px;color:var(--text-secondary);margin-bottom:6px}
+.kpi-val{font-size:22px;font-weight:700}.kpi-sub{font-size:11px;color:var(--text-muted);margin-top:4px}
+.ok{color:var(--accent-green)}.warn{color:var(--accent-warn)}.err{color:var(--accent-error)}.cyan{color:var(--accent-cyan)}
+.table-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:18px}
+.table-header{padding:12px 16px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:space-between}
+table{width:100%;border-collapse:collapse}
+th{background:var(--bg-table-row);padding:8px 12px;font-size:12px;color:var(--text-secondary);text-align:left;border-bottom:1px solid var(--border)}
+td{padding:8px 12px;font-size:12.5px;border-bottom:1px solid var(--border);color:var(--text-primary)}
+tr:last-child td{border-bottom:none}tr:hover td{background:var(--bg-card-hover)}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.badge-ok{background:rgba(16,185,129,.15);color:var(--accent-green)}
+.badge-warn{background:rgba(245,158,11,.15);color:var(--accent-warn)}
+.badge-err{background:rgba(239,68,68,.15);color:var(--accent-error)}
+.badge-blue{background:rgba(26,115,232,.15);color:var(--accent-cyan)}
+.badge-gray{background:rgba(148,163,184,.1);color:var(--text-muted)}
+.btn{padding:8px 14px;border-radius:6px;border:none;cursor:pointer;font-family:var(--font);font-size:13px;font-weight:500}
+.btn-primary{background:var(--accent-blue);color:#fff}
+.btn-secondary{background:transparent;border:1px solid var(--border-light);color:var(--text-secondary)}
+.btn-sm{padding:4px 10px;font-size:11px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-label{font-size:11px;color:var(--text-secondary)}
+.form-input,.form-select{background:var(--bg-table-row);border:1px solid var(--border-light);color:var(--text-primary);padding:7px 10px;border-radius:6px;font-size:12.5px;font-family:var(--font)}
+.form-input:focus,.form-select:focus{outline:none;border-color:var(--accent-blue)}
+.chart-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:18px}
+.chart-title{font-size:13px;font-weight:600;margin-bottom:12px;color:var(--text-secondary)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.section-title{font-size:14px;font-weight:600;margin-bottom:14px;color:var(--text-primary);display:flex;align-items:center;gap:8px}
+.section-title::before{content:'';display:block;width:3px;height:16px;background:var(--accent-blue);border-radius:2px}
+/* Pipeline */
+.pipeline{display:flex;align-items:center;gap:0;padding:20px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;margin-bottom:18px;overflow-x:auto}
+.pipe-node{display:flex;flex-direction:column;align-items:center;flex-shrink:0;padding:0 10px}
+.pipe-box{background:var(--bg-table-row);border:1px solid var(--border-light);border-radius:8px;padding:10px 16px;text-align:center;min-width:110px}
+.pipe-status{font-size:11px;margin-top:5px;display:flex;align-items:center;gap:4px;justify-content:center}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.dot-ok{background:var(--accent-green)}.dot-warn{background:var(--accent-warn)}
+.pipe-arrow{color:var(--text-muted);font-size:18px;padding:0 6px;flex-shrink:0;margin-top:-20px}
+.pipe-name{font-size:12px;font-weight:600;color:var(--text-primary)}
+.pipe-sub{font-size:10px;color:var(--text-secondary)}
+/* Progress bar */
+.progress-wrap{background:var(--bg-table-row);border-radius:10px;height:6px;overflow:hidden;margin-top:4px}
+.progress-bar{height:100%;border-radius:10px;background:var(--accent-blue)}
+/* Label buttons */
+.label-btns{display:flex;gap:6px}
+.label-btn{padding:6px 14px;border-radius:6px;border:1px solid var(--border-light);background:transparent;color:var(--text-secondary);cursor:pointer;font-size:12px;font-family:var(--font)}
+.label-btn.sel-ok{background:rgba(16,185,129,.2);border-color:var(--accent-green);color:var(--accent-green)}
+.label-btn.sel-warn{background:rgba(245,158,11,.2);border-color:var(--accent-warn);color:var(--accent-warn)}
+.label-btn.sel-err{background:rgba(239,68,68,.2);border-color:var(--accent-error);color:var(--accent-error)}
+/* chart type buttons */
+.chart-type-btns{display:flex;gap:6px;margin-bottom:10px}
+.ctype-btn{padding:5px 12px;border-radius:5px;border:1px solid var(--border-light);background:transparent;color:var(--text-secondary);cursor:pointer;font-size:11.5px;font-family:var(--font)}
+.ctype-btn.active{background:rgba(26,115,232,.2);border-color:var(--accent-blue);color:var(--accent-cyan)}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="logo"><div class="logo-icon">🏭</div><div><div class="logo-title">꽃순이김치 MES</div><div class="logo-sub">AI 스마트팩토리</div></div></div>
+  <nav class="nav">
+    <div class="nav-item"><i class="ico fa fa-chart-line"></i>AI 대시보드</div>
+    <div class="nav-item"><i class="ico fa fa-boxes-stacked"></i>원재료관리</div>
+    <div class="nav-item"><i class="ico fa fa-temperature-half"></i>숙성발효관리</div>
+    <div class="nav-item"><i class="ico fa fa-truck"></i>포장출하관리</div>
+    <div class="nav-item"><i class="ico fa fa-gears"></i>공정관리</div>
+    <div class="nav-item active"><i class="ico fa fa-database"></i>데이터관리</div>
+    <div class="nav-item"><i class="ico fa fa-robot"></i>AI Agent 통합관리<span class="nav-badge">2</span></div>
+    <div class="nav-item"><i class="ico fa fa-book"></i>기준정보관리</div>
+    <div class="nav-item"><i class="ico fa fa-shield-halved"></i>사용자/시스템관리</div>
+    <div class="nav-item"><i class="ico fa fa-bullseye"></i>KPI관리</div>
+  </nav>
+  <div class="sidebar-footer"><div class="avatar">최</div><div><div class="u-name">최관리</div><div class="u-role">관리자</div></div></div>
+</aside>
+
+<header class="header">
+  <div class="header-tabs">
+    <div class="htab active" onclick="showTab(1)">파이프라인 관리</div>
+    <div class="htab" onclick="showTab(2)">데이터 조회</div>
+    <div class="htab" onclick="showTab(3)">데이터 시각화</div>
+    <div class="htab" onclick="showTab(4)">데이터 다운로드</div>
+    <div class="htab" onclick="showTab(5)">AI 학습 데이터</div>
+  </div>
+  <div class="header-right"><span><i class="fa fa-calendar-alt"></i> 2026-05-23</span></div>
+</header>
+
+<main class="content">
+
+<!-- 탭1: 파이프라인 -->
+<div class="tab-panel active" id="tab1">
+  <div class="section-title">데이터 통합 파이프라인 현황</div>
+  <div class="pipeline">
+    <div class="pipe-node"><div class="pipe-box"><div class="pipe-name">Edge Collector</div><div class="pipe-sub">AI Data Gateway</div></div><div class="pipe-status"><span class="dot dot-ok"></span><span style="color:var(--accent-green)">연결됨</span></div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-node"><div class="pipe-box"><div class="pipe-name">MQTT / Kafka</div><div class="pipe-sub">메시지 브로커</div></div><div class="pipe-status"><span class="dot dot-ok"></span><span style="color:var(--accent-green)">스트리밍</span></div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-node"><div class="pipe-box"><div class="pipe-name">Data Lake</div><div class="pipe-sub">Raw Zone</div></div><div class="pipe-status"><span class="dot dot-ok"></span><span style="color:var(--accent-green)">저장중</span></div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-node"><div class="pipe-box"><div class="pipe-name">ETL 처리</div><div class="pipe-sub">전처리/정제</div></div><div class="pipe-status"><span class="dot dot-ok"></span><span style="color:var(--accent-green)">실행중</span></div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-node"><div class="pipe-box"><div class="pipe-name">PostgreSQL<br>+ pgvector</div><div class="pipe-sub">운영 DB</div></div><div class="pipe-status"><span class="dot dot-ok"></span><span style="color:var(--accent-green)">정상</span></div></div>
+  </div>
+
+  <div class="kpi-row" style="grid-template-columns:repeat(6,1fr)">
+    <div class="kpi-card"><div class="kpi-label">Edge 연결</div><div class="kpi-val ok">3 / 3</div><div class="kpi-sub">전체 연결</div></div>
+    <div class="kpi-card"><div class="kpi-label">MQTT 처리율</div><div class="kpi-val">42 <span style="font-size:12px">msg/s</span></div><div class="kpi-sub ok">정상</div></div>
+    <div class="kpi-card"><div class="kpi-label">Data Lake 지연</div><div class="kpi-val ok">8s</div><div class="kpi-sub">목표 &lt;30s</div></div>
+    <div class="kpi-card"><div class="kpi-label">ETL 마지막 실행</div><div class="kpi-val cyan">14:30</div><div class="kpi-sub">5분 전</div></div>
+    <div class="kpi-card"><div class="kpi-label">DB 응답시간</div><div class="kpi-val ok">45ms</div><div class="kpi-sub">목표 &lt;200ms</div></div>
+    <div class="kpi-card"><div class="kpi-label">오류(24h)</div><div class="kpi-val ok">0건</div><div class="kpi-sub">정상</div></div>
+  </div>
+
+  <div class="two-col">
+    <div class="table-wrap">
+      <div class="table-header">Edge Collector 연결 장치</div>
+      <table>
+        <thead><tr><th>장치 ID</th><th>장치명</th><th>프로토콜</th><th>상태</th><th>마지막 수신</th></tr></thead>
+        <tbody>
+          <tr><td>GW-001</td><td>AI Data Gateway</td><td>OPC-UA</td><td><span class="badge badge-ok">연결됨</span></td><td>14:35:22</td></tr>
+          <tr><td>PAD-001</td><td>SmartPad #1 (입고)</td><td>MQTT</td><td><span class="badge badge-ok">연결됨</span></td><td>14:34:50</td></tr>
+          <tr><td>PAD-002</td><td>SmartPad #2 (발효)</td><td>MQTT</td><td><span class="badge badge-ok">연결됨</span></td><td>14:35:01</td></tr>
+          <tr><td>PAD-003</td><td>SmartPad #3 (출하)</td><td>MQTT</td><td><span class="badge badge-ok">연결됨</span></td><td>14:33:45</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-wrap">
+      <div class="table-header">ETL 작업 이력</div>
+      <table>
+        <thead><tr><th>작업명</th><th>실행시간</th><th>처리건수</th><th>소요시간</th><th>상태</th></tr></thead>
+        <tbody>
+          <tr><td>발효센서 ETL</td><td>14:30:00</td><td>2,847건</td><td>12s</td><td><span class="badge badge-ok">완료</span></td></tr>
+          <tr><td>LOT 데이터 ETL</td><td>14:00:00</td><td>156건</td><td>3s</td><td><span class="badge badge-ok">완료</span></td></tr>
+          <tr><td>품질 데이터 ETL</td><td>13:30:00</td><td>89건</td><td>2s</td><td><span class="badge badge-ok">완료</span></td></tr>
+          <tr><td>공정실적 ETL</td><td>13:00:00</td><td>42건</td><td>1s</td><td><span class="badge badge-ok">완료</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 탭2: 데이터 조회 -->
+<div class="tab-panel" id="tab2">
+  <div class="table-wrap" style="padding:14px;margin-bottom:16px">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+      <div class="form-group"><label class="form-label">데이터 유형</label><select class="form-select"><option>정형 데이터</option><option>센서 시계열</option><option>LOT 통합</option></select></div>
+      <div class="form-group"><label class="form-label">LOT ID</label><input class="form-input" placeholder="LOT ID 입력" value=""></div>
+      <div class="form-group"><label class="form-label">시작일</label><input class="form-input" type="date" value="2026-05-23"></div>
+      <div class="form-group"><label class="form-label">종료일</label><input class="form-input" type="date" value="2026-05-23"></div>
+      <div class="form-group"><label class="form-label">공정</label><select class="form-select"><option>전체</option><option>세척/절임</option><option>숙성/발효</option></select></div>
+      <button class="btn btn-primary"><i class="fa fa-search"></i> 조회</button>
+    </div>
+  </div>
+  <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">총 <strong style="color:var(--accent-cyan)">1,284건</strong> 조회 (1-20 표시)</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>LOT ID</th><th>공정</th><th>수집일시</th><th>측정항목</th><th>측정값</th><th>단위</th><th>정상여부</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>LOT-20260523-003</td><td>세척/절임</td><td>14:35:00</td><td>절임온도</td><td>12.3</td><td>°C</td><td><span class="badge badge-ok">정상</span></td></tr>
+        <tr><td>2</td><td>LOT-20260523-003</td><td>세척/절임</td><td>14:35:00</td><td>절임염도</td><td>2.8</td><td>%</td><td><span class="badge badge-ok">정상</span></td></tr>
+        <tr><td>3</td><td>LOT-20260523-003</td><td>세척/절임</td><td>14:35:00</td><td>절임 pH</td><td>5.8</td><td>—</td><td><span class="badge badge-ok">정상</span></td></tr>
+        <tr><td>4</td><td>LOT-20260522-001</td><td>숙성/발효</td><td>14:30:00</td><td>발효온도</td><td>4.2</td><td>°C</td><td><span class="badge badge-ok">정상</span></td></tr>
+        <tr style="background:rgba(245,158,11,.04)"><td>5</td><td>LOT-20260521-003</td><td>숙성/발효</td><td>14:30:00</td><td>발효온도</td><td class="warn" style="font-weight:600">9.1</td><td>°C</td><td><span class="badge badge-warn">경고</span></td></tr>
+        <tr><td>6</td><td>LOT-20260523-001</td><td>입고/보관</td><td>09:15:00</td><td>함수율</td><td>85.2</td><td>%</td><td><span class="badge badge-ok">정상</span></td></tr>
+        <tr><td>7</td><td>LOT-20260522-005</td><td>숙성/발효</td><td>14:30:00</td><td>산도</td><td>0.72</td><td>%</td><td><span class="badge badge-ok">정상</span></td></tr>
+        <tr><td>8</td><td>LOT-20260523-002</td><td>절단/전처리</td><td>12:30:00</td><td>투입수량</td><td>3,500</td><td>kg</td><td><span class="badge badge-ok">정상</span></td></tr>
+        <tr><td>9</td><td>LOT-20260523-002</td><td>절단/전처리</td><td>12:30:00</td><td>산출수량</td><td>3,280</td><td>kg</td><td><span class="badge badge-ok">정상</span></td></tr>
+        <tr><td>10</td><td>LOT-20260523-003</td><td>세척/절임</td><td>14:25:00</td><td>세척수온도</td><td>10.5</td><td>°C</td><td><span class="badge badge-ok">정상</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div style="display:flex;gap:4px;justify-content:center">
+    <button class="btn btn-secondary btn-sm">이전</button>
+    <button class="btn btn-primary btn-sm">1</button>
+    <button class="btn btn-secondary btn-sm">2</button>
+    <button class="btn btn-secondary btn-sm">3</button>
+    <button class="btn btn-secondary btn-sm">다음</button>
+  </div>
+</div>
+
+<!-- 탭3: 시각화 -->
+<div class="tab-panel" id="tab3">
+  <div class="table-wrap" style="padding:14px;margin-bottom:16px">
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <span style="font-size:12px;color:var(--text-secondary)">차트유형:</span>
+      <div class="chart-type-btns">
+        <button class="ctype-btn active">라인</button>
+        <button class="ctype-btn">바</button>
+        <button class="ctype-btn">산포도</button>
+        <button class="ctype-btn">히트맵</button>
+      </div>
+      <div class="form-group"><label class="form-label">Y축</label><select class="form-select" style="padding:5px 8px;font-size:12px"><option>발효온도</option><option>절임온도</option><option>pH</option><option>산도</option></select></div>
+      <div class="form-group"><label class="form-label">기간</label><select class="form-select" style="padding:5px 8px;font-size:12px"><option>7일</option><option>1개월</option><option>3개월</option></select></div>
+    </div>
+  </div>
+  <div class="two-col">
+    <div class="chart-wrap"><div class="chart-title">발효실별 온도 트렌드 (7일)</div><canvas id="chart3a" height="180"></canvas></div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="table-wrap" style="margin:0">
+        <div class="table-header">통계 요약</div>
+        <table>
+          <thead><tr><th>구분</th><th>발효실1</th><th>발효실2</th><th>발효실3</th></tr></thead>
+          <tbody>
+            <tr><td>평균 (°C)</td><td>4.8</td><td class="warn">7.2</td><td>5.1</td></tr>
+            <tr><td>최솟값</td><td>3.2</td><td>4.8</td><td>3.5</td></tr>
+            <tr><td>최댓값</td><td>6.1</td><td class="err">9.1</td><td>6.8</td></tr>
+            <tr><td>표준편차</td><td>0.8</td><td class="warn">1.4</td><td>0.9</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="chart-wrap" style="margin:0;flex:1"><div class="chart-title">온도-pH 산포도</div><canvas id="chart3b" height="130"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- 탭4: 다운로드 -->
+<div class="tab-panel" id="tab4">
+  <div class="two-col">
+    <div class="table-wrap" style="padding:18px">
+      <div class="section-title" style="margin-bottom:16px">다운로드 설정</div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="form-group"><label class="form-label" style="font-size:12px;font-weight:600;margin-bottom:6px">데이터 유형</label>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label style="font-size:12.5px;color:var(--text-primary);cursor:pointer"><input type="radio" name="dtype" checked> 공정 실적</label>
+            <label style="font-size:12.5px;color:var(--text-primary);cursor:pointer"><input type="radio" name="dtype"> 센서 시계열</label>
+            <label style="font-size:12.5px;color:var(--text-primary);cursor:pointer"><input type="radio" name="dtype"> LOT 이력</label>
+            <label style="font-size:12.5px;color:var(--text-primary);cursor:pointer"><input type="radio" name="dtype"> 품질 검사</label>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label">기간</label>
+          <div style="display:flex;gap:8px"><input class="form-input" type="date" value="2026-05-01"><span style="padding:7px 4px;color:var(--text-muted)">~</span><input class="form-input" type="date" value="2026-05-23"></div>
+        </div>
+        <div class="form-group"><label class="form-label" style="font-size:12px;font-weight:600;margin-bottom:6px">공정 선택</label>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <label style="font-size:12px;cursor:pointer"><input type="checkbox" checked> 입고/보관</label>
+            <label style="font-size:12px;cursor:pointer"><input type="checkbox" checked> 세척/절임</label>
+            <label style="font-size:12px;cursor:pointer"><input type="checkbox" checked> 숙성/발효</label>
+            <label style="font-size:12px;cursor:pointer"><input type="checkbox" checked> 포장/출하</label>
+            <label style="font-size:12px;cursor:pointer"><input type="checkbox"> 기타</label>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label" style="font-size:12px;font-weight:600;margin-bottom:6px">파일 형식</label>
+          <div style="display:flex;gap:12px">
+            <label style="font-size:12.5px;cursor:pointer"><input type="radio" name="fmt" checked> Excel (.xlsx)</label>
+            <label style="font-size:12.5px;cursor:pointer"><input type="radio" name="fmt"> CSV</label>
+            <label style="font-size:12.5px;cursor:pointer"><input type="radio" name="fmt"> JSON</label>
+          </div>
+        </div>
+        <div style="background:rgba(26,115,232,.08);border:1px solid var(--border-light);border-radius:8px;padding:12px">
+          <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">생성될 파일명</div>
+          <div style="font-size:13px;color:var(--accent-cyan);font-weight:500">kimchi_process_20260501_20260523.xlsx</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:6px">예상 건수: 약 45,320건 · 예상 크기: 약 8.2MB</div>
+        </div>
+        <button class="btn btn-primary" style="width:100%;padding:10px"><i class="fa fa-download"></i> 다운로드</button>
+      </div>
+    </div>
+    <div class="table-wrap" style="margin:0">
+      <div class="table-header">최근 다운로드 이력</div>
+      <table>
+        <thead><tr><th>파일명</th><th>다운로드 일시</th><th>형식</th><th>크기</th><th>다운로더</th></tr></thead>
+        <tbody>
+          <tr><td style="font-size:11.5px">kimchi_process_20260501_20260523.xlsx</td><td>14:20</td><td>Excel</td><td>8.2MB</td><td>최관리</td></tr>
+          <tr><td style="font-size:11.5px">kimchi_ferment_2026Q1.csv</td><td>05-10 09:00</td><td>CSV</td><td>52.1MB</td><td>최관리</td></tr>
+          <tr><td style="font-size:11.5px">lot_history_20260401.xlsx</td><td>04-30 17:00</td><td>Excel</td><td>3.4MB</td><td>김공장장</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 탭5: AI 학습 데이터 -->
+<div class="tab-panel" id="tab5">
+  <div class="kpi-row">
+    <div class="kpi-card"><div class="kpi-label">전체 데이터셋</div><div class="kpi-val">8개</div></div>
+    <div class="kpi-card"><div class="kpi-label">라벨링 완료</div><div class="kpi-val ok">6개</div><div class="kpi-sub">75%</div></div>
+    <div class="kpi-card"><div class="kpi-label">미라벨링</div><div class="kpi-val warn">2개</div></div>
+    <div class="kpi-card"><div class="kpi-label">최근 승인</div><div class="kpi-val cyan" style="font-size:16px">2026-05-20</div></div>
+  </div>
+  <div class="table-wrap" style="margin-bottom:16px">
+    <div class="table-header">데이터셋 목록</div>
+    <table>
+      <thead><tr><th>데이터셋명</th><th>대상 모델</th><th>데이터수</th><th>라벨링</th><th>품질점수</th><th>업데이트</th></tr></thead>
+      <tbody>
+        <tr><td>발효품질학습셋_v3</td><td>XGBoost 품질분류</td><td>2,847건</td><td><span class="badge badge-ok">완료 100%</span></td><td class="ok">94.2</td><td>05-20</td></tr>
+        <tr><td>발효완료예측셋_v2</td><td>LSTM 시계열</td><td>1,523건</td><td><span class="badge badge-ok">완료 100%</span></td><td class="ok">91.8</td><td>05-15</td></tr>
+        <tr><td>이상발효탐지셋_v1</td><td>XGBoost 이상탐지</td><td>876건</td><td><span class="badge badge-warn">진행 72%</span></td><td>—</td><td>진행중</td></tr>
+        <tr><td>입고품질분류셋_v2</td><td>Random Forest</td><td>1,204건</td><td><span class="badge badge-ok">완료 100%</span></td><td class="ok">88.5</td><td>04-30</td></tr>
+        <tr><td>원재료불량탐지셋_v1</td><td>Random Forest</td><td>642건</td><td><span class="badge badge-ok">완료 100%</span></td><td class="ok">86.1</td><td>04-15</td></tr>
+        <tr><td>포장중량예측셋_v1</td><td>SVR 회귀</td><td>2,105건</td><td><span class="badge badge-ok">완료 100%</span></td><td class="ok">90.3</td><td>05-01</td></tr>
+        <tr><td>절임조건최적화셋_v2</td><td>XGBoost</td><td>934건</td><td><span class="badge badge-warn">진행 58%</span></td><td>—</td><td>진행중</td></tr>
+        <tr><td>SHAP분석기준셋_v1</td><td>SHAP Explainer</td><td>1,847건</td><td><span class="badge badge-ok">완료 100%</span></td><td class="ok">92.7</td><td>05-10</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="two-col">
+    <div class="table-wrap" style="padding:16px;margin:0">
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px">라벨링 작업 <span style="font-size:11px;color:var(--text-secondary);font-weight:400">대기: 245건</span></div>
+      <div style="background:var(--bg-table-row);border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="font-size:11px;color:var(--text-secondary);margin-bottom:8px">샘플 데이터 #247</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <span style="background:rgba(26,115,232,.15);color:var(--accent-cyan);padding:3px 8px;border-radius:5px;font-size:12px">발효온도 9.1°C</span>
+          <span style="background:rgba(26,115,232,.15);color:var(--accent-cyan);padding:3px 8px;border-radius:5px;font-size:12px">pH 4.1</span>
+          <span style="background:rgba(26,115,232,.15);color:var(--accent-cyan);padding:3px 8px;border-radius:5px;font-size:12px">산도 0.68%</span>
+          <span style="background:rgba(26,115,232,.15);color:var(--accent-cyan);padding:3px 8px;border-radius:5px;font-size:12px">염도 1.9%</span>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">품질 등급 라벨 선택:</div>
+      <div class="label-btns" id="labelBtns">
+        <button class="label-btn" onclick="selectLabel('ok',this)">정상</button>
+        <button class="label-btn" onclick="selectLabel('warn',this)">주의</button>
+        <button class="label-btn sel-err" onclick="selectLabel('err',this)">이상</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn btn-secondary btn-sm">이전</button>
+        <button class="btn btn-secondary btn-sm">다음</button>
+        <button class="btn btn-primary btn-sm">저장</button>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:var(--text-secondary)">라벨일치율 <strong style="color:var(--accent-cyan)">96.3%</strong> · 검토 대기 <strong style="color:var(--accent-warn)">12건</strong></div>
+    </div>
+    <div class="chart-wrap" style="margin:0"><div class="chart-title">라벨 분포</div><canvas id="chart5" height="160"></canvas></div>
+  </div>
+</div>
+</main>
+</div>
+<script>
+function showTab(n){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.htab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab'+n).classList.add('active');
+  document.querySelectorAll('.htab')[n-1].classList.add('active');
+  if(n===3&&!window.c3done){initChart3();window.c3done=true}
+  if(n===5&&!window.c5done){initChart5();window.c5done=true}
+}
+function selectLabel(type, el){
+  document.querySelectorAll('#labelBtns .label-btn').forEach(b=>{b.className='label-btn'});
+  el.classList.add('sel-'+type);
+}
+const C=(id)=>document.getElementById(id).getContext('2d');
+const days7=['5/17','5/18','5/19','5/20','5/21','5/22','5/23'];
+function initChart3(){
+  new Chart(C('chart3a'),{type:'line',data:{labels:days7,datasets:[
+    {label:'발효실1',data:[4.2,4.5,4.1,4.3,4.8,4.6,4.2],borderColor:'#10b981',tension:.4,fill:false},
+    {label:'발효실2',data:[5.0,5.8,6.5,7.2,7.8,8.5,9.1],borderColor:'#ef4444',tension:.4,fill:false},
+    {label:'발효실3',data:[4.8,5.0,4.9,5.1,5.0,4.8,3.8],borderColor:'#1a73e8',tension:.4,fill:false}
+  ]},options:{plugins:{legend:{labels:{color:'#94a3b8',font:{size:11}}}},scales:{x:{ticks:{color:'#94a3b8'}},y:{ticks:{color:'#94a3b8'},grid:{color:'#1e3a5f'},title:{display:true,text:'온도(°C)',color:'#5a7494'}}}}});
+  new Chart(C('chart3b'),{type:'scatter',data:{datasets:[
+    {label:'정상',data:[{x:4.2,y:4.3},{x:4.5,y:4.2},{x:5.1,y:4.4},{x:3.8,y:4.5},{x:6.0,y:4.1}],backgroundColor:'rgba(16,185,129,.7)',pointRadius:5},
+    {label:'경고',data:[{x:9.1,y:4.1},{x:8.5,y:4.2},{x:7.8,y:4.0}],backgroundColor:'rgba(245,158,11,.8)',pointRadius:6}
+  ]},options:{plugins:{legend:{labels:{color:'#94a3b8',font:{size:11}}}},scales:{x:{title:{display:true,text:'온도(°C)',color:'#5a7494'},ticks:{color:'#94a3b8'},grid:{color:'#1e3a5f'}},y:{title:{display:true,text:'pH',color:'#5a7494'},ticks:{color:'#94a3b8'},grid:{color:'#1e3a5f'}}}}});
+}
+function initChart5(){
+  new Chart(C('chart5'),{type:'doughnut',data:{labels:['정상(완료)','주의','이상','미라벨링'],datasets:[{data:[68,15,8,9],backgroundColor:['rgba(16,185,129,.7)','rgba(245,158,11,.7)','rgba(239,68,68,.7)','rgba(148,163,184,.3)']}]},options:{plugins:{legend:{position:'right',labels:{color:'#94a3b8',font:{size:11}}}}}});
+}
+</script>
+</body>
+</html>

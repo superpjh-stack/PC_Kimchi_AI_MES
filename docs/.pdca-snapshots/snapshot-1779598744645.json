@@ -1,0 +1,228 @@
+{
+  "timestamp": "2026-05-24T04:59:04.642Z",
+  "reason": "compaction",
+  "status": {
+    "version": "2.0",
+    "lastUpdated": "2026-05-24T04:42:29.630Z",
+    "activeFeatures": [
+      "pm3-process-data-kpi-system",
+      "streamlit_app",
+      "_workspace"
+    ],
+    "primaryFeature": "pm3-process-data-kpi-system",
+    "features": {
+      "pm3-process-data-kpi-system": {
+        "phase": "plan",
+        "startedAt": "2026-05-23T00:00:00.000Z",
+        "planPath": "docs/01-plan/features/pm3-process-data-kpi-system.plan.md",
+        "matchRate": null,
+        "iterationCount": 0
+      },
+      "streamlit_app": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-05-23T07:54:08.960Z",
+          "lastUpdated": "2026-05-23T08:03:46.069Z"
+        },
+        "lastFile": "C:\\AI Make\\31 PC-Kimchi-AI-MES\\streamlit_app\\pages\\09_시스템관리.py"
+      },
+      "_workspace": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-05-24T04:39:36.871Z",
+          "lastUpdated": "2026-05-24T04:42:29.630Z"
+        },
+        "lastFile": "C:\\AI Make\\31 PC-Kimchi-AI-MES\\_workspace\\ui_09_system.py"
+      }
+    },
+    "pipeline": {
+      "currentPhase": 1,
+      "level": "Dynamic",
+      "phaseHistory": [
+        {
+          "phase": "plan",
+          "feature": "pm3-process-data-kpi-system",
+          "completedAt": "2026-05-23T00:00:00.000Z"
+        }
+      ]
+    },
+    "session": {
+      "startedAt": "2026-05-23T00:30:37.906Z",
+      "onboardingCompleted": true,
+      "lastActivity": "2026-05-24T04:42:29.630Z"
+    },
+    "history": [
+      {
+        "event": "plan_created",
+        "feature": "pm3-process-data-kpi-system",
+        "timestamp": "2026-05-23T00:00:00.000Z"
+      },
+      {
+        "timestamp": "2026-05-23T07:54:08.960Z",
+        "feature": "streamlit_app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-05-23T07:54:33.422Z",
+        "feature": "streamlit_app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-05-23T07:57:07.261Z",
+        "feature": "streamlit_app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-05-23T07:57:59.021Z",
+        "feature": "streamlit_app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-05-23T07:58:34.993Z",
+        "feature": "streamlit_app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-05-23T07:58:55.022Z",
+        "feature": "streamlit_app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-05-23T07:59:10.923Z",
+        "feature": "streamlit_app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-05-23T07:59:29.078Z",
+        "feature": "streamlit_app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-05-23T07:59:42.015Z",
+        "feature": "streamlit_app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-05-23T08:00:24.705Z",
+        "feature": "streamlit_app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-05-23T08:00:41.126Z",
+        "feature": "streamlit_app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-05-23T08:01:04.826Z",
+        "feature": "streamlit_app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-05-23T08:02:09.151Z",
+        "feature": "streamlit_app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-05-23T08:02:56.231Z",
+        "feature": "streamlit_app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-05-23T08:03:46.069Z",
+        "feature": "streamlit_app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-05-24T04:39:36.871Z",
+        "feature": "_workspace",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-05-24T04:39:43.412Z",
+        "feature": "_workspace",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-05-24T04:39:56.048Z",
+        "feature": "_workspace",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-05-24T04:40:29.020Z",
+        "feature": "_workspace",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-05-24T04:40:39.912Z",
+        "feature": "_workspace",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-05-24T04:40:58.551Z",
+        "feature": "_workspace",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-05-24T04:41:05.781Z",
+        "feature": "_workspace",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-05-24T04:41:16.185Z",
+        "feature": "_workspace",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-05-24T04:41:30.825Z",
+        "feature": "_workspace",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-05-24T04:41:36.059Z",
+        "feature": "_workspace",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-05-24T04:42:29.630Z",
+        "feature": "_workspace",
+        "phase": "do",
+        "action": "updated"
+      }
+    ]
+  }
+}

@@ -1,0 +1,2387 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>꽃순이김치 SmartPad & 현황판 목업</title>
+<style>
+/* ===== CSS 변수 (디자인 토큰) ===== */
+:root {
+  /* SmartPad 색상 */
+  --sp-bg: #f0f4f8;
+  --sp-surface: #ffffff;
+  --sp-primary: #1a6b3c;
+  --sp-primary-dark: #134f2d;
+  --sp-primary-light: #e8f5ee;
+  --sp-secondary: #2563eb;
+  --sp-warning: #d97706;
+  --sp-danger: #dc2626;
+  --sp-text-main: #1a202c;
+  --sp-text-sub: #4a5568;
+  --sp-text-muted: #718096;
+  --sp-border: #e2e8f0;
+  --sp-grade-a: #16a34a;
+  --sp-grade-b: #ca8a04;
+  --sp-grade-c: #ea580c;
+  --sp-shadow: 0 4px 16px rgba(0,0,0,0.10);
+  --sp-shadow-lg: 0 8px 32px rgba(0,0,0,0.15);
+
+  /* 현황판 색상 */
+  --db-bg: #050e1a;
+  --db-surface: #0a1929;
+  --db-surface2: #0f2540;
+  --db-border: #1a3a5c;
+  --db-normal: #00ff88;
+  --db-warning: #ffaa00;
+  --db-danger: #ff4455;
+  --db-text: #e8f4ff;
+  --db-text-sub: #7ab8e8;
+  --db-accent: #00ccff;
+
+  /* 공통 */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  background: #1a1a2e;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ===== 탭 네비게이션 ===== */
+.tab-nav {
+  display: flex;
+  gap: 8px;
+  padding: 20px 20px 0;
+  width: 100%;
+  max-width: 1400px;
+  justify-content: center;
+}
+
+.tab-btn {
+  padding: 12px 28px;
+  border: 2px solid #334155;
+  background: #0f172a;
+  color: #94a3b8;
+  border-radius: 12px 12px 0 0;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  transition: all 0.2s;
+  letter-spacing: -0.02em;
+}
+
+.tab-btn:hover { background: #1e293b; color: #e2e8f0; }
+
+.tab-btn.active {
+  background: #f0f4f8;
+  border-color: #f0f4f8;
+  color: #1a202c;
+}
+
+.tab-btn.active.display-tab {
+  background: #050e1a;
+  border-color: #1a3a5c;
+  color: #00ccff;
+}
+
+/* ===== 탭 패널 ===== */
+.tab-panel { display: none; width: 100%; }
+.tab-panel.active { display: block; }
+
+/* ===== SmartPad 공통 ===== */
+.smartpad-wrapper {
+  background: var(--sp-bg);
+  min-height: calc(100vh - 80px);
+  padding-bottom: 40px;
+}
+
+/* SmartPad 상단 헤더 */
+.sp-header {
+  background: var(--sp-primary);
+  color: white;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.sp-header-left { display: flex; align-items: center; gap: 12px; }
+
+.sp-process-badge {
+  background: rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.sp-header-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.sp-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.sp-time {
+  font-size: 28px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.sp-worker {
+  font-size: 13px;
+  opacity: 0.85;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sp-worker::before {
+  content: '';
+  display: inline-block;
+  width: 8px; height: 8px;
+  background: #4ade80;
+  border-radius: 50%;
+}
+
+/* SmartPad 콘텐츠 영역 */
+.sp-content {
+  padding: 24px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* 금일 현황 카드 */
+.sp-status-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.sp-status-card {
+  background: var(--sp-surface);
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  border: 1px solid var(--sp-border);
+  box-shadow: var(--sp-shadow);
+}
+
+.sp-status-label {
+  font-size: 12px;
+  color: var(--sp-text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.sp-status-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--sp-primary);
+  letter-spacing: -0.03em;
+}
+
+.sp-status-unit {
+  font-size: 14px;
+  color: var(--sp-text-sub);
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+/* 메인 버튼 그리드 */
+.sp-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.sp-main-btn {
+  background: var(--sp-surface);
+  border: 2px solid var(--sp-border);
+  border-radius: var(--radius-xl);
+  padding: 32px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: var(--sp-shadow);
+  min-height: 160px;
+  position: relative;
+  overflow: hidden;
+}
+
+.sp-main-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 60%, rgba(0,0,0,0.03));
+}
+
+.sp-main-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--sp-shadow-lg);
+  border-color: var(--sp-primary);
+}
+
+.sp-main-btn:active { transform: translateY(0); }
+
+.sp-main-btn.primary {
+  background: linear-gradient(135deg, var(--sp-primary), var(--sp-primary-dark));
+  border-color: var(--sp-primary-dark);
+  color: white;
+}
+
+.sp-main-btn.primary:hover { border-color: white; }
+
+.sp-main-btn.ai-btn {
+  background: linear-gradient(135deg, #1e40af, #1d4ed8);
+  border-color: #1e3a8a;
+  color: white;
+}
+
+.sp-main-btn.warning-btn {
+  background: linear-gradient(135deg, #92400e, #b45309);
+  border-color: #78350f;
+  color: white;
+}
+
+.sp-btn-icon {
+  font-size: 48px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+}
+
+.sp-btn-label {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+.sp-btn-sub {
+  font-size: 13px;
+  opacity: 0.75;
+  text-align: center;
+  font-weight: 400;
+}
+
+/* ===== 모달 오버레이 ===== */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 1000;
+  align-items: flex-end;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.modal-overlay.open { display: flex; }
+
+/* ===== 슬라이드업 패널 ===== */
+.slide-panel {
+  background: var(--sp-surface);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  width: 100%;
+  max-width: 900px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 0;
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.panel-handle {
+  width: 48px; height: 5px;
+  background: var(--sp-border);
+  border-radius: 99px;
+  margin: 16px auto 0;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 28px 16px;
+  border-bottom: 1px solid var(--sp-border);
+}
+
+.panel-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--sp-text-main);
+  letter-spacing: -0.03em;
+}
+
+.panel-close {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--sp-border);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: var(--sp-text-sub);
+  transition: all 0.2s;
+}
+
+.panel-close:hover { background: var(--sp-bg); color: var(--sp-text-main); }
+
+.panel-body { padding: 24px 28px 40px; }
+
+/* ===== 입고 등록 패널 ===== */
+.form-section { margin-bottom: 28px; }
+
+.form-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--sp-text-sub);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lot-scan-area {
+  background: var(--sp-primary-light);
+  border: 2px dashed var(--sp-primary);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.lot-scan-area:hover { background: #d1fae5; }
+
+.lot-scan-icon { font-size: 40px; }
+
+.lot-scan-text { flex: 1; }
+.lot-scan-main { font-size: 18px; font-weight: 700; color: var(--sp-primary); }
+.lot-scan-sub { font-size: 13px; color: var(--sp-text-muted); margin-top: 2px; }
+
+.lot-input {
+  width: 100%;
+  background: var(--sp-bg);
+  border: 2px solid var(--sp-border);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--sp-text-main);
+  letter-spacing: 0.08em;
+  margin-top: 12px;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: 'Courier New', monospace;
+}
+
+.lot-input:focus { border-color: var(--sp-primary); background: white; }
+
+/* 등급 버튼 */
+.grade-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.grade-btn {
+  border: 3px solid transparent;
+  border-radius: var(--radius-lg);
+  padding: 24px 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  font-weight: 700;
+}
+
+.grade-btn.grade-a {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: var(--sp-grade-a);
+}
+
+.grade-btn.grade-b {
+  background: #fefce8;
+  border-color: #fde047;
+  color: var(--sp-grade-b);
+}
+
+.grade-btn.grade-c {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: var(--sp-grade-c);
+}
+
+.grade-btn:hover, .grade-btn.selected {
+  transform: scale(1.05);
+  box-shadow: var(--sp-shadow-lg);
+}
+
+.grade-btn.grade-a.selected { background: #dcfce7; border-color: var(--sp-grade-a); }
+.grade-btn.grade-b.selected { background: #fef9c3; border-color: var(--sp-grade-b); }
+.grade-btn.grade-c.selected { background: #ffedd5; border-color: var(--sp-grade-c); }
+
+.grade-letter {
+  font-size: 48px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.grade-desc {
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+/* 중량 키패드 */
+.weight-display {
+  background: var(--sp-bg);
+  border: 2px solid var(--sp-border);
+  border-radius: var(--radius-md);
+  padding: 16px 24px;
+  text-align: right;
+  margin-bottom: 16px;
+}
+
+.weight-value {
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--sp-text-main);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.weight-unit { font-size: 20px; color: var(--sp-text-muted); margin-left: 8px; }
+
+.keypad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.key-btn {
+  background: var(--sp-bg);
+  border: 2px solid var(--sp-border);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  font-size: 24px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: var(--sp-text-main);
+}
+
+.key-btn:hover { background: white; border-color: var(--sp-primary); color: var(--sp-primary); }
+.key-btn:active { transform: scale(0.95); background: var(--sp-primary-light); }
+
+.key-btn.del { color: var(--sp-danger); }
+.key-btn.ok { background: var(--sp-primary); color: white; border-color: var(--sp-primary-dark); }
+
+/* 제출 버튼 */
+.submit-btn {
+  width: 100%;
+  background: linear-gradient(135deg, var(--sp-primary), var(--sp-primary-dark));
+  color: white;
+  border: none;
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 20px rgba(26,107,60,0.4);
+  letter-spacing: -0.02em;
+  margin-top: 8px;
+}
+
+.submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(26,107,60,0.5); }
+.submit-btn:active { transform: translateY(0); }
+
+/* ===== 작업지시 패널 ===== */
+.work-order-list { display: flex; flex-direction: column; gap: 12px; }
+
+.work-order-card {
+  background: var(--sp-bg);
+  border: 1px solid var(--sp-border);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-left: 5px solid var(--sp-primary);
+}
+
+.work-order-card.pending { border-left-color: var(--sp-warning); }
+.work-order-card.done { border-left-color: #94a3b8; opacity: 0.65; }
+
+.wo-icon { font-size: 32px; }
+
+.wo-info { flex: 1; }
+.wo-title { font-size: 18px; font-weight: 700; color: var(--sp-text-main); }
+.wo-meta { font-size: 13px; color: var(--sp-text-muted); margin-top: 3px; }
+
+.wo-badge {
+  padding: 6px 14px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.badge-ongoing { background: #dcfce7; color: #16a34a; }
+.badge-pending { background: #fef9c3; color: #a16207; }
+.badge-done { background: #f1f5f9; color: #64748b; }
+
+/* ===== AI Agent 패널 ===== */
+.ai-panel-body { padding: 20px 24px 40px; }
+
+.ai-suggestion-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.ai-suggest-btn {
+  background: #eff6ff;
+  border: 2px solid #bfdbfe;
+  border-radius: var(--radius-md);
+  padding: 16px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1d4ed8;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  line-height: 1.4;
+}
+
+.ai-suggest-btn:hover { background: #dbeafe; border-color: #93c5fd; }
+
+.ai-chat-area {
+  background: var(--sp-bg);
+  border: 1px solid var(--sp-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  min-height: 200px;
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chat-msg { display: flex; gap: 10px; align-items: flex-start; }
+.chat-msg.user { flex-direction: row-reverse; }
+
+.chat-avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--sp-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.chat-avatar.user-av { background: var(--sp-secondary); }
+
+.chat-bubble {
+  background: white;
+  border: 1px solid var(--sp-border);
+  border-radius: 16px 16px 16px 4px;
+  padding: 12px 16px;
+  font-size: 15px;
+  color: var(--sp-text-main);
+  max-width: 80%;
+  line-height: 1.5;
+}
+
+.chat-msg.user .chat-bubble {
+  background: var(--sp-secondary);
+  color: white;
+  border-color: transparent;
+  border-radius: 16px 16px 4px 16px;
+}
+
+.ai-input-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.ai-input {
+  flex: 1;
+  background: white;
+  border: 2px solid var(--sp-border);
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  font-size: 18px;
+  color: var(--sp-text-main);
+  outline: none;
+  resize: none;
+  min-height: 58px;
+  max-height: 120px;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.ai-input:focus { border-color: var(--sp-secondary); }
+
+.ai-send-btn {
+  width: 58px; height: 58px;
+  background: var(--sp-secondary);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  color: white;
+}
+
+.ai-send-btn:hover { background: #1d4ed8; transform: scale(1.05); }
+
+.ai-mic-btn {
+  width: 58px; height: 58px;
+  background: #f43f5e;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  color: white;
+}
+
+.ai-mic-btn:hover { background: #e11d48; }
+.ai-mic-btn.recording { animation: pulse-red 1s infinite; }
+
+@keyframes pulse-red {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(244,63,94,0.5); }
+  50% { box-shadow: 0 0 0 12px rgba(244,63,94,0); }
+}
+
+/* ===== 이상보고 패널 ===== */
+.alert-type-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.alert-type-btn {
+  background: #fff7ed;
+  border: 2px solid #fed7aa;
+  border-radius: var(--radius-md);
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 15px;
+  font-weight: 700;
+  color: #92400e;
+}
+
+.alert-type-btn:hover, .alert-type-btn.selected {
+  background: #ffedd5;
+  border-color: var(--sp-grade-c);
+  transform: scale(1.03);
+}
+
+.alert-icon { font-size: 36px; }
+
+.alert-report-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  color: white;
+  border: none;
+  border-radius: var(--radius-xl);
+  padding: 22px;
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 20px rgba(220,38,38,0.4);
+  letter-spacing: -0.02em;
+}
+
+.alert-report-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(220,38,38,0.5); }
+
+/* ===== TAB 2: 포장/출하 ===== */
+.sp-header.shipping { background: linear-gradient(135deg, #1e40af, #1d4ed8); }
+
+.shipment-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+
+.shipment-card {
+  background: var(--sp-surface);
+  border: 1px solid var(--sp-border);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: var(--sp-shadow);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.shipment-card:hover { transform: translateX(4px); border-color: var(--sp-secondary); }
+
+.ai-status-badge {
+  padding: 6px 14px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ai-approved { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+.ai-review { background: #fef9c3; color: #92400e; border: 1px solid #fde047; }
+.ai-pending { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+
+.ship-info { flex: 1; }
+.ship-lot { font-size: 16px; font-weight: 700; color: var(--sp-text-main); font-family: monospace; letter-spacing: 0.05em; }
+.ship-meta { font-size: 13px; color: var(--sp-text-muted); margin-top: 3px; }
+.ship-weight { font-size: 18px; font-weight: 700; color: var(--sp-secondary); }
+
+/* 포장 실적 입력 */
+.pack-input-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.pack-input-card {
+  background: var(--sp-bg);
+  border: 2px solid var(--sp-border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+}
+
+.pack-input-label { font-size: 13px; color: var(--sp-text-muted); font-weight: 600; margin-bottom: 8px; }
+
+.pack-input-field {
+  width: 100%;
+  background: white;
+  border: 2px solid var(--sp-border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--sp-text-main);
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s;
+  font-variant-numeric: tabular-nums;
+}
+
+.pack-input-field:focus { border-color: var(--sp-secondary); }
+
+.pack-input-field.defect:focus { border-color: var(--sp-danger); }
+
+/* ===== TAB 3: 현황판 ===== */
+.display-tab-panel {
+  background: #0a0a1a;
+  padding: 20px;
+}
+
+.display-container {
+  background: var(--db-bg);
+  width: 100%;
+  max-width: 1280px;
+  aspect-ratio: 16/9;
+  margin: 0 auto;
+  border-radius: 16px;
+  border: 2px solid var(--db-border);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 60px rgba(0,204,255,0.1), 0 0 120px rgba(0,204,255,0.05);
+}
+
+/* 현황판 헤더 */
+.db-header {
+  background: var(--db-surface);
+  border-bottom: 1px solid var(--db-border);
+  padding: 10px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.db-logo-area { display: flex; align-items: center; gap: 14px; }
+
+.db-logo-icon {
+  width: 44px; height: 44px;
+  background: linear-gradient(135deg, #00ff88, #00cc66);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  box-shadow: 0 0 16px rgba(0,255,136,0.4);
+}
+
+.db-logo-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.db-logo-main {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--db-text);
+  letter-spacing: -0.02em;
+}
+
+.db-logo-sub {
+  font-size: 11px;
+  color: var(--db-text-sub);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.db-header-center {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.db-live-dot {
+  width: 10px; height: 10px;
+  background: var(--db-normal);
+  border-radius: 50%;
+  animation: blink-green 2s infinite;
+  box-shadow: 0 0 8px var(--db-normal);
+}
+
+@keyframes blink-green {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.db-live-text {
+  font-size: 13px;
+  color: var(--db-normal);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+
+.db-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.db-clock {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--db-text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  font-family: 'Courier New', monospace;
+}
+
+.db-date {
+  font-size: 12px;
+  color: var(--db-text-sub);
+  letter-spacing: 0.04em;
+}
+
+/* 현황판 메인 그리드 */
+.db-main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1px;
+  background: var(--db-border);
+  min-height: 0;
+}
+
+.db-section {
+  background: var(--db-bg);
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow: hidden;
+}
+
+.db-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--db-text-sub);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.db-section-title::before {
+  content: '';
+  display: block;
+  width: 3px; height: 16px;
+  background: var(--db-accent);
+  border-radius: 2px;
+}
+
+/* 생산 현황 섹션 */
+.db-production-kpi {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.db-kpi-value {
+  font-size: 72px;
+  font-weight: 900;
+  color: var(--db-normal);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+  font-family: 'Courier New', monospace;
+  text-shadow: 0 0 20px rgba(0,255,136,0.5);
+}
+
+.db-kpi-unit {
+  font-size: 20px;
+  color: var(--db-text-sub);
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.db-kpi-label {
+  font-size: 13px;
+  color: var(--db-text-sub);
+  margin-bottom: 10px;
+}
+
+.db-target-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--db-surface);
+  border-radius: 8px;
+  padding: 10px 14px;
+  border: 1px solid var(--db-border);
+  flex-shrink: 0;
+}
+
+.db-target-label { font-size: 12px; color: var(--db-text-sub); }
+.db-target-value { font-size: 20px; font-weight: 700; color: var(--db-text); font-variant-numeric: tabular-nums; }
+.db-target-pct { font-size: 14px; font-weight: 700; color: var(--db-normal); }
+
+/* 공정 상태 그리드 */
+.db-process-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.db-process-item {
+  background: var(--db-surface);
+  border: 1px solid var(--db-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.db-process-name { font-size: 12px; color: var(--db-text-sub); }
+.db-process-status { font-size: 12px; font-weight: 700; }
+.status-run { color: var(--db-normal); }
+.status-wait { color: var(--db-warning); }
+.status-stop { color: var(--db-danger); }
+
+.db-process-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dot-run { background: var(--db-normal); box-shadow: 0 0 6px var(--db-normal); animation: blink-green 2s infinite; }
+.dot-wait { background: var(--db-warning); box-shadow: 0 0 6px var(--db-warning); }
+.dot-stop { background: var(--db-danger); }
+
+.db-worker-row {
+  background: var(--db-surface);
+  border: 1px solid var(--db-border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.db-worker-label { font-size: 12px; color: var(--db-text-sub); }
+.db-worker-value { font-size: 22px; font-weight: 700; color: var(--db-accent); }
+
+/* 발효 상태 섹션 */
+.db-batch-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.db-batch-item {
+  background: var(--db-surface);
+  border: 1px solid var(--db-border);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.db-batch-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.db-batch-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--db-text);
+  font-family: monospace;
+  letter-spacing: 0.04em;
+}
+
+.db-batch-time {
+  font-size: 12px;
+  color: var(--db-text-sub);
+}
+
+.db-quality-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.q-normal { background: var(--db-normal); box-shadow: 0 0 8px var(--db-normal); }
+.q-warning { background: var(--db-warning); box-shadow: 0 0 8px var(--db-warning); animation: pulse-warn 1.5s infinite; }
+.q-danger { background: var(--db-danger); box-shadow: 0 0 8px var(--db-danger); animation: pulse-danger 0.8s infinite; }
+
+@keyframes pulse-warn {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.3); }
+}
+
+@keyframes pulse-danger {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
+.db-progress-bar {
+  height: 8px;
+  background: var(--db-surface2);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.db-progress-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 1s ease;
+}
+
+.fill-normal { background: linear-gradient(90deg, #00cc66, var(--db-normal)); box-shadow: 0 0 8px rgba(0,255,136,0.5); }
+.fill-warning { background: linear-gradient(90deg, #ff8800, var(--db-warning)); }
+.fill-danger { background: linear-gradient(90deg, #cc0011, var(--db-danger)); }
+
+.db-progress-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--db-text-sub);
+}
+
+/* 경보 배너 */
+.db-alarm-banner {
+  background: rgba(255,68,85,0.15);
+  border: 1px solid var(--db-danger);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: alarm-flash 1s infinite;
+  flex-shrink: 0;
+}
+
+@keyframes alarm-flash {
+  0%, 100% { background: rgba(255,68,85,0.15); border-color: var(--db-danger); }
+  50% { background: rgba(255,68,85,0.30); border-color: #ff8890; }
+}
+
+.db-alarm-icon { font-size: 18px; animation: pulse-danger 0.8s infinite; }
+.db-alarm-text { font-size: 13px; font-weight: 700; color: var(--db-danger); }
+
+/* 출하 현황 섹션 */
+.db-ship-kpi-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.db-ship-kpi {
+  background: var(--db-surface);
+  border: 1px solid var(--db-border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.db-ship-kpi-label { font-size: 11px; color: var(--db-text-sub); text-transform: uppercase; letter-spacing: 0.06em; }
+.db-ship-kpi-value { font-size: 32px; font-weight: 700; color: var(--db-text); font-variant-numeric: tabular-nums; }
+.db-ship-kpi-sub { font-size: 12px; }
+.sub-good { color: var(--db-normal); }
+.sub-warn { color: var(--db-warning); }
+
+.db-defect-row {
+  background: var(--db-surface);
+  border: 1px solid var(--db-border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.db-defect-label { font-size: 12px; color: var(--db-text-sub); }
+
+.db-defect-value {
+  font-size: 28px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.defect-ok { color: var(--db-normal); }
+.defect-warn { color: var(--db-warning); }
+
+.db-lot-list {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.db-lot-item {
+  background: var(--db-surface);
+  border: 1px solid var(--db-border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.db-lot-code { font-size: 13px; font-weight: 600; color: var(--db-text); font-family: monospace; }
+.db-lot-qty { font-size: 13px; color: var(--db-text-sub); }
+
+.db-lot-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 99px;
+}
+
+.lot-shipped { background: rgba(0,255,136,0.15); color: var(--db-normal); border: 1px solid rgba(0,255,136,0.3); }
+.lot-waiting { background: rgba(255,170,0,0.15); color: var(--db-warning); border: 1px solid rgba(255,170,0,0.3); }
+.lot-prep { background: rgba(0,204,255,0.15); color: var(--db-accent); border: 1px solid rgba(0,204,255,0.3); }
+
+.db-claim-row {
+  background: rgba(255,170,0,0.1);
+  border: 1px solid rgba(255,170,0,0.3);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.db-claim-icon { font-size: 16px; }
+.db-claim-text { font-size: 12px; color: var(--db-warning); font-weight: 600; }
+
+/* 현황판 하단 */
+.db-footer {
+  background: var(--db-surface);
+  border-top: 1px solid var(--db-border);
+  padding: 8px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.db-footer-left { display: flex; align-items: center; gap: 24px; }
+
+.db-footer-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--db-text-sub);
+}
+
+.db-footer-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+.db-update-info {
+  font-size: 11px;
+  color: var(--db-text-sub);
+  opacity: 0.6;
+}
+
+/* 반응형 최소 조정 */
+@media (max-width: 800px) {
+  .sp-main-grid { grid-template-columns: 1fr 1fr; }
+  .sp-status-bar { grid-template-columns: repeat(3, 1fr); }
+  .db-kpi-value { font-size: 48px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== 탭 네비게이션 ===== -->
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('intake')">SmartPad — 원재료 입고</button>
+  <button class="tab-btn" onclick="switchTab('shipping')">SmartPad — 포장/출하</button>
+  <button class="tab-btn display-tab" onclick="switchTab('display')">현황판 (1920×1080)</button>
+</div>
+
+<!-- ===== TAB 1: 원재료 입고 SmartPad ===== -->
+<div id="tab-intake" class="tab-panel active">
+  <div class="smartpad-wrapper">
+    <!-- 헤더 -->
+    <div class="sp-header">
+      <div class="sp-header-left">
+        <span class="sp-process-badge">원재료 입고</span>
+        <span class="sp-header-title">꽃순이김치 MES</span>
+      </div>
+      <div class="sp-header-right">
+        <div class="sp-time" id="intake-clock">09:32:14</div>
+        <div class="sp-worker">김철수 (입고담당)</div>
+      </div>
+    </div>
+
+    <div class="sp-content">
+      <!-- 금일 현황 -->
+      <div class="sp-status-bar">
+        <div class="sp-status-card">
+          <div class="sp-status-label">금일 입고</div>
+          <div class="sp-status-value">12<span class="sp-status-unit">건</span></div>
+        </div>
+        <div class="sp-status-card">
+          <div class="sp-status-label">총 중량</div>
+          <div class="sp-status-value">4,280<span class="sp-status-unit">kg</span></div>
+        </div>
+        <div class="sp-status-card">
+          <div class="sp-status-label">대기 작업</div>
+          <div class="sp-status-value" style="color: var(--sp-warning)">3<span class="sp-status-unit">건</span></div>
+        </div>
+      </div>
+
+      <!-- 메인 버튼 그리드 -->
+      <div class="sp-main-grid">
+        <button class="sp-main-btn primary" onclick="openPanel('intake-register')">
+          <div class="sp-btn-icon">📦</div>
+          <div class="sp-btn-label">원재료 입고 등록</div>
+          <div class="sp-btn-sub">LOT 스캔 및 품질 등록</div>
+        </button>
+        <button class="sp-main-btn" onclick="openPanel('work-order')">
+          <div class="sp-btn-icon">📋</div>
+          <div class="sp-btn-label">작업지시 확인</div>
+          <div class="sp-btn-sub">오늘의 입고 계획</div>
+        </button>
+        <button class="sp-main-btn ai-btn" onclick="openPanel('ai-agent')">
+          <div class="sp-btn-icon">🤖</div>
+          <div class="sp-btn-label">AI에게 묻기</div>
+          <div class="sp-btn-sub">입고 기준·이력 질의</div>
+        </button>
+        <button class="sp-main-btn warning-btn" onclick="openPanel('alert-report')">
+          <div class="sp-btn-icon">⚠️</div>
+          <div class="sp-btn-label">이상 보고</div>
+          <div class="sp-btn-sub">입고 이상 즉시 보고</div>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 2: 포장/출하 SmartPad ===== -->
+<div id="tab-shipping" class="tab-panel">
+  <div class="smartpad-wrapper">
+    <!-- 헤더 -->
+    <div class="sp-header shipping">
+      <div class="sp-header-left">
+        <span class="sp-process-badge">포장/출하</span>
+        <span class="sp-header-title">꽃순이김치 MES</span>
+      </div>
+      <div class="sp-header-right">
+        <div class="sp-time" id="ship-clock">09:32:14</div>
+        <div class="sp-worker">박영희 (포장담당)</div>
+      </div>
+    </div>
+
+    <div class="sp-content">
+      <!-- 금일 현황 -->
+      <div class="sp-status-bar">
+        <div class="sp-status-card">
+          <div class="sp-status-label">출하 예정</div>
+          <div class="sp-status-value">8<span class="sp-status-unit">건</span></div>
+        </div>
+        <div class="sp-status-card">
+          <div class="sp-status-label">출하 완료</div>
+          <div class="sp-status-value" style="color:var(--sp-grade-a)">5<span class="sp-status-unit">건</span></div>
+        </div>
+        <div class="sp-status-card">
+          <div class="sp-status-label">AI 승인 대기</div>
+          <div class="sp-status-value" style="color:var(--sp-warning)">2<span class="sp-status-unit">건</span></div>
+        </div>
+      </div>
+
+      <!-- 금일 출하 목록 -->
+      <div style="font-size:14px;font-weight:700;color:var(--sp-text-muted);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:12px;">금일 출하 LOT 목록</div>
+      <div class="shipment-list">
+        <div class="shipment-card" onclick="openPanel('ship-detail')">
+          <div class="ship-info">
+            <div class="ship-lot">FER-2026-0523-001</div>
+            <div class="ship-meta">백김치 500g × 200박스 · 서울 이마트</div>
+          </div>
+          <div class="ship-weight">100 kg</div>
+          <div class="ai-status-badge ai-approved">AI 승인완료</div>
+        </div>
+        <div class="shipment-card" onclick="openPanel('ship-detail')">
+          <div class="ship-info">
+            <div class="ship-lot">FER-2026-0523-002</div>
+            <div class="ship-meta">포기김치 1kg × 150박스 · 강원 홈플러스</div>
+          </div>
+          <div class="ship-weight">150 kg</div>
+          <div class="ai-status-badge ai-approved">AI 승인완료</div>
+        </div>
+        <div class="shipment-card" onclick="openPanel('ship-detail')">
+          <div class="ship-info">
+            <div class="ship-lot">FER-2026-0523-003</div>
+            <div class="ship-meta">열무김치 300g × 120박스 · 수도권 배송</div>
+          </div>
+          <div class="ship-weight">36 kg</div>
+          <div class="ai-status-badge ai-review">AI 검토중</div>
+        </div>
+        <div class="shipment-card" onclick="openPanel('ship-detail')">
+          <div class="ship-info">
+            <div class="ship-lot">FER-2026-0523-004</div>
+            <div class="ship-meta">총각김치 500g × 180박스 · 대형 거래처</div>
+          </div>
+          <div class="ship-weight">90 kg</div>
+          <div class="ai-status-badge ai-pending">AI 보류</div>
+        </div>
+        <div class="shipment-card" onclick="openPanel('ship-detail')">
+          <div class="ship-info">
+            <div class="ship-lot">FER-2026-0523-005</div>
+            <div class="ship-meta">깍두기 500g × 160박스 · 온라인몰</div>
+          </div>
+          <div class="ship-weight">80 kg</div>
+          <div class="ai-status-badge ai-approved">AI 승인완료</div>
+        </div>
+      </div>
+
+      <!-- 포장 실적 입력 -->
+      <div style="font-size:14px;font-weight:700;color:var(--sp-text-muted);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:12px;">포장 실적 입력</div>
+      <div class="pack-input-grid">
+        <div class="pack-input-card">
+          <div class="pack-input-label">포장 수량 (박스)</div>
+          <input class="pack-input-field" type="number" value="186" placeholder="0">
+        </div>
+        <div class="pack-input-card">
+          <div class="pack-input-label">불량 수량 (박스)</div>
+          <input class="pack-input-field defect" type="number" value="2" placeholder="0" style="color:var(--sp-danger)">
+        </div>
+      </div>
+
+      <!-- 하단 버튼 -->
+      <div class="sp-main-grid" style="margin-top:0">
+        <button class="sp-main-btn ai-btn" onclick="openPanel('ship-ai-agent')">
+          <div class="sp-btn-icon">🤖</div>
+          <div class="sp-btn-label">출하 AI 질의</div>
+          <div class="sp-btn-sub">출하 기준·클레임 조회</div>
+        </button>
+        <button class="sp-main-btn primary" onclick="showToast('포장 실적이 등록되었습니다.')">
+          <div class="sp-btn-icon">✅</div>
+          <div class="sp-btn-label">실적 등록 완료</div>
+          <div class="sp-btn-sub">MES에 즉시 반영</div>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 3: 현황판 ===== -->
+<div id="tab-display" class="tab-panel">
+  <div class="display-tab-panel">
+    <div class="display-container">
+      <!-- 현황판 헤더 -->
+      <div class="db-header">
+        <div class="db-logo-area">
+          <div class="db-logo-icon">🥬</div>
+          <div class="db-logo-text">
+            <div class="db-logo-main">평창꽃순이(주) 제조AI MES</div>
+            <div class="db-logo-sub">Smart Factory Dashboard · Real-time Monitor</div>
+          </div>
+        </div>
+        <div class="db-header-center">
+          <div class="db-live-dot"></div>
+          <div class="db-live-text">LIVE</div>
+        </div>
+        <div class="db-header-right">
+          <div class="db-clock" id="db-clock">09:32:14</div>
+          <div class="db-date" id="db-date">2026년 5월 23일 토요일</div>
+        </div>
+      </div>
+
+      <!-- 현황판 메인 3열 -->
+      <div class="db-main">
+
+        <!-- 섹션 1: 생산 현황 -->
+        <div class="db-section">
+          <div class="db-section-title">생산 현황</div>
+
+          <div style="flex-shrink:0">
+            <div style="font-size:11px;color:var(--db-text-sub);letter-spacing:0.06em;margin-bottom:4px;">시간당 생산량 (kg/h)</div>
+            <div class="db-production-kpi">
+              <div class="db-kpi-value" id="db-production">2,850</div>
+              <div style="display:flex;flex-direction:column;margin-bottom:10px;gap:2px;">
+                <div class="db-kpi-unit">kg/h</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="db-target-row">
+            <div class="db-target-label">목표</div>
+            <div class="db-target-value">3,000 kg/h</div>
+            <div class="db-target-pct" id="db-prod-pct">95.0%</div>
+          </div>
+
+          <div class="db-target-row" style="border-color: rgba(0,204,255,0.2);">
+            <div class="db-target-label">금일 누적</div>
+            <div class="db-target-value" id="db-total">24,650 kg</div>
+            <div class="db-target-pct" style="color:var(--db-accent)">목표 32,000</div>
+          </div>
+
+          <div style="font-size:11px;color:var(--db-text-sub);letter-spacing:0.06em;margin-bottom:4px;flex-shrink:0;">공정별 가동 상태</div>
+          <div class="db-process-grid">
+            <div class="db-process-item">
+              <span class="db-process-name">원재료 입고</span>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <div class="db-process-dot dot-run"></div>
+                <span class="db-process-status status-run">운전중</span>
+              </div>
+            </div>
+            <div class="db-process-item">
+              <span class="db-process-name">절단/전처리</span>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <div class="db-process-dot dot-run"></div>
+                <span class="db-process-status status-run">운전중</span>
+              </div>
+            </div>
+            <div class="db-process-item">
+              <span class="db-process-name">세척/절임</span>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <div class="db-process-dot dot-run"></div>
+                <span class="db-process-status status-run">운전중</span>
+              </div>
+            </div>
+            <div class="db-process-item">
+              <span class="db-process-name">탈수/혼합</span>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <div class="db-process-dot dot-wait"></div>
+                <span class="db-process-status status-wait">대기중</span>
+              </div>
+            </div>
+            <div class="db-process-item">
+              <span class="db-process-name">금속검출</span>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <div class="db-process-dot dot-run"></div>
+                <span class="db-process-status status-run">운전중</span>
+              </div>
+            </div>
+            <div class="db-process-item">
+              <span class="db-process-name">포장/출하</span>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <div class="db-process-dot dot-run"></div>
+                <span class="db-process-status status-run">운전중</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="db-worker-row">
+            <span class="db-worker-label">현재 근무 인원</span>
+            <span class="db-worker-value">14명</span>
+          </div>
+        </div>
+
+        <!-- 섹션 2: 발효 상태 -->
+        <div class="db-section">
+          <div class="db-section-title">발효 상태 모니터링</div>
+
+          <!-- 이상발효 경보 -->
+          <div class="db-alarm-banner">
+            <div class="db-alarm-icon">🚨</div>
+            <div class="db-alarm-text">FER-0523-B03 — 온도 이상 감지 (+2.1°C 초과)</div>
+          </div>
+
+          <div class="db-batch-list">
+            <!-- 배치 1 -->
+            <div class="db-batch-item">
+              <div class="db-batch-header">
+                <span class="db-batch-name">FER-2026-0523-B01</span>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div class="db-quality-dot q-normal"></div>
+                  <span style="font-size:11px;color:var(--db-normal);font-weight:700;">정상</span>
+                </div>
+              </div>
+              <div class="db-progress-bar">
+                <div class="db-progress-fill fill-normal" style="width:78%"></div>
+              </div>
+              <div class="db-progress-labels">
+                <span>발효 진행률 78%</span>
+                <span class="db-batch-time">완료 예상 14:20</span>
+              </div>
+            </div>
+            <!-- 배치 2 -->
+            <div class="db-batch-item">
+              <div class="db-batch-header">
+                <span class="db-batch-name">FER-2026-0523-B02</span>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div class="db-quality-dot q-normal"></div>
+                  <span style="font-size:11px;color:var(--db-normal);font-weight:700;">정상</span>
+                </div>
+              </div>
+              <div class="db-progress-bar">
+                <div class="db-progress-fill fill-normal" id="batch2-fill" style="width:54%"></div>
+              </div>
+              <div class="db-progress-labels">
+                <span id="batch2-pct">발효 진행률 54%</span>
+                <span class="db-batch-time">완료 예상 17:45</span>
+              </div>
+            </div>
+            <!-- 배치 3 — 이상 -->
+            <div class="db-batch-item" style="border-color:rgba(255,68,85,0.4);background:rgba(255,68,85,0.05);">
+              <div class="db-batch-header">
+                <span class="db-batch-name">FER-2026-0523-B03</span>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div class="db-quality-dot q-danger"></div>
+                  <span style="font-size:11px;color:var(--db-danger);font-weight:700;">이상</span>
+                </div>
+              </div>
+              <div class="db-progress-bar">
+                <div class="db-progress-fill fill-danger" style="width:41%"></div>
+              </div>
+              <div class="db-progress-labels">
+                <span style="color:var(--db-danger);">온도이상 — 조치 필요</span>
+                <span class="db-batch-time" style="color:var(--db-danger);">지연 예상</span>
+              </div>
+            </div>
+            <!-- 배치 4 -->
+            <div class="db-batch-item">
+              <div class="db-batch-header">
+                <span class="db-batch-name">FER-2026-0523-B04</span>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div class="db-quality-dot q-warning"></div>
+                  <span style="font-size:11px;color:var(--db-warning);font-weight:700;">주의</span>
+                </div>
+              </div>
+              <div class="db-progress-bar">
+                <div class="db-progress-fill fill-warning" style="width:22%"></div>
+              </div>
+              <div class="db-progress-labels">
+                <span>발효 진행률 22%</span>
+                <span class="db-batch-time">완료 예상 내일 08:30</span>
+              </div>
+            </div>
+            <!-- 배치 5 -->
+            <div class="db-batch-item">
+              <div class="db-batch-header">
+                <span class="db-batch-name">FER-2026-0523-B05</span>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div class="db-quality-dot q-normal"></div>
+                  <span style="font-size:11px;color:var(--db-normal);font-weight:700;">정상</span>
+                </div>
+              </div>
+              <div class="db-progress-bar">
+                <div class="db-progress-fill fill-normal" style="width:8%"></div>
+              </div>
+              <div class="db-progress-labels">
+                <span>발효 진행률 8%</span>
+                <span class="db-batch-time">완료 예상 내일 15:00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 섹션 3: 출하 현황 -->
+        <div class="db-section">
+          <div class="db-section-title">출하 현황</div>
+
+          <div class="db-ship-kpi-row">
+            <div class="db-ship-kpi">
+              <div class="db-ship-kpi-label">출하 예정</div>
+              <div class="db-ship-kpi-value">8</div>
+              <div class="db-ship-kpi-sub" style="color:var(--db-text-sub)">건</div>
+            </div>
+            <div class="db-ship-kpi">
+              <div class="db-ship-kpi-label">출하 완료</div>
+              <div class="db-ship-kpi-value" style="color:var(--db-normal)" id="db-ship-done">5</div>
+              <div class="db-ship-kpi-sub sub-good">건 (62.5%)</div>
+            </div>
+          </div>
+
+          <div class="db-target-row">
+            <div class="db-target-label">AI 승인 대기 LOT</div>
+            <div class="db-target-value" style="color:var(--db-warning)">2건</div>
+            <div class="db-target-pct" style="color:var(--db-warning)">검토중</div>
+          </div>
+
+          <div class="db-defect-row">
+            <span class="db-defect-label">금일 불량률</span>
+            <span class="db-defect-value defect-ok" id="db-defect">0.82%</span>
+            <span style="font-size:12px;color:var(--db-normal);">목표 1.0% 이하</span>
+          </div>
+
+          <div style="font-size:11px;color:var(--db-text-sub);letter-spacing:0.06em;flex-shrink:0;">금일 출하 LOT 현황</div>
+          <div class="db-lot-list">
+            <div class="db-lot-item">
+              <span class="db-lot-code">FER-0523-001</span>
+              <span class="db-lot-qty">100 kg · 백김치 500g</span>
+              <span class="db-lot-badge lot-shipped">출하완료</span>
+            </div>
+            <div class="db-lot-item">
+              <span class="db-lot-code">FER-0523-002</span>
+              <span class="db-lot-qty">150 kg · 포기김치 1kg</span>
+              <span class="db-lot-badge lot-shipped">출하완료</span>
+            </div>
+            <div class="db-lot-item">
+              <span class="db-lot-code">FER-0523-003</span>
+              <span class="db-lot-qty">36 kg · 열무김치</span>
+              <span class="db-lot-badge lot-waiting">AI검토중</span>
+            </div>
+            <div class="db-lot-item">
+              <span class="db-lot-code">FER-0523-004</span>
+              <span class="db-lot-qty">90 kg · 총각김치</span>
+              <span class="db-lot-badge lot-waiting">AI보류</span>
+            </div>
+            <div class="db-lot-item">
+              <span class="db-lot-code">FER-0523-005</span>
+              <span class="db-lot-qty">80 kg · 깍두기 500g</span>
+              <span class="db-lot-badge lot-shipped">출하완료</span>
+            </div>
+          </div>
+
+          <div class="db-claim-row">
+            <div class="db-claim-icon">📋</div>
+            <div class="db-claim-text">최근 클레임: 5/20 A마트 — 염도 과다 (처리완료)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 현황판 하단 -->
+      <div class="db-footer">
+        <div class="db-footer-left">
+          <div class="db-footer-item">
+            <div class="db-footer-dot" style="background:var(--db-normal)"></div>
+            <span>정상</span>
+          </div>
+          <div class="db-footer-item">
+            <div class="db-footer-dot" style="background:var(--db-warning)"></div>
+            <span>주의</span>
+          </div>
+          <div class="db-footer-item">
+            <div class="db-footer-dot" style="background:var(--db-danger)"></div>
+            <span>이상</span>
+          </div>
+          <div class="db-footer-item" style="margin-left:16px;">
+            <span>MES ver 1.0 · SF26179540 · 로뎀솔루션</span>
+          </div>
+        </div>
+        <div class="db-update-info" id="db-update">마지막 갱신: 09:32:14</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 모달: 원재료 입고 등록 ===== -->
+<div id="modal-intake-register" class="modal-overlay" onclick="handleOverlayClick(event,'intake-register')">
+  <div class="slide-panel">
+    <div class="panel-handle"></div>
+    <div class="panel-header">
+      <div class="panel-title">📦 원재료 입고 등록</div>
+      <button class="panel-close" onclick="closePanel('intake-register')">✕</button>
+    </div>
+    <div class="panel-body">
+      <!-- LOT 스캔 -->
+      <div class="form-section">
+        <div class="form-label">🔍 LOT 번호 스캔</div>
+        <div class="lot-scan-area" onclick="simulateScan()">
+          <div class="lot-scan-icon">📷</div>
+          <div class="lot-scan-text">
+            <div class="lot-scan-main">바코드 스캔 터치</div>
+            <div class="lot-scan-sub">카메라로 바코드를 스캔하거나 직접 입력하세요</div>
+          </div>
+          <div style="font-size:28px;color:var(--sp-primary);">→</div>
+        </div>
+        <input class="lot-input" id="lot-input-val" type="text" value="RAW-2026-0523-PC-014" placeholder="LOT 번호 직접 입력">
+      </div>
+
+      <!-- 외관 등급 선택 -->
+      <div class="form-section">
+        <div class="form-label">⭐ 외관 등급 선택</div>
+        <div class="grade-grid">
+          <button class="grade-btn grade-a selected" id="grade-a" onclick="selectGrade('a')">
+            <div class="grade-letter">A</div>
+            <div class="grade-desc">우수 (외상없음)</div>
+          </button>
+          <button class="grade-btn grade-b" id="grade-b" onclick="selectGrade('b')">
+            <div class="grade-letter">B</div>
+            <div class="grade-desc">보통 (경미한 흠)</div>
+          </button>
+          <button class="grade-btn grade-c" id="grade-c" onclick="selectGrade('c')">
+            <div class="grade-letter">C</div>
+            <div class="grade-desc">불량 (재검토 필요)</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- 중량 입력 -->
+      <div class="form-section">
+        <div class="form-label">⚖️ 중량 입력 (kg)</div>
+        <div class="weight-display">
+          <span class="weight-value" id="weight-display">350</span>
+          <span class="weight-unit">kg</span>
+        </div>
+        <div class="keypad-grid">
+          <button class="key-btn" onclick="keypadInput('7')">7</button>
+          <button class="key-btn" onclick="keypadInput('8')">8</button>
+          <button class="key-btn" onclick="keypadInput('9')">9</button>
+          <button class="key-btn" onclick="keypadInput('4')">4</button>
+          <button class="key-btn" onclick="keypadInput('5')">5</button>
+          <button class="key-btn" onclick="keypadInput('6')">6</button>
+          <button class="key-btn" onclick="keypadInput('1')">1</button>
+          <button class="key-btn" onclick="keypadInput('2')">2</button>
+          <button class="key-btn" onclick="keypadInput('3')">3</button>
+          <button class="key-btn del" onclick="keypadInput('del')">⌫</button>
+          <button class="key-btn" onclick="keypadInput('0')">0</button>
+          <button class="key-btn ok" onclick="keypadInput('ok')">확인</button>
+        </div>
+      </div>
+
+      <!-- 공급처 정보 -->
+      <div class="form-section">
+        <div class="form-label">🏭 공급처</div>
+        <div style="background:var(--sp-primary-light);border:1px solid #bbf7d0;border-radius:var(--radius-md);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-size:16px;font-weight:700;color:var(--sp-primary);">평창고랭지 영농조합</div>
+            <div style="font-size:13px;color:var(--sp-text-muted);margin-top:2px;">강원도 평창군 · 계약공급처 · 품질등급 A</div>
+          </div>
+          <div style="font-size:28px;">🥬</div>
+        </div>
+      </div>
+
+      <!-- 등록 완료 버튼 -->
+      <button class="submit-btn" onclick="submitIntake()">
+        <span>✅</span>
+        <span>입고 등록 완료</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 모달: 작업지시 확인 ===== -->
+<div id="modal-work-order" class="modal-overlay" onclick="handleOverlayClick(event,'work-order')">
+  <div class="slide-panel">
+    <div class="panel-handle"></div>
+    <div class="panel-header">
+      <div class="panel-title">📋 금일 작업지시</div>
+      <button class="panel-close" onclick="closePanel('work-order')">✕</button>
+    </div>
+    <div class="panel-body">
+      <div style="font-size:14px;color:var(--sp-text-muted);margin-bottom:16px;">2026년 5월 23일 · 원재료 입고 공정</div>
+      <div class="work-order-list">
+        <div class="work-order-card">
+          <div class="wo-icon">🥬</div>
+          <div class="wo-info">
+            <div class="wo-title">평창고랭지 배추 입고</div>
+            <div class="wo-meta">납품처: 평창고랭지 영농조합 · 예정 중량: 1,200 kg · 09:00~11:00</div>
+          </div>
+          <div class="wo-badge badge-ongoing">진행중</div>
+        </div>
+        <div class="work-order-card pending">
+          <div class="wo-icon">🧅</div>
+          <div class="wo-info">
+            <div class="wo-title">무 & 쪽파 입고</div>
+            <div class="wo-meta">납품처: 강원채소조합 · 예정 중량: 350 kg · 13:00~14:00</div>
+          </div>
+          <div class="wo-badge badge-pending">대기중</div>
+        </div>
+        <div class="work-order-card pending">
+          <div class="wo-icon">🌶️</div>
+          <div class="wo-info">
+            <div class="wo-title">고춧가루 외 양념류 입고</div>
+            <div class="wo-meta">납품처: 경북양념영농 · 예정 중량: 180 kg · 14:30~15:30</div>
+          </div>
+          <div class="wo-badge badge-pending">대기중</div>
+        </div>
+        <div class="work-order-card done">
+          <div class="wo-icon">🧄</div>
+          <div class="wo-info">
+            <div class="wo-title">마늘 & 생강 입고 (완료)</div>
+            <div class="wo-meta">납품처: 서산마늘농원 · 실적 중량: 120 kg · 08:00 완료</div>
+          </div>
+          <div class="wo-badge badge-done">완료</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 모달: AI Agent ===== -->
+<div id="modal-ai-agent" class="modal-overlay" onclick="handleOverlayClick(event,'ai-agent')">
+  <div class="slide-panel" style="max-height:95vh;">
+    <div class="panel-handle"></div>
+    <div class="panel-header">
+      <div class="panel-title">🤖 입고 AI Agent</div>
+      <button class="panel-close" onclick="closePanel('ai-agent')">✕</button>
+    </div>
+    <div class="ai-panel-body">
+      <!-- 추천 질문 -->
+      <div style="font-size:13px;font-weight:700;color:var(--sp-text-muted);margin-bottom:10px;">자주 묻는 질문</div>
+      <div class="ai-suggestion-row">
+        <button class="ai-suggest-btn" onclick="sendAiQuestion(this.textContent)">평창고랭지 영농조합 최근 입고 품질 이력은?</button>
+        <button class="ai-suggest-btn" onclick="sendAiQuestion(this.textContent)">오늘 배추 입고 기준 (염도/크기/외관)이 뭐야?</button>
+        <button class="ai-suggest-btn" onclick="sendAiQuestion(this.textContent)">이번 LOT 발효 예측 품질은 어때?</button>
+        <button class="ai-suggest-btn" onclick="sendAiQuestion(this.textContent)">C등급 배추 입고시 처리 절차 알려줘</button>
+      </div>
+
+      <!-- 채팅 영역 -->
+      <div class="ai-chat-area" id="intake-chat">
+        <div class="chat-msg">
+          <div class="chat-avatar">AI</div>
+          <div class="chat-bubble">안녕하세요! 원재료 입고 AI Agent입니다. 입고 기준, 공급처 품질 이력, LOT 추적 등 무엇이든 질문해 주세요.</div>
+        </div>
+      </div>
+
+      <!-- 입력 영역 -->
+      <div class="ai-input-row">
+        <button class="ai-mic-btn" id="mic-btn" onclick="toggleMic()">🎤</button>
+        <textarea class="ai-input" id="intake-ai-input" placeholder="질문을 입력하세요..." rows="1"></textarea>
+        <button class="ai-send-btn" onclick="sendAiMessage('intake')">↑</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 모달: 이상 보고 ===== -->
+<div id="modal-alert-report" class="modal-overlay" onclick="handleOverlayClick(event,'alert-report')">
+  <div class="slide-panel">
+    <div class="panel-handle"></div>
+    <div class="panel-header">
+      <div class="panel-title">⚠️ 이상 보고</div>
+      <button class="panel-close" onclick="closePanel('alert-report')">✕</button>
+    </div>
+    <div class="panel-body">
+      <div style="font-size:15px;color:var(--sp-text-sub);margin-bottom:20px;">발생한 이상 유형을 선택하세요.</div>
+      <div class="alert-type-grid">
+        <button class="alert-type-btn" onclick="selectAlert(this)">
+          <div class="alert-icon">🦠</div>
+          <div>이물질 발견</div>
+        </button>
+        <button class="alert-type-btn" onclick="selectAlert(this)">
+          <div class="alert-icon">⚖️</div>
+          <div>중량 기준 미달</div>
+        </button>
+        <button class="alert-type-btn" onclick="selectAlert(this)">
+          <div class="alert-icon">🌡️</div>
+          <div>온도 기준 초과</div>
+        </button>
+        <button class="alert-type-btn" onclick="selectAlert(this)">
+          <div class="alert-icon">🔍</div>
+          <div>외관 불량 (심각)</div>
+        </button>
+        <button class="alert-type-btn" onclick="selectAlert(this)">
+          <div class="alert-icon">📦</div>
+          <div>포장 훼손</div>
+        </button>
+        <button class="alert-type-btn" onclick="selectAlert(this)">
+          <div class="alert-icon">📝</div>
+          <div>서류 불일치</div>
+        </button>
+      </div>
+      <div style="margin-bottom:16px;">
+        <div class="form-label">상세 내용 (선택)</div>
+        <textarea style="width:100%;background:var(--sp-bg);border:2px solid var(--sp-border);border-radius:var(--radius-md);padding:14px 16px;font-size:16px;color:var(--sp-text-main);resize:none;height:80px;outline:none;font-family:inherit;" placeholder="추가 내용을 입력하세요..."></textarea>
+      </div>
+      <button class="alert-report-btn" onclick="submitAlert()">
+        <span>🚨</span>
+        <span>이상 즉시 보고</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 모달: 출하 AI Agent ===== -->
+<div id="modal-ship-ai-agent" class="modal-overlay" onclick="handleOverlayClick(event,'ship-ai-agent')">
+  <div class="slide-panel" style="max-height:95vh;">
+    <div class="panel-handle"></div>
+    <div class="panel-header">
+      <div class="panel-title">🤖 출하 AI Agent</div>
+      <button class="panel-close" onclick="closePanel('ship-ai-agent')">✕</button>
+    </div>
+    <div class="ai-panel-body">
+      <div style="font-size:13px;font-weight:700;color:var(--sp-text-muted);margin-bottom:10px;">자주 묻는 질문</div>
+      <div class="ai-suggestion-row">
+        <button class="ai-suggest-btn" onclick="sendAiQuestionShip(this.textContent)" style="background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8;">FER-0523-003 보류 사유가 뭐야?</button>
+        <button class="ai-suggest-btn" onclick="sendAiQuestionShip(this.textContent)" style="background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8;">오늘 출하 품질 기준 알려줘</button>
+        <button class="ai-suggest-btn" onclick="sendAiQuestionShip(this.textContent)" style="background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8;">최근 클레임 원인 분석 보여줘</button>
+        <button class="ai-suggest-btn" onclick="sendAiQuestionShip(this.textContent)" style="background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8;">A마트 클레임 대응 가이드는?</button>
+      </div>
+      <div class="ai-chat-area" id="ship-chat">
+        <div class="chat-msg">
+          <div class="chat-avatar" style="background:#1d4ed8;">AI</div>
+          <div class="chat-bubble">출하 AI Agent입니다. 출하 승인 기준, LOT 추적, 클레임 대응에 대해 질문해 주세요.</div>
+        </div>
+      </div>
+      <div class="ai-input-row">
+        <button class="ai-mic-btn" onclick="toggleMic()">🎤</button>
+        <textarea class="ai-input" id="ship-ai-input" placeholder="질문을 입력하세요..." rows="1"></textarea>
+        <button class="ai-send-btn" style="background:#1d4ed8;" onclick="sendAiMessage('ship')">↑</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 모달: 출하 상세 ===== -->
+<div id="modal-ship-detail" class="modal-overlay" onclick="handleOverlayClick(event,'ship-detail')">
+  <div class="slide-panel">
+    <div class="panel-handle"></div>
+    <div class="panel-header">
+      <div class="panel-title">📦 출하 LOT 상세</div>
+      <button class="panel-close" onclick="closePanel('ship-detail')">✕</button>
+    </div>
+    <div class="panel-body">
+      <div style="background:var(--sp-primary-light);border:1px solid #bbf7d0;border-radius:var(--radius-md);padding:18px 20px;margin-bottom:20px;">
+        <div style="font-size:14px;color:var(--sp-text-muted);margin-bottom:4px;">LOT 번호</div>
+        <div style="font-size:22px;font-weight:700;color:var(--sp-primary);font-family:monospace;letter-spacing:0.06em;">FER-2026-0523-001</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+        <div class="sp-status-card"><div class="sp-status-label">품목</div><div style="font-size:18px;font-weight:700;color:var(--sp-text-main);">백김치 500g</div></div>
+        <div class="sp-status-card"><div class="sp-status-label">총 중량</div><div class="sp-status-value">100<span class="sp-status-unit">kg</span></div></div>
+        <div class="sp-status-card"><div class="sp-status-label">포장 수량</div><div class="sp-status-value">200<span class="sp-status-unit">박스</span></div></div>
+        <div class="sp-status-card"><div class="sp-status-label">불량 수량</div><div class="sp-status-value" style="color:var(--sp-grade-a)">0<span class="sp-status-unit">박스</span></div></div>
+      </div>
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--radius-md);padding:16px 20px;display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+        <div style="font-size:32px;">✅</div>
+        <div>
+          <div style="font-size:16px;font-weight:700;color:#15803d;">AI 출하 승인 완료</div>
+          <div style="font-size:13px;color:var(--sp-text-muted);margin-top:2px;">품질 기준 충족 · 발효 완료 확인 · 09:18 승인</div>
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--sp-text-muted);margin-bottom:8px;font-weight:700;">거래처 정보</div>
+      <div style="background:var(--sp-bg);border:1px solid var(--sp-border);border-radius:var(--radius-md);padding:14px 18px;margin-bottom:20px;">
+        <div style="font-size:16px;font-weight:700;">서울 이마트 성수점</div>
+        <div style="font-size:13px;color:var(--sp-text-muted);margin-top:2px;">출하 예정: 2026.05.23 14:00 · 운송: 냉장 직배</div>
+      </div>
+      <button class="submit-btn" onclick="closePanel('ship-detail');showToast('출하 확인이 완료되었습니다.')">
+        <span>🚚</span>
+        <span>출하 확인 완료</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 토스트 알림 ===== -->
+<div id="toast" style="
+  position:fixed;
+  bottom:40px;
+  left:50%;
+  transform:translateX(-50%) translateY(100px);
+  background:#1a202c;
+  color:white;
+  padding:16px 28px;
+  border-radius:12px;
+  font-size:16px;
+  font-weight:600;
+  box-shadow:0 8px 32px rgba(0,0,0,0.4);
+  transition:transform 0.3s cubic-bezier(0.16,1,0.3,1);
+  z-index:9999;
+  border:1px solid #2d3748;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  white-space:nowrap;
+">
+  <span id="toast-icon">✅</span>
+  <span id="toast-text">등록 완료</span>
+</div>
+
+<script>
+/* ===== 탭 전환 ===== */
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+  document.getElementById('tab-' + name).classList.add('active');
+  const btns = document.querySelectorAll('.tab-btn');
+  const nameMap = { intake: 0, shipping: 1, display: 2 };
+  btns[nameMap[name]].classList.add('active');
+}
+
+/* ===== 패널 열기/닫기 ===== */
+function openPanel(name) {
+  document.getElementById('modal-' + name).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePanel(name) {
+  document.getElementById('modal-' + name).classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function handleOverlayClick(e, name) {
+  if (e.target === document.getElementById('modal-' + name)) {
+    closePanel(name);
+  }
+}
+
+/* ===== 시계 업데이트 ===== */
+function updateClocks() {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  const ss = String(now.getSeconds()).padStart(2, '0');
+  const timeStr = `${hh}:${mm}:${ss}`;
+
+  const ic = document.getElementById('intake-clock');
+  const sc = document.getElementById('ship-clock');
+  const dc = document.getElementById('db-clock');
+  if (ic) ic.textContent = timeStr;
+  if (sc) sc.textContent = timeStr;
+  if (dc) dc.textContent = timeStr;
+
+  const days = ['일', '월', '화', '수', '목', '금', '토'];
+  const dateEl = document.getElementById('db-date');
+  if (dateEl) {
+    dateEl.textContent = `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 ${days[now.getDay()]}요일`;
+  }
+}
+
+setInterval(updateClocks, 1000);
+updateClocks();
+
+/* ===== 현황판 데이터 갱신 시뮬레이션 (30초 주기) ===== */
+let simTick = 0;
+
+function simulateDashboard() {
+  simTick++;
+
+  /* 시간당 생산량: 2700 ~ 3050 사이 랜덤 변동 */
+  const prod = Math.round((2700 + Math.random() * 350) / 10) * 10;
+  const pct = (prod / 3000 * 100).toFixed(1);
+  const prodEl = document.getElementById('db-production');
+  const pctEl = document.getElementById('db-prod-pct');
+  if (prodEl) {
+    prodEl.textContent = prod.toLocaleString('ko-KR');
+    prodEl.style.color = prod >= 2750 ? 'var(--db-normal)' : 'var(--db-warning)';
+  }
+  if (pctEl) {
+    pctEl.textContent = pct + '%';
+    pctEl.style.color = prod >= 2750 ? 'var(--db-normal)' : 'var(--db-warning)';
+  }
+
+  /* 금일 누적 생산량: 매 틱마다 증가 */
+  const totalBase = 24650 + simTick * 42;
+  const totalEl = document.getElementById('db-total');
+  if (totalEl) totalEl.textContent = totalBase.toLocaleString('ko-KR') + ' kg';
+
+  /* 출하 완료 수: 5~7 사이 */
+  const shipDone = Math.min(8, 5 + Math.floor(simTick / 3));
+  const shipEl = document.getElementById('db-ship-done');
+  if (shipEl) {
+    shipEl.textContent = shipDone;
+    shipEl.style.color = shipDone >= 6 ? 'var(--db-normal)' : 'var(--db-accent)';
+  }
+
+  /* 불량률 소폭 변동 */
+  const defect = (0.75 + Math.random() * 0.3).toFixed(2);
+  const defectEl = document.getElementById('db-defect');
+  if (defectEl) {
+    defectEl.textContent = defect + '%';
+    defectEl.className = 'db-defect-value ' + (parseFloat(defect) <= 1.0 ? 'defect-ok' : 'defect-warn');
+  }
+
+  /* 발효 진행률: B02 배치 진행 */
+  const b2Pct = Math.min(99, 54 + simTick * 2);
+  const b2Fill = document.getElementById('batch2-fill');
+  const b2Text = document.getElementById('batch2-pct');
+  if (b2Fill) b2Fill.style.width = b2Pct + '%';
+  if (b2Text) b2Text.textContent = '발효 진행률 ' + b2Pct + '%';
+
+  /* 갱신 시각 */
+  const now = new Date();
+  const updateEl = document.getElementById('db-update');
+  if (updateEl) {
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const s = String(now.getSeconds()).padStart(2,'0');
+    updateEl.textContent = `마지막 갱신: ${h}:${m}:${s}`;
+  }
+}
+
+setInterval(simulateDashboard, 30000);
+
+/* ===== LOT 스캔 시뮬레이션 ===== */
+function simulateScan() {
+  const lots = [
+    'RAW-2026-0523-PC-014',
+    'RAW-2026-0523-PC-015',
+    'RAW-2026-0523-MU-003',
+    'RAW-2026-0523-GR-007'
+  ];
+  const el = document.getElementById('lot-input-val');
+  if (el) {
+    el.value = lots[Math.floor(Math.random() * lots.length)];
+    el.style.borderColor = 'var(--sp-primary)';
+    showToast('바코드 스캔 완료');
+    setTimeout(() => { el.style.borderColor = ''; }, 1500);
+  }
+}
+
+/* ===== 등급 선택 ===== */
+let selectedGrade = 'a';
+function selectGrade(g) {
+  ['a', 'b', 'c'].forEach(x => {
+    const el = document.getElementById('grade-' + x);
+    if (el) el.classList.toggle('selected', x === g);
+  });
+  selectedGrade = g;
+}
+
+/* ===== 키패드 ===== */
+let weightStr = '350';
+function keypadInput(k) {
+  if (k === 'del') {
+    weightStr = weightStr.slice(0, -1) || '0';
+  } else if (k === 'ok') {
+    showToast('중량 ' + weightStr + ' kg 입력 완료');
+    return;
+  } else {
+    if (weightStr === '0') weightStr = k;
+    else weightStr += k;
+    if (weightStr.length > 6) weightStr = weightStr.slice(0, 6);
+  }
+  const el = document.getElementById('weight-display');
+  if (el) el.textContent = parseInt(weightStr || '0').toLocaleString('ko-KR');
+}
+
+/* ===== 입고 등록 완료 ===== */
+function submitIntake() {
+  const lot = document.getElementById('lot-input-val')?.value || '';
+  if (!lot) { showToast('LOT 번호를 입력해주세요', '⚠️'); return; }
+  showToast(`LOT ${lot} 입고 등록 완료`);
+  setTimeout(() => closePanel('intake-register'), 1200);
+}
+
+/* ===== 이상 보고 ===== */
+function selectAlert(btn) {
+  document.querySelectorAll('.alert-type-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function submitAlert() {
+  showToast('이상 보고가 전송되었습니다', '🚨');
+  setTimeout(() => closePanel('alert-report'), 1200);
+}
+
+/* ===== AI 채팅 ===== */
+const aiResponses = {
+  intake: [
+    '평창고랭지 영농조합의 최근 3개월 입고 품질 이력을 조회했습니다. A등급 비율: 78%, B등급: 20%, C등급: 2%로 우수한 공급처입니다.',
+    '오늘 기준 배추 입고 기준: 직경 25cm 이상, 외엽 손상 10% 미만, 수분 함량 92~95%, 냉장 보관 온도 2~5°C입니다.',
+    '해당 LOT의 예측 발효 품질은 "정상(A)" 등급입니다. 절임 조건이 기준치 내에 있으며 발효 완료 예상 시각은 내일 오전 8시 30분입니다.',
+    'C등급 배추 입고 시 처리 절차: 1) 품질 관리자 즉시 통보 2) 분리 보관 3) 재검수 후 처리 결정 (반품/할인 수령/폐기). 반드시 이상 보고서를 작성하세요.'
+  ],
+  ship: [
+    'FER-0523-003 보류 사유: 산도 측정값 0.82%로 기준치 0.7% 초과. AI가 추가 숙성 4시간을 권장합니다. 오후 2시 재측정 후 재승인 가능합니다.',
+    '오늘 출하 품질 기준: 산도 0.5~0.7%, 염도 1.8~2.2%, 외관 이상 없음, 발효 완료 확인, 금속검출 통과, 포장 밀봉 상태 이상 없음.',
+    '최근 3개월 클레임 분석: 염도 과다(42%), 포장 불량(28%), 이취 발생(18%), 기타(12%). 주요 원인: 혼합 공정 염도 측정 오류 가능성 높음.',
+    'A마트 클레임 대응 가이드: 1) 24시간 내 공식 사과 메일 발송 2) 해당 LOT 전량 수거 3) 교환 또는 환불 처리 4) 재발 방지 보고서 3일 내 제출.'
+  ]
+};
+
+let chatCounters = { intake: 0, ship: 0 };
+
+function sendAiQuestion(text) {
+  const input = document.getElementById('intake-ai-input');
+  if (input) input.value = text;
+  sendAiMessage('intake');
+}
+
+function sendAiQuestionShip(text) {
+  const input = document.getElementById('ship-ai-input');
+  if (input) input.value = text;
+  sendAiMessage('ship');
+}
+
+function sendAiMessage(type) {
+  const inputId = type === 'intake' ? 'intake-ai-input' : 'ship-ai-input';
+  const chatId = type === 'intake' ? 'intake-chat' : 'ship-chat';
+  const input = document.getElementById(inputId);
+  const chat = document.getElementById(chatId);
+  if (!input || !chat || !input.value.trim()) return;
+
+  const userMsg = input.value.trim();
+  input.value = '';
+
+  /* 사용자 메시지 추가 */
+  const userDiv = document.createElement('div');
+  userDiv.className = 'chat-msg user';
+  userDiv.innerHTML = `
+    <div class="chat-avatar user-av">나</div>
+    <div class="chat-bubble">${userMsg}</div>
+  `;
+  chat.appendChild(userDiv);
+
+  /* 타이핑 표시 */
+  const typingDiv = document.createElement('div');
+  typingDiv.className = 'chat-msg';
+  typingDiv.innerHTML = `
+    <div class="chat-avatar"${type === 'ship' ? ' style="background:#1d4ed8"' : ''}>AI</div>
+    <div class="chat-bubble" style="color:#94a3b8">답변을 생성하고 있습니다...</div>
+  `;
+  chat.appendChild(typingDiv);
+  chat.scrollTop = chat.scrollHeight;
+
+  /* AI 응답 (1.5초 딜레이) */
+  setTimeout(() => {
+    const responses = aiResponses[type];
+    const idx = chatCounters[type] % responses.length;
+    chatCounters[type]++;
+    typingDiv.querySelector('.chat-bubble').textContent = responses[idx];
+    typingDiv.querySelector('.chat-bubble').style.color = '';
+    chat.scrollTop = chat.scrollHeight;
+  }, 1500);
+}
+
+/* ===== 마이크 토글 ===== */
+let micOn = false;
+function toggleMic() {
+  micOn = !micOn;
+  const btn = document.getElementById('mic-btn');
+  if (btn) btn.classList.toggle('recording', micOn);
+  if (micOn) {
+    showToast('음성 인식 중...', '🎤');
+    setTimeout(() => {
+      if (micOn) {
+        micOn = false;
+        if (btn) btn.classList.remove('recording');
+        const input = document.getElementById('intake-ai-input');
+        if (input) input.value = '오늘 배추 입고 기준이 뭐야?';
+      }
+    }, 2500);
+  }
+}
+
+/* ===== 토스트 알림 ===== */
+let toastTimer = null;
+function showToast(msg, icon = '✅') {
+  const toast = document.getElementById('toast');
+  const textEl = document.getElementById('toast-text');
+  const iconEl = document.getElementById('toast-icon');
+  if (!toast || !textEl || !iconEl) return;
+  textEl.textContent = msg;
+  iconEl.textContent = icon;
+  toast.style.transform = 'translateX(-50%) translateY(0)';
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toast.style.transform = 'translateX(-50%) translateY(100px)';
+  }, 2800);
+}
+</script>
+</body>
+</html>

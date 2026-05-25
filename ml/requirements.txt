@@ -1,0 +1,25 @@
+# 꽃순이김치 제조AI MES — 발효 ML 모듈 의존성
+# 프로젝트: SF26179540 / 로뎀솔루션
+# 설치:  pip install -r ml/requirements.txt
+
+# --- 코어 데이터 ---
+numpy>=1.26.0
+pandas>=2.2.0
+pyarrow>=15.0.0            # Parquet 저장
+
+# --- 머신러닝 ---
+scikit-learn>=1.4.0        # RandomForest, SVR, IsolationForest, KNNImputer, scaler
+xgboost>=2.0.0             # 품질 분류 / 이상탐지
+shap>=0.44.0               # SHAP 요인 분석 (선택: 미설치 시 feature_importance 폴백)
+imbalanced-learn>=0.12.0   # SMOTE 오버샘플링 (선택: 미설치 시 scale_pos_weight 보정)
+
+# --- 딥러닝 (LSTM) ---
+tensorflow>=2.15.0         # LSTM 발효 완료 시점 예측 (선택: 미설치 시 LSTM 건너뜀)
+
+# --- 시계열 트렌드 (선택) ---
+prophet>=1.1.5             # 생산량 트렌드 예측
+
+# --- 추론 서비스 ---
+asyncpg>=0.29.0            # PostgreSQL 비동기 로드
+httpx>=0.27.0              # MES API(POST /predictions, /anomalies) 호출
+joblib>=1.3.0              # 모델 직렬화

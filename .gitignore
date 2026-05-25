@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# 가상환경
+.venv/
+venv/
+env/
+.env
+
+# 환경변수
+.env.local
+.env.*.local
+*.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Docker
+*.log
+
+# ML 모델 (대용량 바이너리)
+*.pkl
+*.joblib
+*.h5
+*.pt
+*.pth
+ml/models/*.bin
+
+# 데이터 파일
+*.csv
+*.xlsx
+data/raw/
+data/processed/
+
+# PDF (사업계획서 등 대용량)
+*.pdf
+
+# Claude 로컬 메모리 (개인 설정)
+.claude/agent-memory/
+.claude/plugins/

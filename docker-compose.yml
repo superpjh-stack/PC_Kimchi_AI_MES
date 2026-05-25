@@ -1,0 +1,93 @@
+# =====================================================================
+# 꽃순이김치 제조AI MES — 개발 환경 Docker Compose
+# 프로젝트: SF26179540 / 로뎀솔루션 주식회사
+#
+# 구성: PostgreSQL(운영DB) + pgvector(Vector DB) + FastAPI + Streamlit
+# 실행: docker compose up --build
+#       (OpenAI 키는 .env 또는 환경변수 OPENAI_API_KEY 로 주입)
+#
+# 접속:
+#   - FastAPI Swagger : http://localhost:8000/docs
+#   - Streamlit UI    : http://localhost:8501
+#   - 운영 DB         : localhost:5432  (kimchi_mes)
+#   - Vector DB       : localhost:5433  (vector_db)
+# =====================================================================
+version: "3.9"
+
+services:
+  # ── 운영 DB (PostgreSQL) ────────────────────────────────────────────
+  db:
+    image: postgres:15
+    container_name: kimchi-db
+    environment:
+      POSTGRES_DB: kimchi_mes
+      POSTGRES_USER: mes_user
+      POSTGRES_PASSWORD: mes_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # 컨테이너 최초 기동 시 통합 스키마 자동 적재
+      - ./_workspace:/docker-entrypoint-initdb.d/_workspace:ro
+      - ./db_init.sql:/docker-entrypoint-initdb.d/01_db_init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mes_user -d kimchi_mes"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Vector DB (pgvector) ────────────────────────────────────────────
+  vector-db:
+    image: pgvector/pgvector:pg15
+    container_name: kimchi-vector-db
+    environment:
+      POSTGRES_DB: vector_db
+      POSTGRES_USER: mes_user
+      POSTGRES_PASSWORD: mes_pass
+    ports:
+      - "5433:5432"
+    volumes:
+      - vectordata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mes_user -d vector_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── FastAPI 백엔드 ──────────────────────────────────────────────────
+  api:
+    build: .
+    container_name: kimchi-api
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    environment:
+      # database.py 는 DATABASE_URL 또는 개별 DB_* 변수를 모두 인식한다.
+      DATABASE_URL: postgresql://mes_user:mes_pass@db:5432/kimchi_mes
+      VECTOR_DB_URL: postgresql://mes_user:mes_pass@vector-db:5432/vector_db
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    depends_on:
+      db:
+        condition: service_healthy
+      vector-db:
+        condition: service_healthy
+    volumes:
+      - .:/app
+
+  # ── Streamlit UI ────────────────────────────────────────────────────
+  ui:
+    build: .
+    container_name: kimchi-ui
+    command: streamlit run streamlit_app/Home.py --server.port 8501 --server.address 0.0.0.0
+    ports:
+      - "8501:8501"
+    environment:
+      API_BASE_URL: http://api:8000
+    depends_on:
+      - api
+    volumes:
+      - .:/app
+
+volumes:
+  pgdata:
+  vectordata:

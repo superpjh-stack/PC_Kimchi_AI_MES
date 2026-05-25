@@ -1,0 +1,27 @@
+{
+  "timestamp": "2026-05-25T08:20:00.000Z",
+  "reason": "pm3-check-phase-start",
+  "status": {
+    "version": "2.0",
+    "lastUpdated": "2026-05-25T08:20:00.000Z",
+    "primaryFeature": "pm3-process-data-kpi-system",
+    "features": {
+      "pm3-process-data-kpi-system": {
+        "phase": "check",
+        "startedAt": "2026-05-23T00:00:00.000Z",
+        "planPath": "docs/01-plan/features/pm3-process-data-kpi-system.plan.md",
+        "designPath": "docs/02-design/features/pm3-process-data-kpi-system.design.md",
+        "matchRate": null,
+        "iterationCount": 0,
+        "doSummary": {
+          "modules": ["공정관리","데이터관리","KPI관리","기준정보관리","사용자/시스템관리"],
+          "dbSchemas": 5,
+          "apiRouters": 5,
+          "uiPages": 5,
+          "qaReports": 5,
+          "uiIntegrated": "2026-05-25"
+        }
+      }
+    }
+  }
+}

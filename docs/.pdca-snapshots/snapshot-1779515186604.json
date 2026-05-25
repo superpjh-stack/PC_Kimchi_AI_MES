@@ -1,0 +1,44 @@
+{
+  "timestamp": "2026-05-23T05:46:26.597Z",
+  "reason": "compaction",
+  "status": {
+    "version": "2.0",
+    "lastUpdated": "2026-05-23T00:00:00.000Z",
+    "activeFeatures": [
+      "pm3-process-data-kpi-system"
+    ],
+    "primaryFeature": "pm3-process-data-kpi-system",
+    "features": {
+      "pm3-process-data-kpi-system": {
+        "phase": "plan",
+        "startedAt": "2026-05-23T00:00:00.000Z",
+        "planPath": "docs/01-plan/features/pm3-process-data-kpi-system.plan.md",
+        "matchRate": null,
+        "iterationCount": 0
+      }
+    },
+    "pipeline": {
+      "currentPhase": 1,
+      "level": "Dynamic",
+      "phaseHistory": [
+        {
+          "phase": "plan",
+          "feature": "pm3-process-data-kpi-system",
+          "completedAt": "2026-05-23T00:00:00.000Z"
+        }
+      ]
+    },
+    "session": {
+      "startedAt": "2026-05-23T00:30:37.906Z",
+      "onboardingCompleted": true,
+      "lastActivity": "2026-05-23T00:00:00.000Z"
+    },
+    "history": [
+      {
+        "event": "plan_created",
+        "feature": "pm3-process-data-kpi-system",
+        "timestamp": "2026-05-23T00:00:00.000Z"
+      }
+    ]
+  }
+}

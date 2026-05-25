@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>꽃순이김치 MES - AI 대시보드</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root {
+  --bg-main:#0a1628; --bg-sidebar:#0f2044; --bg-card:#162035; --bg-card2:#1a2a45;
+  --accent-blue:#1a73e8; --accent-cyan:#00b4d8; --accent-green:#00c853;
+  --accent-orange:#ff9800; --accent-red:#f44336; --accent-purple:#9c27b0;
+  --text-primary:#e8eaf6; --text-secondary:#8899bb; --text-muted:#556688;
+  --border:#1e3a5f; --sidebar-w:220px; --header-h:56px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',sans-serif;background:var(--bg-main);color:var(--text-primary);height:100vh;display:grid;grid-template-columns:var(--sidebar-w) 1fr;grid-template-rows:var(--header-h) 1fr;overflow:hidden;}
+.header{grid-column:1/-1;background:var(--bg-sidebar);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:16px;z-index:10;}
+.logo{font-size:18px;font-weight:700;color:var(--accent-cyan);white-space:nowrap;}
+.logo span{color:var(--text-secondary);font-size:12px;font-weight:400;margin-left:8px;}
+.header-tabs{display:flex;gap:4px;margin-left:20px;}
+.htab{padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;color:var(--text-secondary);border:none;background:none;}
+.htab.active{background:var(--accent-blue);color:#fff;}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:12px;}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--accent-blue);display:flex;align-items:center;justify-content:center;font-size:13px;}
+.badge{background:var(--accent-red);color:#fff;border-radius:10px;padding:2px 7px;font-size:11px;}
+.sidebar{background:var(--bg-sidebar);border-right:1px solid var(--border);overflow-y:auto;padding:12px 0;}
+.sidebar-section{font-size:10px;color:var(--text-muted);padding:8px 16px 4px;text-transform:uppercase;letter-spacing:.8px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 16px;font-size:13px;color:var(--text-secondary);cursor:pointer;border-left:3px solid transparent;}
+.nav-item:hover{background:rgba(26,115,232,.1);color:var(--text-primary);}
+.nav-item.active{background:rgba(26,115,232,.15);color:var(--accent-cyan);border-left-color:var(--accent-cyan);}
+.nav-item i{width:16px;text-align:center;font-size:13px;}
+.content{overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;}
+.tab-bar{display:flex;gap:6px;flex-wrap:wrap;}
+.tab-btn{padding:7px 16px;border-radius:6px;font-size:13px;cursor:pointer;border:1px solid var(--border);background:var(--bg-card2);color:var(--text-secondary);}
+.tab-btn.active{background:var(--accent-blue);border-color:var(--accent-blue);color:#fff;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:16px;}
+.card-title{font-size:14px;font-weight:600;color:var(--accent-cyan);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+.row4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.row5{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;}
+/* KPI Summary */
+.kpi-card{background:var(--bg-card2);border:1px solid var(--border);border-radius:8px;padding:12px;}
+.kpi-val{font-size:24px;font-weight:700;color:var(--accent-cyan);}
+.kpi-label{font-size:11px;color:var(--text-muted);margin-top:2px;}
+.kpi-delta{font-size:11px;font-weight:500;margin-top:4px;}
+.up{color:var(--accent-green);} .dn{color:var(--accent-red);} .warn{color:var(--accent-orange);}
+/* Process Status */
+.proc-flow{display:flex;align-items:center;gap:6px;overflow-x:auto;padding:8px 0;}
+.proc-step{display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;}
+.proc-box{width:80px;height:52px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:600;gap:3px;border:1px solid;}
+.proc-ok{background:rgba(0,200,83,.12);border-color:rgba(0,200,83,.4);color:var(--accent-green);}
+.proc-warn{background:rgba(255,152,0,.12);border-color:rgba(255,152,0,.4);color:var(--accent-orange);}
+.proc-danger{background:rgba(244,67,54,.12);border-color:rgba(244,67,54,.4);color:var(--accent-red);}
+.proc-off{background:rgba(85,102,136,.12);border-color:rgba(85,102,136,.3);color:var(--text-muted);}
+.proc-arrow{color:var(--text-muted);font-size:16px;}
+.proc-label{font-size:10px;color:var(--text-muted);text-align:center;max-width:80px;}
+/* Fermentation status */
+.ferm-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.ferm-card{background:var(--bg-card2);border-radius:8px;padding:12px;border:1px solid var(--border);}
+.ferm-card.danger{border-color:rgba(244,67,54,.4);}
+.ferm-card.warning{border-color:rgba(255,152,0,.4);}
+.ferm-card.ok{border-color:rgba(0,200,83,.3);}
+.ferm-lot{font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:6px;}
+.ferm-vals{display:flex;gap:8px;flex-wrap:wrap;}
+.ferm-val{font-size:11px;}
+.ferm-val .label{color:var(--text-muted);}
+.ferm-val .val{color:var(--text-primary);font-weight:600;}
+.ferm-progress{margin-top:6px;height:4px;background:var(--bg-card);border-radius:2px;overflow:hidden;}
+.ferm-fill{height:100%;border-radius:2px;}
+/* Stat bar */
+.stat-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.stat-row:last-child{border-bottom:none;}
+.tbl{width:100%;border-collapse:collapse;font-size:13px;}
+.tbl th{background:var(--bg-card2);padding:9px 12px;text-align:left;color:var(--text-secondary);font-weight:500;border-bottom:1px solid var(--border);}
+.tbl td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text-primary);}
+.tbl tr:hover td{background:rgba(26,115,232,.06);}
+.badge-s{padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500;}
+.badge-ok{background:rgba(0,200,83,.15);color:var(--accent-green);}
+.badge-warn{background:rgba(255,152,0,.15);color:var(--accent-orange);}
+.badge-danger{background:rgba(244,67,54,.15);color:var(--accent-red);}
+.badge-info{background:rgba(0,180,216,.15);color:var(--accent-cyan);}
+.now{font-size:12px;color:var(--text-muted);}
+canvas{max-height:200px;}
+/* Board view */
+.board-layout{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;gap:16px;}
+.board-card{background:var(--bg-card2);border:1px solid var(--border);border-radius:12px;padding:20px;}
+.board-kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.board-val{font-size:36px;font-weight:800;text-align:center;}
+.board-label{font-size:12px;color:var(--text-muted);text-align:center;margin-top:4px;}
+.alert-ticker{background:rgba(244,67,54,.1);border:1px solid rgba(244,67,54,.3);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px;font-size:12px;}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="logo">꽃순이김치 MES <span>스마트공장 통합관리</span></div>
+  <div class="header-tabs">
+    <button class="htab active">AI 대시보드</button>
+    <button class="htab">원재료관리</button>
+    <button class="htab">숙성발효</button>
+    <button class="htab">포장출하</button>
+    <button class="htab">공정관리</button>
+    <button class="htab">데이터관리</button>
+    <button class="htab">AI Agent</button>
+    <button class="htab">기준정보</button>
+    <button class="htab">사용자/시스템</button>
+    <button class="htab">KPI</button>
+  </div>
+  <div class="header-right">
+    <span class="now" id="nowTime">2026-05-23 09:15:32</span>
+    <i class="fa fa-bell" style="color:var(--text-secondary)"></i>
+    <span class="badge">5</span>
+    <div class="avatar"><i class="fa fa-user" style="font-size:14px"></i></div>
+    <span style="font-size:13px;color:var(--text-secondary)">김관리</span>
+  </div>
+</header>
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="sidebar-section">AI 대시보드</div>
+  <div class="nav-item active" onclick="showTab(1)"><i class="fa fa-chart-pie"></i> 생산현황 분석</div>
+  <div class="nav-item" onclick="showTab(2)"><i class="fa fa-star"></i> 품질현황 분석</div>
+  <div class="nav-item" onclick="showTab(3)"><i class="fa fa-flask"></i> 발효상태 모니터링</div>
+  <div class="nav-item" onclick="showTab(4)"><i class="fa fa-truck"></i> 출하현황 분석</div>
+  <div class="nav-item" onclick="showTab(5)"><i class="fa fa-tv"></i> 통합 현황판</div>
+
+  <div class="sidebar-section" style="margin-top:12px">전체 모듈</div>
+  <div class="nav-item"><i class="fa fa-box"></i> 원재료관리</div>
+  <div class="nav-item"><i class="fa fa-flask"></i> 숙성발효관리</div>
+  <div class="nav-item"><i class="fa fa-truck"></i> 포장출하관리</div>
+  <div class="nav-item"><i class="fa fa-industry"></i> 공정관리</div>
+  <div class="nav-item"><i class="fa fa-database"></i> 데이터관리</div>
+  <div class="nav-item"><i class="fa fa-comments"></i> AI Agent</div>
+  <div class="nav-item"><i class="fa fa-check-double"></i> 기준정보관리</div>
+  <div class="nav-item"><i class="fa fa-users"></i> 사용자/시스템</div>
+  <div class="nav-item"><i class="fa fa-chart-line"></i> KPI관리</div>
+</nav>
+
+<!-- Content -->
+<div class="content">
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="showTab(1)"><i class="fa fa-chart-pie"></i> 생산현황</button>
+    <button class="tab-btn" onclick="showTab(2)"><i class="fa fa-star"></i> 품질현황</button>
+    <button class="tab-btn" onclick="showTab(3)"><i class="fa fa-flask"></i> 발효모니터링</button>
+    <button class="tab-btn" onclick="showTab(4)"><i class="fa fa-truck"></i> 출하현황</button>
+    <button class="tab-btn" onclick="showTab(5)"><i class="fa fa-tv"></i> 통합현황판</button>
+  </div>
+
+  <!-- Tab 1: 생산현황 -->
+  <div class="tab-panel active" id="tab1">
+    <!-- KPI Summary Row -->
+    <div class="row5" style="margin-bottom:6px">
+      <div class="kpi-card"><div class="kpi-val" style="color:var(--accent-green)">3,012</div><div class="kpi-label">시간당 생산량 (kg/h)</div><div class="kpi-delta up">▲ 목표 3,000 달성</div></div>
+      <div class="kpi-card"><div class="kpi-val">24,180</div><div class="kpi-label">오늘 생산량 (kg)</div><div class="kpi-delta up">▲ +0.75% vs 목표</div></div>
+      <div class="kpi-card"><div class="kpi-val" style="color:var(--accent-orange)">94.2<span style="font-size:14px">%</span></div><div class="kpi-label">설비 가동률</div><div class="kpi-delta up">▲ 목표 ≥90%</div></div>
+      <div class="kpi-card"><div class="kpi-val" style="color:var(--accent-orange)">82.5<span style="font-size:14px">%</span></div><div class="kpi-label">OEE 종합효율</div><div class="kpi-delta warn">▼ 목표 85% 미달</div></div>
+      <div class="kpi-card"><div class="kpi-val">12</div><div class="kpi-label">발효 진행 LOT</div><div class="kpi-delta" style="color:var(--accent-red)">⚠ 이상 2건</div></div>
+    </div>
+
+    <!-- Process Flow -->
+    <div class="card">
+      <div class="card-title"><i class="fa fa-stream"></i> 실시간 공정 흐름 상태</div>
+      <div class="proc-flow">
+        <div class="proc-step"><div class="proc-box proc-ok"><i class="fa fa-box-open"></i><span>입고</span></div><div class="proc-label">정상 520kg/h</div></div>
+        <div class="proc-arrow">→</div>
+        <div class="proc-step"><div class="proc-box proc-ok"><i class="fa fa-cut"></i><span>절단</span></div><div class="proc-label">정상 480kg/h</div></div>
+        <div class="proc-arrow">→</div>
+        <div class="proc-step"><div class="proc-box proc-ok"><i class="fa fa-tint"></i><span>세척/절임</span></div><div class="proc-label">정상 460kg/h</div></div>
+        <div class="proc-arrow">→</div>
+        <div class="proc-step"><div class="proc-box proc-ok"><i class="fa fa-filter"></i><span>세척/선별</span></div><div class="proc-label">정상</div></div>
+        <div class="proc-arrow">→</div>
+        <div class="proc-step"><div class="proc-box proc-warn"><i class="fa fa-compress"></i><span>탈수</span></div><div class="proc-label">주의 390kg/h</div></div>
+        <div class="proc-arrow">→</div>
+        <div class="proc-step"><div class="proc-box proc-ok"><i class="fa fa-blender"></i><span>혼합</span></div><div class="proc-label">정상 420kg/h</div></div>
+        <div class="proc-arrow">→</div>
+        <div class="proc-step"><div class="proc-box proc-danger"><i class="fa fa-flask"></i><span>발효</span></div><div class="proc-label">이상 F03 경보</div></div>
+        <div class="proc-arrow">→</div>
+        <div class="proc-step"><div class="proc-box proc-ok"><i class="fa fa-search"></i><span>금속검출</span></div><div class="proc-label">정상</div></div>
+        <div class="proc-arrow">→</div>
+        <div class="proc-step"><div class="proc-box proc-ok"><i class="fa fa-box"></i><span>포장/출하</span></div><div class="proc-label">정상 350kg/h</div></div>
+      </div>
+    </div>
+
+    <div class="row2">
+      <div class="card">
+        <div class="card-title"><i class="fa fa-chart-bar"></i> 시간별 생산량 (오늘)</div>
+        <canvas id="c1hourly"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="fa fa-chart-line"></i> 주간 생산량 추이</div>
+        <canvas id="c1weekly"></canvas>
+      </div>
+    </div>
+
+    <div class="row2" style="margin-top:0">
+      <div class="card">
+        <div class="card-title"><i class="fa fa-table"></i> 오늘 생산 실적 요약</div>
+        <div class="stat-row"><span style="color:var(--text-muted)">포기김치</span><span><strong>14,200</strong> kg</span></div>
+        <div class="stat-row"><span style="color:var(--text-muted)">깍두기</span><span><strong>5,800</strong> kg</span></div>
+        <div class="stat-row"><span style="color:var(--text-muted)">총각김치</span><span><strong>2,900</strong> kg</span></div>
+        <div class="stat-row"><span style="color:var(--text-muted)">기타</span><span><strong>1,280</strong> kg</span></div>
+        <div class="stat-row" style="border-top:1px solid var(--accent-blue);margin-top:4px;padding-top:10px"><span style="color:var(--accent-cyan);font-weight:600">합계</span><span style="color:var(--accent-cyan);font-weight:700"><strong>24,180</strong> kg</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="fa fa-exclamation-circle"></i> 오늘 이벤트 요약</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;gap:8px;padding:8px;background:rgba(244,67,54,.08);border-radius:6px;border-left:3px solid var(--accent-red);font-size:12px">
+            <i class="fa fa-exclamation-triangle" style="color:var(--accent-red);margin-top:2px"></i>
+            <div><strong style="color:var(--accent-red)">09:05</strong> LOT-F03 이상발효 경보 — pH 4.8 초과</div>
+          </div>
+          <div style="display:flex;gap:8px;padding:8px;background:rgba(255,152,0,.08);border-radius:6px;border-left:3px solid var(--accent-orange);font-size:12px">
+            <i class="fa fa-wrench" style="color:var(--accent-orange);margin-top:2px"></i>
+            <div><strong style="color:var(--accent-orange)">08:20</strong> 탈수기 벨트 점검 30분 비가동</div>
+          </div>
+          <div style="display:flex;gap:8px;padding:8px;background:rgba(0,200,83,.08);border-radius:6px;border-left:3px solid var(--accent-green);font-size:12px">
+            <i class="fa fa-check-circle" style="color:var(--accent-green);margin-top:2px"></i>
+            <div><strong style="color:var(--accent-green)">07:30</strong> LOT-0522-F01 발효 완료 — A등급 판정</div>
+          </div>
+          <div style="display:flex;gap:8px;padding:8px;background:rgba(0,180,216,.08);border-radius:6px;border-left:3px solid var(--accent-cyan);font-size:12px">
+            <i class="fa fa-box" style="color:var(--accent-cyan);margin-top:2px"></i>
+            <div><strong style="color:var(--accent-cyan)">07:00</strong> 배추 LOT-0523-B01 입고 완료 — 500kg</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 2: 품질현황 -->
+  <div class="tab-panel" id="tab2">
+    <div class="row5" style="margin-bottom:6px">
+      <div class="kpi-card"><div class="kpi-val" style="color:var(--accent-green)">0.98<span style="font-size:14px">%</span></div><div class="kpi-label">완제품 불량률</div><div class="kpi-delta up">▼ 목표 1.0% 달성</div></div>
+      <div class="kpi-card"><div class="kpi-val" style="color:var(--accent-cyan)">87.2<span style="font-size:14px">%</span></div><div class="kpi-label">AI 예측 정확도</div><div class="kpi-delta up">▲ 목표 80%</div></div>
+      <div class="kpi-card"><div class="kpi-val" style="color:var(--accent-green)">78.5<span style="font-size:14px">%</span></div><div class="kpi-label">발효 A등급 비율</div><div class="kpi-delta up">▲ 목표 75%</div></div>
+      <div class="kpi-card"><div class="kpi-val" style="color:var(--accent-orange)">3</div><div class="kpi-label">품질 검사 대기</div><div class="kpi-delta warn">관능검사 포함</div></div>
+      <div class="kpi-card"><div class="kpi-val" style="color:var(--accent-red)">2</div><div class="kpi-label">품질 이상 경보</div><div class="kpi-delta" style="color:var(--accent-red)">즉시 조치 필요</div></div>
+    </div>
+
+    <div class="row2">
+      <div class="card">
+        <div class="card-title"><i class="fa fa-chart-bar"></i> 일별 불량률 추이 (30일)</div>
+        <canvas id="c2defect"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="fa fa-chart-pie"></i> 불량 유형 분포</div>
+        <canvas id="c2type"></canvas>
+      </div>
+    </div>
+
+    <div class="row2" style="margin-top:0">
+      <div class="card">
+        <div class="card-title"><i class="fa fa-robot"></i> AI 품질예측 vs 실제 (최근 10일)</div>
+        <canvas id="c2ai"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="fa fa-table"></i> 오늘 품질검사 현황</div>
+        <table class="tbl">
+          <thead><tr><th>LOT</th><th>품목</th><th>등급</th><th>검사항목</th><th>결과</th></tr></thead>
+          <tbody>
+            <tr><td>F01</td><td>포기김치</td><td><span class="badge-s badge-ok">A급</span></td><td>pH/염도/관능</td><td><span class="badge-s badge-ok">합격</span></td></tr>
+            <tr><td>F02</td><td>깍두기</td><td><span class="badge-s badge-ok">A급</span></td><td>pH/산도</td><td><span class="badge-s badge-ok">합격</span></td></tr>
+            <tr><td>F03</td><td>포기김치</td><td><span class="badge-s badge-danger">—</span></td><td>pH 이상</td><td><span class="badge-s badge-danger">보류</span></td></tr>
+            <tr><td>F04</td><td>총각김치</td><td><span class="badge-s badge-info">B급</span></td><td>염도 편차</td><td><span class="badge-s badge-warn">조건부</span></td></tr>
+            <tr><td>F05</td><td>포기김치</td><td><span class="badge-s badge-ok">A급</span></td><td>전체</td><td><span class="badge-s badge-ok">합격</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 3: 발효상태 모니터링 -->
+  <div class="tab-panel" id="tab3">
+    <div class="row4" style="margin-bottom:6px">
+      <div class="kpi-card"><div class="kpi-val">12</div><div class="kpi-label">발효 중 LOT</div><div class="kpi-delta up">정상 9 / 주의 1 / 이상 2</div></div>
+      <div class="kpi-card"><div class="kpi-val" style="color:var(--accent-green)">3</div><div class="kpi-label">완료 예정 (24h)</div><div class="kpi-delta up">F05, F08, F11</div></div>
+      <div class="kpi-card"><div class="kpi-val" style="color:var(--accent-red)">2</div><div class="kpi-label">이상 발효 경보</div><div class="kpi-delta" style="color:var(--accent-red)">F03, F07 즉시 조치</div></div>
+      <div class="kpi-card"><div class="kpi-val" style="color:var(--accent-cyan)">10.8°C</div><div class="kpi-label">발효실 평균 온도</div><div class="kpi-delta up">목표 10±2°C 정상</div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title"><i class="fa fa-th"></i> 발효실 LOT 상태 현황</div>
+      <div class="ferm-grid">
+        <!-- Danger LOT -->
+        <div class="ferm-card danger">
+          <div class="ferm-lot" style="color:var(--accent-red)">⚠ LOT-0523-F03 (발효실 3구역)</div>
+          <div class="ferm-vals">
+            <div class="ferm-val"><span class="label">pH </span><span class="val" style="color:var(--accent-red)">4.8</span></div>
+            <div class="ferm-val"><span class="label">온도 </span><span class="val" style="color:var(--accent-red)">13.2°C</span></div>
+            <div class="ferm-val"><span class="label">경과 </span><span class="val">28h</span></div>
+          </div>
+          <div style="margin-top:6px;font-size:10px;color:var(--accent-red)">과발효 위험 — 즉시 조치 필요</div>
+          <div class="ferm-progress"><div class="ferm-fill" style="width:65%;background:var(--accent-red)"></div></div>
+        </div>
+        <!-- Warning LOT -->
+        <div class="ferm-card warning">
+          <div class="ferm-lot" style="color:var(--accent-orange)">⚡ LOT-0522-F07 (발효실 2구역)</div>
+          <div class="ferm-vals">
+            <div class="ferm-val"><span class="label">pH </span><span class="val" style="color:var(--accent-orange)">4.6</span></div>
+            <div class="ferm-val"><span class="label">온도 </span><span class="val">11.8°C</span></div>
+            <div class="ferm-val"><span class="label">경과 </span><span class="val">42h</span></div>
+          </div>
+          <div style="margin-top:6px;font-size:10px;color:var(--accent-orange)">산도 이상 — 모니터링 강화</div>
+          <div class="ferm-progress"><div class="ferm-fill" style="width:82%;background:var(--accent-orange)"></div></div>
+        </div>
+        <!-- OK LOTs -->
+        <div class="ferm-card ok">
+          <div class="ferm-lot">✓ LOT-0523-F05 (발효실 1구역)</div>
+          <div class="ferm-vals">
+            <div class="ferm-val"><span class="label">pH </span><span class="val">4.3</span></div>
+            <div class="ferm-val"><span class="label">온도 </span><span class="val">10.5°C</span></div>
+            <div class="ferm-val"><span class="label">경과 </span><span class="val">36h</span></div>
+          </div>
+          <div style="margin-top:6px;font-size:10px;color:var(--accent-green)">완료예측: +12h — 정상</div>
+          <div class="ferm-progress"><div class="ferm-fill" style="width:75%;background:var(--accent-green)"></div></div>
+        </div>
+        <div class="ferm-card ok">
+          <div class="ferm-lot">✓ LOT-0523-F08 (발효실 1구역)</div>
+          <div class="ferm-vals">
+            <div class="ferm-val"><span class="label">pH </span><span class="val">4.2</span></div>
+            <div class="ferm-val"><span class="label">온도 </span><span class="val">10.2°C</span></div>
+            <div class="ferm-val"><span class="label">경과 </span><span class="val">44h</span></div>
+          </div>
+          <div style="margin-top:6px;font-size:10px;color:var(--accent-green)">완료예측: +6h — 정상</div>
+          <div class="ferm-progress"><div class="ferm-fill" style="width:88%;background:var(--accent-green)"></div></div>
+        </div>
+        <div class="ferm-card ok">
+          <div class="ferm-lot">✓ LOT-0522-F09 (발효실 4구역)</div>
+          <div class="ferm-vals">
+            <div class="ferm-val"><span class="label">pH </span><span class="val">4.4</span></div>
+            <div class="ferm-val"><span class="label">온도 </span><span class="val">10.8°C</span></div>
+            <div class="ferm-val"><span class="label">경과 </span><span class="val">20h</span></div>
+          </div>
+          <div style="margin-top:6px;font-size:10px;color:var(--text-muted)">완료예측: +28h</div>
+          <div class="ferm-progress"><div class="ferm-fill" style="width:42%;background:var(--accent-cyan)"></div></div>
+        </div>
+        <div class="ferm-card ok">
+          <div class="ferm-lot">✓ LOT-0523-F11 (발효실 2구역)</div>
+          <div class="ferm-vals">
+            <div class="ferm-val"><span class="label">pH </span><span class="val">4.2</span></div>
+            <div class="ferm-val"><span class="label">온도 </span><span class="val">10.0°C</span></div>
+            <div class="ferm-val"><span class="label">경과 </span><span class="val">47h</span></div>
+          </div>
+          <div style="margin-top:6px;font-size:10px;color:var(--accent-green)">완료예측: +3h — 출하준비</div>
+          <div class="ferm-progress"><div class="ferm-fill" style="width:94%;background:var(--accent-green)"></div></div>
+        </div>
+        <div class="ferm-card ok">
+          <div class="ferm-lot">✓ LOT-0521-F12 (발효실 3구역)</div>
+          <div class="ferm-vals">
+            <div class="ferm-val"><span class="label">pH </span><span class="val">4.3</span></div>
+            <div class="ferm-val"><span class="label">온도 </span><span class="val">11.0°C</span></div>
+            <div class="ferm-val"><span class="label">경과 </span><span class="val">15h</span></div>
+          </div>
+          <div style="margin-top:6px;font-size:10px;color:var(--text-muted)">완료예측: +33h</div>
+          <div class="ferm-progress"><div class="ferm-fill" style="width:31%;background:var(--accent-cyan)"></div></div>
+        </div>
+        <div class="ferm-card ok">
+          <div class="ferm-lot">+ 기타 5 LOT (F13~F17)</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:8px">모두 정상 발효 중</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:4px">pH 범위: 4.1~4.4</div>
+          <div style="font-size:11px;color:var(--text-secondary)">온도 범위: 9.8~11.2°C</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row2">
+      <div class="card">
+        <div class="card-title"><i class="fa fa-chart-line"></i> 발효실 온도 실시간 (6구역)</div>
+        <canvas id="c3temp"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="fa fa-chart-line"></i> F03 LOT pH 추이 (이상발효)</div>
+        <canvas id="c3ph"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 4: 출하현황 -->
+  <div class="tab-panel" id="tab4">
+    <div class="row5" style="margin-bottom:6px">
+      <div class="kpi-card"><div class="kpi-val">4</div><div class="kpi-label">오늘 출하 LOT</div><div class="kpi-delta up">3,200 kg 출하 완료</div></div>
+      <div class="kpi-card"><div class="kpi-val" style="color:var(--accent-orange)">3</div><div class="kpi-label">출하 승인 대기</div><div class="kpi-delta warn">검사 완료 후 승인 필요</div></div>
+      <div class="kpi-card"><div class="kpi-val" style="color:var(--accent-cyan)">97.3<span style="font-size:14px">%</span></div><div class="kpi-label">납기 준수율</div><div class="kpi-delta up">▲ 목표 95%</div></div>
+      <div class="kpi-card"><div class="kpi-val" style="color:var(--accent-green)">0.12<span style="font-size:14px">%</span></div><div class="kpi-label">클레임 발생률</div><div class="kpi-delta up">▼ 목표 0.2%</div></div>
+      <div class="kpi-card"><div class="kpi-val">18,450</div><div class="kpi-label">이번 주 출하량 (kg)</div><div class="kpi-delta up">▲ +3.2% vs 전주</div></div>
+    </div>
+
+    <div class="row2">
+      <div class="card">
+        <div class="card-title"><i class="fa fa-chart-bar"></i> 납품처별 출하량 (이번 주)</div>
+        <canvas id="c4ship"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="fa fa-chart-line"></i> 월별 출하량 추이</div>
+        <canvas id="c4monthly"></canvas>
+      </div>
+    </div>
+
+    <div class="row2" style="margin-top:0">
+      <div class="card">
+        <div class="card-title"><i class="fa fa-clipboard-check"></i> 출하 승인 대기 목록</div>
+        <table class="tbl">
+          <thead><tr><th>LOT</th><th>품목</th><th>수량</th><th>납품처</th><th>납기</th><th>검사</th><th>조치</th></tr></thead>
+          <tbody>
+            <tr><td>F11</td><td>포기김치 1kg</td><td>800kg</td><td>롯데마트</td><td>오늘 14:00</td><td><span class="badge-s badge-ok">A등급</span></td><td><button style="padding:3px 10px;background:var(--accent-green);border:none;border-radius:4px;color:#fff;font-size:11px;cursor:pointer">승인</button></td></tr>
+            <tr><td>F04</td><td>깍두기 500g</td><td>350kg</td><td>이마트</td><td>내일 09:00</td><td><span class="badge-s badge-warn">B등급</span></td><td><button style="padding:3px 10px;background:var(--accent-orange);border:none;border-radius:4px;color:#fff;font-size:11px;cursor:pointer">검토</button></td></tr>
+            <tr><td>F01</td><td>총각김치 2kg</td><td>600kg</td><td>홈플러스</td><td>내일 13:00</td><td><span class="badge-s badge-ok">A등급</span></td><td><button style="padding:3px 10px;background:var(--accent-green);border:none;border-radius:4px;color:#fff;font-size:11px;cursor:pointer">승인</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="fa fa-history"></i> 오늘 출하 완료 내역</div>
+        <table class="tbl">
+          <thead><tr><th>시간</th><th>LOT</th><th>납품처</th><th>수량</th><th>상태</th></tr></thead>
+          <tbody>
+            <tr><td>08:30</td><td>F-2022-A1</td><td>롯데마트</td><td>850kg</td><td><span class="badge-s badge-ok">완료</span></td></tr>
+            <tr><td>07:45</td><td>F-2022-A2</td><td>CJ대한통운</td><td>1,200kg</td><td><span class="badge-s badge-ok">완료</span></td></tr>
+            <tr><td>07:00</td><td>F-2021-B1</td><td>이마트</td><td>700kg</td><td><span class="badge-s badge-ok">완료</span></td></tr>
+            <tr><td>06:30</td><td>F-2021-B2</td><td>직납(강릉)</td><td>450kg</td><td><span class="badge-s badge-ok">완료</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 5: 통합 현황판 (Board) -->
+  <div class="tab-panel" id="tab5">
+    <!-- Alert ticker -->
+    <div class="alert-ticker">
+      <i class="fa fa-exclamation-triangle" style="color:var(--accent-red)"></i>
+      <strong style="color:var(--accent-red)">경보:</strong>
+      <span style="color:var(--text-primary)">LOT-2026-0523-F03 이상발효 (pH 4.8, 온도 13.2°C) — 즉시 조치 필요</span>
+      <span style="margin-left:auto;color:var(--text-muted)">09:05 발생</span>
+    </div>
+
+    <div class="board-layout">
+      <!-- 생산 현황 -->
+      <div class="board-card">
+        <div style="font-size:16px;font-weight:700;color:var(--accent-cyan);margin-bottom:16px"><i class="fa fa-chart-bar"></i> 생산 현황</div>
+        <div class="board-kpi">
+          <div><div class="board-val" style="color:var(--accent-green)">3,012</div><div class="board-label">시간당 생산량 (kg/h)</div></div>
+          <div><div class="board-val">24,180</div><div class="board-label">오늘 생산 (kg)</div></div>
+          <div><div class="board-val" style="color:var(--accent-orange)">94.2%</div><div class="board-label">설비 가동률</div></div>
+        </div>
+        <div style="margin-top:14px"><canvas id="c5prod" style="max-height:120px"></canvas></div>
+      </div>
+
+      <!-- 품질 현황 -->
+      <div class="board-card">
+        <div style="font-size:16px;font-weight:700;color:var(--accent-cyan);margin-bottom:16px"><i class="fa fa-star"></i> 품질 현황</div>
+        <div class="board-kpi">
+          <div><div class="board-val" style="color:var(--accent-green)">0.98%</div><div class="board-label">불량률</div></div>
+          <div><div class="board-val" style="color:var(--accent-cyan)">87.2%</div><div class="board-label">AI 예측 정확도</div></div>
+          <div><div class="board-val" style="color:var(--accent-green)">78.5%</div><div class="board-label">발효 A등급</div></div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:8px">
+          <div style="flex:1;background:rgba(0,200,83,.1);border:1px solid rgba(0,200,83,.3);border-radius:8px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;color:var(--accent-green)">8/8</div><div style="font-size:11px;color:var(--text-muted)">KPI 달성</div></div>
+          <div style="flex:1;background:rgba(244,67,54,.1);border:1px solid rgba(244,67,54,.3);border-radius:8px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;color:var(--accent-red)">2</div><div style="font-size:11px;color:var(--text-muted)">이상 경보</div></div>
+          <div style="flex:1;background:rgba(0,180,216,.1);border:1px solid rgba(0,180,216,.3);border-radius:8px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;color:var(--accent-cyan)">12</div><div style="font-size:11px;color:var(--text-muted)">발효 중 LOT</div></div>
+        </div>
+      </div>
+
+      <!-- 발효 상태 -->
+      <div class="board-card">
+        <div style="font-size:16px;font-weight:700;color:var(--accent-cyan);margin-bottom:16px"><i class="fa fa-flask"></i> 발효 상태</div>
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+          <div style="padding:6px 12px;background:rgba(0,200,83,.15);border-radius:20px;font-size:13px;color:var(--accent-green)"><i class="fa fa-check"></i> 정상 9</div>
+          <div style="padding:6px 12px;background:rgba(255,152,0,.15);border-radius:20px;font-size:13px;color:var(--accent-orange)"><i class="fa fa-exclamation"></i> 주의 1</div>
+          <div style="padding:6px 12px;background:rgba(244,67,54,.15);border-radius:20px;font-size:13px;color:var(--accent-red)"><i class="fa fa-times"></i> 이상 2</div>
+        </div>
+        <div style="margin-top:10px"><canvas id="c5ferm" style="max-height:120px"></canvas></div>
+      </div>
+
+      <!-- 출하 현황 -->
+      <div class="board-card">
+        <div style="font-size:16px;font-weight:700;color:var(--accent-cyan);margin-bottom:16px"><i class="fa fa-truck"></i> 출하 현황</div>
+        <div class="board-kpi">
+          <div><div class="board-val">4</div><div class="board-label">오늘 출하 LOT</div></div>
+          <div><div class="board-val" style="color:var(--accent-cyan)">97.3%</div><div class="board-label">납기 준수율</div></div>
+          <div><div class="board-val" style="color:var(--accent-orange)">3</div><div class="board-label">승인 대기</div></div>
+        </div>
+        <div style="margin-top:12px"><canvas id="c5ship" style="max-height:100px"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const navItems = document.querySelectorAll('.nav-item');
+const tabs = document.querySelectorAll('.tab-panel');
+const tabBtns = document.querySelectorAll('.tab-btn');
+let dones = [false,false,false,false,false];
+
+function showTab(n) {
+  tabs.forEach((t,i) => t.classList.toggle('active', i===n-1));
+  tabBtns.forEach((b,i) => b.classList.toggle('active', i===n-1));
+  navItems.forEach((ni,i) => ni.classList.toggle('active', i===n-1));
+  if (!dones[n-1]) { initCharts(n); dones[n-1]=true; }
+}
+
+function initCharts(n) {
+  const hrs = ['6시','7시','8시','9시'];
+  if (n===1) {
+    new Chart(document.getElementById('c1hourly'), {
+      type:'bar', data:{ labels:['6시','7시','8시','9시(현재)'], datasets:[{ label:'생산량(kg)', data:[2850,3100,3200,2980], backgroundColor:'rgba(26,115,232,.7)' }] },
+      options:{ responsive:true, scales:{y:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#8899bb'}},x:{ticks:{color:'#8899bb'}}}, plugins:{legend:{display:false}} }
+    });
+    new Chart(document.getElementById('c1weekly'), {
+      type:'line', data:{
+        labels:['5/17','5/18','5/19','5/20','5/21','5/22','5/23'],
+        datasets:[
+          { label:'생산량(kg)', data:[22800,23500,21900,24200,23800,25100,24180], borderColor:'#00b4d8', backgroundColor:'rgba(0,180,216,.1)', fill:true, tension:.4 },
+          { label:'목표(24,000)', data:[24000,24000,24000,24000,24000,24000,24000], borderColor:'#ff9800', borderDash:[5,5], backgroundColor:'transparent', pointRadius:0 }
+        ]
+      },
+      options:{ responsive:true, scales:{y:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#8899bb'}},x:{ticks:{color:'#8899bb'}}}, plugins:{legend:{labels:{color:'#8899bb',font:{size:11}}}} }
+    });
+  }
+  if (n===2) {
+    const days30=[]; for(let i=1;i<=30;i++) days30.push(i+'일');
+    const defects=[]; for(let i=0;i<30;i++) defects.push((1.5-(i/30*0.52)+Math.random()*.1).toFixed(2));
+    new Chart(document.getElementById('c2defect'), {
+      type:'line', data:{ labels:days30, datasets:[
+        { label:'불량률(%)', data:defects, borderColor:'#f44336', backgroundColor:'rgba(244,67,54,.1)', fill:true, tension:.4, pointRadius:2 },
+        { label:'목표(1.0%)', data:Array(30).fill(1.0), borderColor:'#ff9800', borderDash:[5,5], backgroundColor:'transparent', pointRadius:0 }
+      ]},
+      options:{ responsive:true, scales:{y:{max:1.7,grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#8899bb',callback:v=>v+'%'}},x:{ticks:{color:'#8899bb',maxTicksLimit:8}}}, plugins:{legend:{labels:{color:'#8899bb',font:{size:11}}}} }
+    });
+    new Chart(document.getElementById('c2type'), {
+      type:'doughnut', data:{
+        labels:['과발효','염도불균일','이물질','외관불량','기타'],
+        datasets:[{ data:[35,25,18,14,8], backgroundColor:['#f44336','#ff9800','#9c27b0','#00b4d8','#556688'], borderWidth:0 }]
+      },
+      options:{ responsive:true, plugins:{legend:{labels:{color:'#8899bb',font:{size:11}}}} }
+    });
+    new Chart(document.getElementById('c2ai'), {
+      type:'line', data:{
+        labels:['5/14','5/15','5/16','5/17','5/18','5/19','5/20','5/21','5/22','5/23'],
+        datasets:[
+          { label:'AI 예측 등급값', data:[4.1,4.2,4.4,4.1,4.3,4.2,4.1,4.3,4.4,4.2], borderColor:'#1a73e8', backgroundColor:'transparent', tension:.4 },
+          { label:'실제 측정값', data:[4.15,4.18,4.42,4.08,4.35,4.19,4.13,4.28,4.38,4.22], borderColor:'#00c853', backgroundColor:'transparent', tension:.4, borderDash:[3,3] }
+        ]
+      },
+      options:{ responsive:true, scales:{y:{min:3.9,max:4.6,grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#8899bb'}},x:{ticks:{color:'#8899bb',maxTicksLimit:6}}}, plugins:{legend:{labels:{color:'#8899bb',font:{size:11}}}} }
+    });
+  }
+  if (n===3) {
+    const timeLabels=[]; for(let i=0;i<12;i++) timeLabels.push(i*2+'h');
+    new Chart(document.getElementById('c3temp'), {
+      type:'line', data:{
+        labels:timeLabels,
+        datasets:[
+          { label:'1구역', data:[10.2,10.3,10.1,10.4,10.2,10.3,10.5,10.4,10.2,10.3,10.5,10.4], borderColor:'#00c853', backgroundColor:'transparent', tension:.4, pointRadius:2 },
+          { label:'2구역', data:[11.5,11.8,11.6,11.9,11.7,11.8,11.6,11.5,11.8,11.9,11.7,11.8], borderColor:'#ff9800', backgroundColor:'transparent', tension:.4, pointRadius:2 },
+          { label:'3구역(이상)', data:[11.5,11.8,12.1,12.3,12.5,12.8,13.0,13.1,13.2,13.2,13.1,13.2], borderColor:'#f44336', backgroundColor:'transparent', tension:.4, pointRadius:2 },
+        ]
+      },
+      options:{ responsive:true, scales:{y:{min:9,max:15,grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#8899bb',callback:v=>v+'°C'}},x:{ticks:{color:'#8899bb'}}}, plugins:{legend:{labels:{color:'#8899bb',font:{size:11}}}} }
+    });
+    new Chart(document.getElementById('c3ph'), {
+      type:'line', data:{
+        labels:['0h','4h','8h','12h','16h','20h','24h','28h(현재)'],
+        datasets:[
+          { label:'LOT-F03 pH', data:[5.8,5.5,5.2,4.9,4.7,4.6,4.7,4.8], borderColor:'#f44336', backgroundColor:'rgba(244,67,54,.1)', fill:true, tension:.4 },
+          { label:'정상범위 상한(4.5)', data:[4.5,4.5,4.5,4.5,4.5,4.5,4.5,4.5], borderColor:'#ff9800', borderDash:[5,5], backgroundColor:'transparent', pointRadius:0 }
+        ]
+      },
+      options:{ responsive:true, scales:{y:{min:4.0,max:6.0,grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#8899bb'}},x:{ticks:{color:'#8899bb'}}}, plugins:{legend:{labels:{color:'#8899bb',font:{size:11}}}} }
+    });
+  }
+  if (n===4) {
+    new Chart(document.getElementById('c4ship'), {
+      type:'bar', data:{
+        labels:['롯데마트','이마트','홈플러스','CJ대한통운','직납'],
+        datasets:[{ label:'출하량(kg)', data:[4500,3200,2800,5200,2750], backgroundColor:['rgba(26,115,232,.7)','rgba(0,180,216,.7)','rgba(0,200,83,.7)','rgba(255,152,0,.7)','rgba(156,39,176,.7)'] }]
+      },
+      options:{ responsive:true, scales:{y:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#8899bb'}},x:{ticks:{color:'#8899bb'}}}, plugins:{legend:{display:false}} }
+    });
+    new Chart(document.getElementById('c4monthly'), {
+      type:'line', data:{
+        labels:['12월','1월','2월','3월','4월','5월'],
+        datasets:[{ label:'출하량(톤)', data:[280,295,270,310,320,335], borderColor:'#00b4d8', backgroundColor:'rgba(0,180,216,.1)', fill:true, tension:.4 }]
+      },
+      options:{ responsive:true, scales:{y:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#8899bb'}},x:{ticks:{color:'#8899bb'}}}, plugins:{legend:{labels:{color:'#8899bb',font:{size:11}}}} }
+    });
+  }
+  if (n===5) {
+    new Chart(document.getElementById('c5prod'), {
+      type:'bar', data:{ labels:['6시','7시','8시','9시'], datasets:[{ data:[2850,3100,3200,2980], backgroundColor:'rgba(26,115,232,.7)' }] },
+      options:{ responsive:true, plugins:{legend:{display:false}}, scales:{y:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#8899bb'}},x:{ticks:{color:'#8899bb'}}} }
+    });
+    new Chart(document.getElementById('c5ferm'), {
+      type:'doughnut', data:{ labels:['정상','주의','이상'], datasets:[{ data:[9,1,2], backgroundColor:['#00c853','#ff9800','#f44336'], borderWidth:0 }] },
+      options:{ responsive:true, plugins:{legend:{labels:{color:'#8899bb',font:{size:11}}}} }
+    });
+    new Chart(document.getElementById('c5ship'), {
+      type:'bar', data:{ labels:['롯데','이마트','홈플러스','CJ'], datasets:[{ data:[4500,3200,2800,5200], backgroundColor:'rgba(0,180,216,.6)' }] },
+      options:{ responsive:true, plugins:{legend:{display:false}}, scales:{y:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#8899bb'}},x:{ticks:{color:'#8899bb',font:{size:10}}}} }
+    });
+  }
+}
+
+// Initialize first tab charts
+initCharts(1); dones[0]=true;
+
+// Clock
+setInterval(() => {
+  const now=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  document.getElementById('nowTime').textContent=`2026-05-23 ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+},1000);
+</script>
+</body>
+</html>

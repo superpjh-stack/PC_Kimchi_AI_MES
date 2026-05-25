@@ -1,0 +1,50 @@
+{
+  "sessionCount": 27,
+  "lastSession": {
+    "startedAt": "2026-05-25T08:37:06.855Z",
+    "platform": "claude",
+    "level": "Enterprise"
+  },
+  "currentFeature": "jwt-auth-integration",
+  "phase": "completed",
+  "matchRate": 100,
+  "iterationCount": 0,
+  "planPath": "docs/01-plan/features/jwt-auth-integration.plan.md",
+  "designPath": "docs/02-design/features/jwt-auth-integration.design.md",
+  "analysisPath": "docs/03-analysis/jwt-auth-integration.analysis.md",
+  "reportPath": "docs/04-report/features/jwt-auth-integration.report.md",
+  "completedAt": "2026-05-25T11:45:00.000Z",
+  "doStartedAt": "2026-05-25T09:00:00.000Z",
+  "liveTestResults": {
+    "T1_login_valid": "PASS",
+    "T2_login_wrong_password": "PASS",
+    "T3_no_token_401": "PASS",
+    "T4_wrong_role_403": "PASS",
+    "T5_admin_token_200": "PASS"
+  },
+  "implementedFiles": [
+    "app/auth.py (bcrypt 직접 사용으로 수정, create_access_token 공개)",
+    "_workspace/api_system_router.py (POST /auth/login JSON 엔드포인트 추가)",
+    "_workspace/api_kpi_router.py (로컬 stub 제거, app.auth 연동)",
+    "_workspace/api_shipping_router.py (로컬 stub 제거, app.auth 연동)",
+    "_workspace/api_data_router.py (쓰기 엔드포인트 3개 require_role 추가)",
+    "_workspace/api_master_router.py (쓰기 엔드포인트 11개 require_role 추가)",
+    "_workspace/api_material_router.py (쓰기 엔드포인트 4개 require_role 추가)",
+    "streamlit_app/utils/__init__.py (신규)",
+    "streamlit_app/utils/auth_helper.py (신규 — get_auth_headers, check_login, has_role)",
+    "streamlit_app/utils/api_client.py (신규 — get_client with auth headers)",
+    "streamlit_app/Home.py (실제 API 로그인 + token 세션 저장)",
+    "streamlit_app/pages/05_공정관리.py (check_login + get_auth_headers)",
+    "streamlit_app/pages/06_데이터관리.py (check_login + get_auth_headers)",
+    "streamlit_app/pages/07_KPI관리.py (check_login + sys.path)",
+    "streamlit_app/pages/08_기준정보관리.py (check_login + get_auth_headers)",
+    "streamlit_app/pages/09_시스템관리.py (check_login + get_auth_headers)",
+    "seed_users.sql (신규 — bcrypt 해시 초기 계정 4개, ON CONFLICT DO UPDATE)"
+  ],
+  "previousFeature": {
+    "name": "pm3-process-data-kpi-system",
+    "phase": "completed",
+    "matchRate": 91,
+    "completedAt": "2026-05-25T08:25:00.000Z"
+  }
+}

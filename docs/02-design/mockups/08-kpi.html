@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>꽃순이김치 MES - KPI관리 / 로그인</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root {
+  --bg-main:#0a1628; --bg-sidebar:#0f2044; --bg-card:#162035; --bg-card2:#1a2a45;
+  --accent-blue:#1a73e8; --accent-cyan:#00b4d8; --accent-green:#00c853;
+  --accent-orange:#ff9800; --accent-red:#f44336; --accent-purple:#9c27b0;
+  --text-primary:#e8eaf6; --text-secondary:#8899bb; --text-muted:#556688;
+  --border:#1e3a5f; --sidebar-w:220px; --header-h:56px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',sans-serif;background:var(--bg-main);color:var(--text-primary);}
+
+/* Login Screen */
+.login-screen{min-height:100vh;display:none;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#0f2044 0%,#0a1628 70%);}
+.login-screen.active{display:flex;}
+.login-box{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:40px;width:380px;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+.login-logo{text-align:center;margin-bottom:32px;}
+.login-logo .factory-icon{font-size:48px;color:var(--accent-cyan);margin-bottom:12px;}
+.login-logo h1{font-size:22px;font-weight:700;color:var(--accent-cyan);}
+.login-logo p{font-size:13px;color:var(--text-muted);margin-top:4px;}
+.login-form-group{margin-bottom:16px;}
+.login-label{font-size:12px;color:var(--text-secondary);margin-bottom:6px;display:block;}
+.login-input{width:100%;padding:12px 14px;background:var(--bg-card2);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:14px;outline:none;}
+.login-input:focus{border-color:var(--accent-blue);}
+.login-btn{width:100%;padding:13px;background:var(--accent-blue);border:none;border-radius:8px;color:#fff;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px;}
+.login-btn:hover{background:#1557b0;}
+.login-footer{text-align:center;margin-top:20px;font-size:12px;color:var(--text-muted);}
+.role-select{display:flex;gap:8px;margin-bottom:16px;}
+.role-btn{flex:1;padding:8px;border-radius:8px;font-size:12px;border:1px solid var(--border);background:transparent;color:var(--text-secondary);cursor:pointer;text-align:center;}
+.role-btn.active{border-color:var(--accent-blue);background:rgba(26,115,232,.15);color:var(--accent-cyan);}
+
+/* MES App */
+.mes-app{display:none;height:100vh;grid-template-columns:var(--sidebar-w) 1fr;grid-template-rows:var(--header-h) 1fr;}
+.mes-app.active{display:grid;}
+.header{grid-column:1/-1;background:var(--bg-sidebar);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:16px;z-index:10;}
+.logo{font-size:18px;font-weight:700;color:var(--accent-cyan);white-space:nowrap;}
+.logo span{color:var(--text-secondary);font-size:12px;font-weight:400;margin-left:8px;}
+.header-tabs{display:flex;gap:4px;margin-left:20px;}
+.htab{padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;color:var(--text-secondary);border:none;background:none;}
+.htab.active{background:var(--accent-blue);color:#fff;}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:12px;}
+.badge{background:var(--accent-red);color:#fff;border-radius:10px;padding:2px 7px;font-size:11px;}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--accent-blue);display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;}
+.sidebar{background:var(--bg-sidebar);border-right:1px solid var(--border);overflow-y:auto;padding:12px 0;}
+.sidebar-section{font-size:10px;color:var(--text-muted);padding:8px 16px 4px;text-transform:uppercase;letter-spacing:.8px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 16px;font-size:13px;color:var(--text-secondary);cursor:pointer;border-left:3px solid transparent;}
+.nav-item:hover{background:rgba(26,115,232,.1);color:var(--text-primary);}
+.nav-item.active{background:rgba(26,115,232,.15);color:var(--accent-cyan);border-left-color:var(--accent-cyan);}
+.nav-item i{width:16px;text-align:center;font-size:13px;}
+.content{overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;}
+.tab-bar{display:flex;gap:6px;flex-wrap:wrap;}
+.tab-btn{padding:7px 16px;border-radius:6px;font-size:13px;cursor:pointer;border:1px solid var(--border);background:var(--bg-card2);color:var(--text-secondary);}
+.tab-btn.active{background:var(--accent-blue);border-color:var(--accent-blue);color:#fff;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:16px;}
+.card-title{font-size:14px;font-weight:600;color:var(--accent-cyan);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+.row4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.tbl{width:100%;border-collapse:collapse;font-size:13px;}
+.tbl th{background:var(--bg-card2);padding:9px 12px;text-align:left;color:var(--text-secondary);font-weight:500;border-bottom:1px solid var(--border);}
+.tbl td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text-primary);}
+.tbl tr:hover td{background:rgba(26,115,232,.06);}
+.badge-s{padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500;}
+.badge-ok{background:rgba(0,200,83,.15);color:var(--accent-green);}
+.badge-warn{background:rgba(255,152,0,.15);color:var(--accent-orange);}
+.badge-danger{background:rgba(244,67,54,.15);color:var(--accent-red);}
+.badge-info{background:rgba(0,180,216,.15);color:var(--accent-cyan);}
+
+/* KPI Cards */
+.kpi-big{background:var(--bg-card2);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;}
+.kpi-big .val{font-size:32px;font-weight:700;margin:6px 0;}
+.kpi-big .label{font-size:12px;color:var(--text-muted);}
+.kpi-big .target{font-size:11px;margin-top:4px;}
+.kpi-big .delta{font-size:13px;font-weight:600;margin-top:6px;}
+.progress-bar{height:8px;background:var(--bg-card);border-radius:4px;margin-top:8px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:4px;transition:width .5s;}
+
+/* Gauge */
+.gauge-wrap{text-align:center;padding:10px 0;}
+.gauge-val{font-size:28px;font-weight:700;color:var(--accent-cyan);}
+.gauge-label{font-size:12px;color:var(--text-muted);}
+
+select,input[type=text],input[type=date],input[type=number]{background:var(--bg-card2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text-primary);font-size:12px;outline:none;}
+.filter-row{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
+.btn{padding:7px 14px;border-radius:6px;font-size:12px;cursor:pointer;border:none;}
+.btn-primary{background:var(--accent-blue);color:#fff;}
+.btn-secondary{background:var(--bg-card2);border:1px solid var(--border);color:var(--text-secondary);}
+.btn-sm{padding:4px 10px;font-size:11px;}
+.form-group{margin-bottom:14px;}
+.form-label{font-size:12px;color:var(--text-secondary);margin-bottom:5px;display:block;}
+canvas{max-height:220px;}
+.section-title{font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:10px;}
+.trend-up{color:var(--accent-green);}
+.trend-down{color:var(--accent-red);}
+.trend-ok{color:var(--accent-orange);}
+</style>
+</head>
+<body>
+
+<!-- === LOGIN SCREEN === -->
+<div class="login-screen active" id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="factory-icon"><i class="fa fa-industry"></i></div>
+      <h1>꽃순이김치 MES</h1>
+      <p>평창꽃순이(주) 스마트공장 제조AI 시스템</p>
+    </div>
+
+    <div class="login-form-group">
+      <label class="login-label">역할 선택</label>
+      <div class="role-select">
+        <button class="role-btn active"><i class="fa fa-user-shield"></i><br>관리자</button>
+        <button class="role-btn"><i class="fa fa-hard-hat"></i><br>공장장</button>
+        <button class="role-btn"><i class="fa fa-microscope"></i><br>품질담당</button>
+        <button class="role-btn"><i class="fa fa-tools"></i><br>현장작업자</button>
+      </div>
+    </div>
+
+    <div class="login-form-group">
+      <label class="login-label">사용자 ID</label>
+      <input type="text" class="login-input" value="admin001" placeholder="사용자 ID를 입력하세요">
+    </div>
+    <div class="login-form-group">
+      <label class="login-label">비밀번호</label>
+      <input type="password" class="login-input" value="••••••••" placeholder="비밀번호를 입력하세요">
+    </div>
+
+    <button class="login-btn" onclick="doLogin()"><i class="fa fa-sign-in-alt"></i> 로그인</button>
+
+    <div class="login-footer">
+      <div style="margin-bottom:8px">로뎀솔루션 주식회사 · SF26179540</div>
+      <div>문의: support@rodem.co.kr · 시스템 v1.0.0</div>
+    </div>
+  </div>
+</div>
+
+<!-- === MES APP (KPI Module) === -->
+<div class="mes-app" id="mesApp">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="logo">꽃순이김치 MES <span>스마트공장 통합관리</span></div>
+    <div class="header-tabs">
+      <button class="htab">AI 대시보드</button>
+      <button class="htab">원재료관리</button>
+      <button class="htab">숙성발효</button>
+      <button class="htab">포장출하</button>
+      <button class="htab">공정관리</button>
+      <button class="htab">데이터관리</button>
+      <button class="htab">AI Agent</button>
+      <button class="htab">기준정보</button>
+      <button class="htab">사용자/시스템</button>
+      <button class="htab active">KPI</button>
+    </div>
+    <div class="header-right">
+      <i class="fa fa-bell" style="color:var(--text-secondary)"></i>
+      <span class="badge">3</span>
+      <div class="avatar" onclick="doLogout()"><i class="fa fa-user" style="font-size:14px"></i></div>
+      <span style="font-size:13px;color:var(--text-secondary)">김관리 <i class="fa fa-caret-down" style="font-size:10px"></i></span>
+    </div>
+  </header>
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-section">KPI 관리</div>
+    <div class="nav-item active" onclick="showTab(1)"><i class="fa fa-tachometer-alt"></i> 생산성 KPI</div>
+    <div class="nav-item" onclick="showTab(2)"><i class="fa fa-star"></i> 품질 KPI</div>
+    <div class="nav-item" onclick="showTab(3)"><i class="fa fa-cog"></i> KPI 설정 관리</div>
+
+    <div class="sidebar-section" style="margin-top:12px">전체 모듈</div>
+    <div class="nav-item"><i class="fa fa-tachometer-alt"></i> AI 대시보드</div>
+    <div class="nav-item"><i class="fa fa-box"></i> 원재료관리</div>
+    <div class="nav-item"><i class="fa fa-flask"></i> 숙성발효관리</div>
+    <div class="nav-item"><i class="fa fa-truck"></i> 포장출하관리</div>
+    <div class="nav-item"><i class="fa fa-industry"></i> 공정관리</div>
+    <div class="nav-item"><i class="fa fa-database"></i> 데이터관리</div>
+    <div class="nav-item"><i class="fa fa-comments"></i> AI Agent</div>
+    <div class="nav-item"><i class="fa fa-check-double"></i> 기준정보관리</div>
+    <div class="nav-item"><i class="fa fa-users"></i> 사용자/시스템</div>
+  </nav>
+
+  <!-- Content -->
+  <div class="content">
+
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="showTab(1)"><i class="fa fa-tachometer-alt"></i> 생산성 KPI</button>
+      <button class="tab-btn" onclick="showTab(2)"><i class="fa fa-star"></i> 품질 KPI</button>
+      <button class="tab-btn" onclick="showTab(3)"><i class="fa fa-cog"></i> KPI 설정 관리</button>
+    </div>
+
+    <!-- Tab 1: 생산성 KPI -->
+    <div class="tab-panel active" id="tab1">
+      <div class="filter-row">
+        <select><option selected>2026년 5월</option><option>2026년 4월</option><option>2026년 3월</option></select>
+        <select><option selected>전체 공정</option><option>절임</option><option>발효</option><option>포장</option></select>
+        <button class="btn btn-primary"><i class="fa fa-sync"></i> 갱신</button>
+        <button class="btn btn-secondary"><i class="fa fa-download"></i> 보고서</button>
+      </div>
+
+      <!-- 핵심 KPI 카드 -->
+      <div class="row2" style="margin-bottom:16px">
+        <div class="kpi-big">
+          <div class="label">시간당 생산량</div>
+          <div class="val" style="color:var(--accent-green)">3,012 <span style="font-size:16px">kg/h</span></div>
+          <div class="target" style="color:var(--text-muted)">목표: 3,000 kg/h · 기준: 2,750 kg/h</div>
+          <div class="delta trend-up">▲ +9.5% vs 기준 · +0.4% vs 목표 달성</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:100%;background:var(--accent-green)"></div></div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px">KPI 달성: ✓ 목표 초과</div>
+        </div>
+        <div class="kpi-big">
+          <div class="label">일 생산량</div>
+          <div class="val" style="color:var(--accent-cyan)">24,180 <span style="font-size:16px">kg</span></div>
+          <div class="target" style="color:var(--text-muted)">목표: 24,000 kg · 계획 대비</div>
+          <div class="delta trend-up">▲ +0.75% vs 일 목표</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:100%;background:var(--accent-cyan)"></div></div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px">8시간 기준 환산</div>
+        </div>
+      </div>
+
+      <div class="row4" style="margin-bottom:16px">
+        <div class="kpi-big">
+          <div class="label">설비 가동률</div>
+          <div class="val" style="font-size:24px;color:var(--accent-cyan)">94.2%</div>
+          <div class="target" style="color:var(--text-muted)">목표: ≥90%</div>
+          <div class="delta trend-up">▲ +4.2%p</div>
+        </div>
+        <div class="kpi-big">
+          <div class="label">계획 대비 달성률</div>
+          <div class="val" style="font-size:24px;color:var(--accent-green)">100.75%</div>
+          <div class="target" style="color:var(--text-muted)">목표: ≥95%</div>
+          <div class="delta trend-up">▲ 달성</div>
+        </div>
+        <div class="kpi-big">
+          <div class="label">OEE (종합효율)</div>
+          <div class="val" style="font-size:24px;color:var(--accent-orange)">82.5%</div>
+          <div class="target" style="color:var(--text-muted)">목표: ≥85%</div>
+          <div class="delta trend-ok">▼ -2.5%p 미달</div>
+        </div>
+        <div class="kpi-big">
+          <div class="label">LOT 적시 완료율</div>
+          <div class="val" style="font-size:24px;color:var(--accent-green)">97.3%</div>
+          <div class="target" style="color:var(--text-muted)">목표: ≥95%</div>
+          <div class="delta trend-up">▲ +2.3%p</div>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="card">
+          <div class="card-title"><i class="fa fa-chart-bar"></i> 주별 시간당 생산량 추이</div>
+          <canvas id="cProd"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fa fa-chart-line"></i> 월별 KPI 달성률 (생산성)</div>
+          <canvas id="cProdMonth"></canvas>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="card-title"><i class="fa fa-table"></i> 공정별 생산성 상세</div>
+        <table class="tbl">
+          <thead><tr><th>공정</th><th>처리량</th><th>목표</th><th>달성률</th><th>가동률</th><th>비가동 사유</th><th>상태</th></tr></thead>
+          <tbody>
+            <tr><td>입고/보관</td><td>520 kg/h</td><td>500 kg/h</td><td>104%</td><td>96%</td><td>—</td><td><span class="badge-s badge-ok">달성</span></td></tr>
+            <tr><td>절단/전처리</td><td>480 kg/h</td><td>480 kg/h</td><td>100%</td><td>94%</td><td>칼날 교체 15분</td><td><span class="badge-s badge-ok">달성</span></td></tr>
+            <tr><td>세척/절임</td><td>460 kg/h</td><td>460 kg/h</td><td>100%</td><td>93%</td><td>—</td><td><span class="badge-s badge-ok">달성</span></td></tr>
+            <tr><td>탈수</td><td>390 kg/h</td><td>400 kg/h</td><td>97.5%</td><td>91%</td><td>벨트 점검 30분</td><td><span class="badge-s badge-warn">주의</span></td></tr>
+            <tr><td>혼합</td><td>420 kg/h</td><td>420 kg/h</td><td>100%</td><td>95%</td><td>—</td><td><span class="badge-s badge-ok">달성</span></td></tr>
+            <tr><td>숙성/발효</td><td>3,200 kg/배치</td><td>3,000 kg/배치</td><td>107%</td><td>98%</td><td>—</td><td><span class="badge-s badge-ok">달성</span></td></tr>
+            <tr><td>포장/출하</td><td>350 kg/h</td><td>340 kg/h</td><td>103%</td><td>92%</td><td>포장재 교체 10분</td><td><span class="badge-s badge-ok">달성</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab 2: 품질 KPI -->
+    <div class="tab-panel" id="tab2">
+      <div class="filter-row">
+        <select><option selected>2026년 5월</option><option>2026년 4월</option></select>
+        <select><option selected>전체 품목</option><option>포기김치</option><option>깍두기</option><option>총각김치</option></select>
+        <button class="btn btn-primary"><i class="fa fa-sync"></i> 갱신</button>
+        <button class="btn btn-secondary"><i class="fa fa-download"></i> 보고서</button>
+      </div>
+
+      <div class="row2" style="margin-bottom:16px">
+        <div class="kpi-big">
+          <div class="label">완제품 불량률</div>
+          <div class="val" style="color:var(--accent-green)">0.98 <span style="font-size:16px">%</span></div>
+          <div class="target" style="color:var(--text-muted)">목표: 1.0% · 기준: 1.5%</div>
+          <div class="delta trend-up">▼ -34.7% vs 기준 · 목표 이하 달성</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:100%;background:var(--accent-green)"></div></div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px">KPI 달성: ✓ 목표 초과</div>
+        </div>
+        <div class="kpi-big">
+          <div class="label">고객 클레임 발생률</div>
+          <div class="val" style="color:var(--accent-cyan)">0.12 <span style="font-size:16px">%</span></div>
+          <div class="target" style="color:var(--text-muted)">목표: ≤0.2% · 전월: 0.18%</div>
+          <div class="delta trend-up">▼ -33.3% vs 전월</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:100%;background:var(--accent-cyan)"></div></div>
+        </div>
+      </div>
+
+      <div class="row4" style="margin-bottom:16px">
+        <div class="kpi-big">
+          <div class="label">AI 품질예측 정확도</div>
+          <div class="val" style="font-size:24px;color:var(--accent-cyan)">87.2%</div>
+          <div class="target" style="color:var(--text-muted)">목표: ≥80%</div>
+          <div class="delta trend-up">▲ +7.2%p</div>
+        </div>
+        <div class="kpi-big">
+          <div class="label">이상탐지 정확도</div>
+          <div class="val" style="font-size:24px;color:var(--accent-green)">91.4%</div>
+          <div class="target" style="color:var(--text-muted)">목표: ≥85%</div>
+          <div class="delta trend-up">▲ +6.4%p</div>
+        </div>
+        <div class="kpi-big">
+          <div class="label">발효완료 예측 MAE</div>
+          <div class="val" style="font-size:24px;color:var(--accent-orange)">1.42h</div>
+          <div class="target" style="color:var(--text-muted)">목표: ≤2h MAE</div>
+          <div class="delta trend-up">▲ 달성</div>
+        </div>
+        <div class="kpi-big">
+          <div class="label">R² (회귀 성능)</div>
+          <div class="val" style="font-size:24px;color:var(--accent-green)">0.891</div>
+          <div class="target" style="color:var(--text-muted)">목표: ≥0.85</div>
+          <div class="delta trend-up">▲ 달성</div>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="card">
+          <div class="card-title"><i class="fa fa-chart-line"></i> 월별 불량률 추이</div>
+          <canvas id="cQual"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fa fa-chart-bar"></i> 불량 유형 분포</div>
+          <canvas id="cDefect"></canvas>
+        </div>
+      </div>
+
+      <div class="row2" style="margin-top:16px">
+        <div class="card">
+          <div class="card-title"><i class="fa fa-spider"></i> AI 성능 KPI 레이더</div>
+          <canvas id="cAiKpi"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fa fa-table"></i> 품질 KPI 상세</div>
+          <table class="tbl">
+            <thead><tr><th>KPI 항목</th><th>실적</th><th>목표</th><th>달성여부</th></tr></thead>
+            <tbody>
+              <tr><td>완제품 불량률</td><td>0.98%</td><td>≤1.0%</td><td><span class="badge-s badge-ok">달성</span></td></tr>
+              <tr><td>발효 품질 A등급 비율</td><td>78.5%</td><td>≥75%</td><td><span class="badge-s badge-ok">달성</span></td></tr>
+              <tr><td>이상발효 조기탐지율</td><td>91.4%</td><td>≥85%</td><td><span class="badge-s badge-ok">달성</span></td></tr>
+              <tr><td>품질 리스크 Recall</td><td>88.7%</td><td>≥85%</td><td><span class="badge-s badge-ok">달성</span></td></tr>
+              <tr><td>고객 클레임률</td><td>0.12%</td><td>≤0.2%</td><td><span class="badge-s badge-ok">달성</span></td></tr>
+              <tr><td>OEE 품질 요소</td><td>97.8%</td><td>≥97%</td><td><span class="badge-s badge-ok">달성</span></td></tr>
+              <tr><td>AI 예측 정확도</td><td>87.2%</td><td>≥80%</td><td><span class="badge-s badge-ok">달성</span></td></tr>
+              <tr><td>발효완료 예측 MAE</td><td>1.42h</td><td>≤2.0h</td><td><span class="badge-s badge-ok">달성</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: KPI 설정 관리 -->
+    <div class="tab-panel" id="tab3">
+      <div class="row2">
+        <div class="card">
+          <div class="card-title"><i class="fa fa-list"></i> KPI 항목 목록</div>
+          <div class="filter-row">
+            <select><option>전체 유형</option><option>생산성</option><option>품질</option><option>AI 성능</option></select>
+            <button class="btn btn-primary btn-sm">+ KPI 추가</button>
+          </div>
+          <table class="tbl">
+            <thead><tr><th>KPI 코드</th><th>항목명</th><th>유형</th><th>목표값</th><th>단위</th><th>상태</th><th>관리</th></tr></thead>
+            <tbody>
+              <tr style="background:rgba(26,115,232,.06)">
+                <td>KPI-P01</td><td>시간당 생산량</td><td><span class="badge-s badge-info">생산성</span></td><td>≥3,000</td><td>kg/h</td><td><span class="badge-s badge-ok">활성</span></td>
+                <td><button class="btn btn-sm btn-secondary">편집</button></td>
+              </tr>
+              <tr><td>KPI-P02</td><td>설비 가동률</td><td><span class="badge-s badge-info">생산성</span></td><td>≥90%</td><td>%</td><td><span class="badge-s badge-ok">활성</span></td><td><button class="btn btn-sm btn-secondary">편집</button></td></tr>
+              <tr><td>KPI-P03</td><td>OEE 종합효율</td><td><span class="badge-s badge-info">생산성</span></td><td>≥85%</td><td>%</td><td><span class="badge-s badge-ok">활성</span></td><td><button class="btn btn-sm btn-secondary">편집</button></td></tr>
+              <tr><td>KPI-Q01</td><td>완제품 불량률</td><td><span class="badge-s badge-warn">품질</span></td><td>≤1.0%</td><td>%</td><td><span class="badge-s badge-ok">활성</span></td><td><button class="btn btn-sm btn-secondary">편집</button></td></tr>
+              <tr><td>KPI-Q02</td><td>발효 A등급 비율</td><td><span class="badge-s badge-warn">품질</span></td><td>≥75%</td><td>%</td><td><span class="badge-s badge-ok">활성</span></td><td><button class="btn btn-sm btn-secondary">편집</button></td></tr>
+              <tr><td>KPI-A01</td><td>발효품질 예측 정확도</td><td><span class="badge-s badge-purple">AI성능</span></td><td>≥80%</td><td>%</td><td><span class="badge-s badge-ok">활성</span></td><td><button class="btn btn-sm btn-secondary">편집</button></td></tr>
+              <tr><td>KPI-A02</td><td>이상탐지 Recall</td><td><span class="badge-s badge-purple">AI성능</span></td><td>≥85%</td><td>%</td><td><span class="badge-s badge-ok">활성</span></td><td><button class="btn btn-sm btn-secondary">편집</button></td></tr>
+              <tr><td>KPI-A03</td><td>발효완료 예측 MAE</td><td><span class="badge-s badge-purple">AI성능</span></td><td>≤2.0h</td><td>시간</td><td><span class="badge-s badge-ok">활성</span></td><td><button class="btn btn-sm btn-secondary">편집</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- KPI Edit Form -->
+        <div class="card">
+          <div class="card-title"><i class="fa fa-edit"></i> KPI 편집 — KPI-P01 시간당 생산량</div>
+          <div class="form-group"><label class="form-label">KPI 코드</label><input type="text" value="KPI-P01" style="width:100%" readonly></div>
+          <div class="form-group"><label class="form-label">항목명 (한국어)</label><input type="text" value="시간당 생산량" style="width:100%"></div>
+          <div class="row2">
+            <div class="form-group"><label class="form-label">KPI 유형</label><select style="width:100%"><option selected>생산성</option><option>품질</option><option>AI 성능</option></select></div>
+            <div class="form-group"><label class="form-label">단위</label><input type="text" value="kg/h" style="width:100%"></div>
+          </div>
+          <div class="row2">
+            <div class="form-group"><label class="form-label">기준값 (Before)</label><input type="number" value="2750" style="width:100%"></div>
+            <div class="form-group"><label class="form-label">목표값 (After)</label><input type="number" value="3000" style="width:100%"></div>
+          </div>
+          <div class="row2">
+            <div class="form-group"><label class="form-label">경고 임계값</label><input type="number" value="2900" style="width:100%"></div>
+            <div class="form-group"><label class="form-label">위험 임계값</label><input type="number" value="2800" style="width:100%"></div>
+          </div>
+          <div class="form-group"><label class="form-label">집계 방식</label>
+            <select style="width:100%"><option selected>시간 평균</option><option>일 합계</option><option>주 평균</option><option>월 평균</option></select>
+          </div>
+          <div class="form-group"><label class="form-label">데이터 소스</label>
+            <select style="width:100%"><option selected>포장 출하 실적 DB</option><option>공정 센서 데이터</option><option>수동 입력</option></select>
+          </div>
+          <div class="form-group"><label class="form-label">개선율 계산식</label>
+            <input type="text" value="(목표값 - 기준값) / 기준값 × 100" style="width:100%">
+          </div>
+          <div class="form-group"><label class="form-label">KPI 설명 (보고서용)</label>
+            <textarea rows="2" style="width:100%">단위 시간(1시간) 동안 완제품 기준으로 생산된 김치 중량. 포장 출하 실적 기준으로 산출.</textarea>
+          </div>
+          <div style="display:flex;gap:8px;justify-content:flex-end">
+            <button class="btn btn-secondary">취소</button>
+            <button class="btn btn-primary">저장</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI Summary -->
+      <div class="card" style="margin-top:16px">
+        <div class="card-title"><i class="fa fa-trophy"></i> 전체 KPI 달성 현황 (2026년 5월)</div>
+        <div style="display:flex;gap:24px;align-items:center">
+          <div style="text-align:center;padding:20px 30px;background:var(--bg-card2);border-radius:10px">
+            <div style="font-size:40px;font-weight:700;color:var(--accent-green)">8</div>
+            <div style="font-size:13px;color:var(--text-muted)">달성 항목</div>
+          </div>
+          <div style="text-align:center;padding:20px 30px;background:var(--bg-card2);border-radius:10px">
+            <div style="font-size:40px;font-weight:700;color:var(--accent-orange)">1</div>
+            <div style="font-size:13px;color:var(--text-muted)">미달 항목</div>
+          </div>
+          <div style="flex:1">
+            <canvas id="cKpiSum" style="max-height:140px"></canvas>
+          </div>
+          <div style="text-align:center;padding:20px 30px;background:rgba(0,200,83,.08);border:1px solid rgba(0,200,83,.3);border-radius:10px">
+            <div style="font-size:40px;font-weight:700;color:var(--accent-green)">88.9%</div>
+            <div style="font-size:13px;color:var(--text-muted)">전체 KPI 달성률</div>
+            <div style="font-size:11px;color:var(--accent-green);margin-top:4px">▲ 전월 대비 +5.6%p</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// Login / Logout
+function doLogin() {
+  document.getElementById('loginScreen').classList.remove('active');
+  document.getElementById('mesApp').classList.add('active');
+  initTab1Charts();
+}
+function doLogout() {
+  document.getElementById('mesApp').classList.remove('active');
+  document.getElementById('loginScreen').classList.add('active');
+}
+
+// Role select
+document.querySelectorAll('.role-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+// Tabs
+const navItems = document.querySelectorAll('.nav-item');
+const tabs = document.querySelectorAll('.tab-panel');
+const tabBtns = document.querySelectorAll('.tab-btn');
+let t1done=false, t2done=false, t3done=false;
+
+function showTab(n) {
+  tabs.forEach((t,i) => t.classList.toggle('active', i===n-1));
+  tabBtns.forEach((b,i) => b.classList.toggle('active', i===n-1));
+  navItems.forEach((ni,i) => ni.classList.toggle('active', i===n-1));
+  if (n===1 && !t1done) { initTab1Charts(); t1done=true; }
+  if (n===2 && !t2done) { initTab2Charts(); t2done=true; }
+  if (n===3 && !t3done) { initTab3Charts(); t3done=true; }
+}
+
+function initTab1Charts() {
+  if (t1done) return; t1done=true;
+  const weeks = ['4/28주','5/5주','5/12주','5/19주','5/23(현재)'];
+  new Chart(document.getElementById('cProd'), {
+    type:'bar',
+    data: { labels:weeks, datasets:[
+      { label:'시간당 생산량(kg/h)', data:[2850,2920,2980,3010,3012], backgroundColor:'rgba(26,115,232,.7)' },
+      { label:'목표(3,000)', data:[3000,3000,3000,3000,3000], type:'line', borderColor:'#ff9800', borderDash:[5,5], backgroundColor:'transparent', pointRadius:0 }
+    ]},
+    options:{ responsive:true, scales:{y:{min:2700,grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#8899bb',callback:v=>v.toLocaleString()}},x:{ticks:{color:'#8899bb'}}}, plugins:{legend:{labels:{color:'#8899bb',font:{size:11}}}} }
+  });
+  const months=['12월','1월','2월','3월','4월','5월'];
+  new Chart(document.getElementById('cProdMonth'), {
+    type:'line',
+    data:{ labels:months, datasets:[
+      { label:'생산량 달성률', data:[94,96,97,98,99,100.75], borderColor:'#00c853', backgroundColor:'rgba(0,200,83,.1)', fill:true, tension:.4 },
+      { label:'OEE', data:[79,80,81,82,83,82.5], borderColor:'#00b4d8', backgroundColor:'transparent', tension:.4 }
+    ]},
+    options:{ responsive:true, scales:{y:{min:75,max:105,grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#8899bb',callback:v=>v+'%'}},x:{ticks:{color:'#8899bb'}}}, plugins:{legend:{labels:{color:'#8899bb',font:{size:11}}}} }
+  });
+}
+
+function initTab2Charts() {
+  if (t2done) return; t2done=true;
+  const months=['12월','1월','2월','3월','4월','5월'];
+  new Chart(document.getElementById('cQual'), {
+    type:'line',
+    data:{ labels:months, datasets:[
+      { label:'불량률(%)', data:[1.45,1.35,1.25,1.15,1.08,0.98], borderColor:'#f44336', backgroundColor:'rgba(244,67,54,.1)', fill:true, tension:.4 },
+      { label:'목표(1.0%)', data:[1,1,1,1,1,1], borderColor:'#ff9800', borderDash:[5,5], backgroundColor:'transparent', pointRadius:0 }
+    ]},
+    options:{ responsive:true, scales:{y:{max:1.6,grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#8899bb',callback:v=>v+'%'}},x:{ticks:{color:'#8899bb'}}}, plugins:{legend:{labels:{color:'#8899bb',font:{size:11}}}} }
+  });
+  new Chart(document.getElementById('cDefect'), {
+    type:'doughnut',
+    data:{ labels:['과발효','염도불균일','이물질','외관불량','기타'], datasets:[{ data:[35,25,18,14,8], backgroundColor:['#f44336','#ff9800','#9c27b0','#00b4d8','#556688'], borderWidth:0 }] },
+    options:{ responsive:true, plugins:{ legend:{labels:{color:'#8899bb',font:{size:11}}} } }
+  });
+  new Chart(document.getElementById('cAiKpi'), {
+    type:'radar',
+    data:{
+      labels:['품질예측(87.2%)','이상탐지(91.4%)','완료예측(96%)','Recall(88.7%)','R²(0.891)','클레임율(99.9%)'],
+      datasets:[
+        { label:'실적', data:[87.2,91.4,96,88.7,89.1,99.9], borderColor:'#1a73e8', backgroundColor:'rgba(26,115,232,.15)', pointBackgroundColor:'#1a73e8' },
+        { label:'목표', data:[80,85,90,85,85,99.8], borderColor:'#556688', backgroundColor:'transparent', borderDash:[5,5] }
+      ]
+    },
+    options:{ responsive:true, scales:{r:{grid:{color:'rgba(255,255,255,.1)'},ticks:{color:'#8899bb',backdropColor:'transparent',callback:v=>v+'%'},pointLabels:{color:'#8899bb',font:{size:10}}}}, plugins:{legend:{labels:{color:'#8899bb',font:{size:11}}}} }
+  });
+}
+
+function initTab3Charts() {
+  if (t3done) return; t3done=true;
+  new Chart(document.getElementById('cKpiSum'), {
+    type:'bar',
+    data:{
+      labels:['시간당생산','설비가동','OEE','불량률','발효A등급','AI정확도','이상탐지','MAE','Recall'],
+      datasets:[
+        { label:'달성률', data:[100.4,104.7,97.1,102,104.7,109,107.5,129,104.4], backgroundColor: data => data.raw >= 100 ? 'rgba(0,200,83,.7)' : 'rgba(255,152,0,.7)' }
+      ]
+    },
+    options:{ responsive:true, scales:{y:{min:85,max:135,grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#8899bb',callback:v=>v+'%'}},x:{ticks:{color:'#8899bb',font:{size:9}}}}, plugins:{legend:{display:false}} }
+  });
+}
+</script>
+</body>
+</html>

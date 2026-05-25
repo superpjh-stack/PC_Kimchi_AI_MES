@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>꽃순이김치 MES - 기준정보/사용자/시스템관리</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root {
+  --bg-main:#0a1628; --bg-sidebar:#0f2044; --bg-card:#162035; --bg-card2:#1a2a45;
+  --accent-blue:#1a73e8; --accent-cyan:#00b4d8; --accent-green:#00c853;
+  --accent-orange:#ff9800; --accent-red:#f44336; --accent-purple:#9c27b0;
+  --text-primary:#e8eaf6; --text-secondary:#8899bb; --text-muted:#556688;
+  --border:#1e3a5f; --sidebar-w:220px; --header-h:56px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',sans-serif;background:var(--bg-main);color:var(--text-primary);height:100vh;display:grid;grid-template-columns:var(--sidebar-w) 1fr;grid-template-rows:var(--header-h) 1fr;overflow:hidden;}
+.header{grid-column:1/-1;background:var(--bg-sidebar);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:16px;z-index:10;}
+.logo{font-size:18px;font-weight:700;color:var(--accent-cyan);white-space:nowrap;}
+.logo span{color:var(--text-secondary);font-size:12px;font-weight:400;margin-left:8px;}
+.header-tabs{display:flex;gap:4px;margin-left:20px;}
+.htab{padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;color:var(--text-secondary);border:none;background:none;}
+.htab.active{background:var(--accent-blue);color:#fff;}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:12px;}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--accent-blue);display:flex;align-items:center;justify-content:center;font-size:13px;}
+.badge{background:var(--accent-red);color:#fff;border-radius:10px;padding:2px 7px;font-size:11px;}
+.sidebar{background:var(--bg-sidebar);border-right:1px solid var(--border);overflow-y:auto;padding:12px 0;}
+.sidebar-section{font-size:10px;color:var(--text-muted);padding:8px 16px 4px;text-transform:uppercase;letter-spacing:.8px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 16px;font-size:13px;color:var(--text-secondary);cursor:pointer;border-left:3px solid transparent;}
+.nav-item:hover{background:rgba(26,115,232,.1);color:var(--text-primary);}
+.nav-item.active{background:rgba(26,115,232,.15);color:var(--accent-cyan);border-left-color:var(--accent-cyan);}
+.nav-item i{width:16px;text-align:center;font-size:13px;}
+.content{overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;}
+.tab-bar{display:flex;gap:6px;flex-wrap:wrap;}
+.tab-btn{padding:7px 16px;border-radius:6px;font-size:13px;cursor:pointer;border:1px solid var(--border);background:var(--bg-card2);color:var(--text-secondary);}
+.tab-btn.active{background:var(--accent-blue);border-color:var(--accent-blue);color:#fff;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:16px;}
+.card-title{font-size:14px;font-weight:600;color:var(--accent-cyan);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+.tbl{width:100%;border-collapse:collapse;font-size:13px;}
+.tbl th{background:var(--bg-card2);padding:9px 12px;text-align:left;color:var(--text-secondary);font-weight:500;border-bottom:1px solid var(--border);}
+.tbl td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text-primary);}
+.tbl tr:hover td{background:rgba(26,115,232,.06);}
+.badge-s{padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500;}
+.badge-ok{background:rgba(0,200,83,.15);color:var(--accent-green);}
+.badge-warn{background:rgba(255,152,0,.15);color:var(--accent-orange);}
+.badge-danger{background:rgba(244,67,54,.15);color:var(--accent-red);}
+.badge-info{background:rgba(0,180,216,.15);color:var(--accent-cyan);}
+.badge-purple{background:rgba(156,39,176,.15);color:var(--accent-purple);}
+.badge-gray{background:rgba(85,102,136,.2);color:var(--text-secondary);}
+select,input[type=text],input[type=date],input[type=number],input[type=email],input[type=password],textarea{background:var(--bg-card2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text-primary);font-size:12px;outline:none;}
+select:focus,input:focus,textarea:focus{border-color:var(--accent-blue);}
+textarea{width:100%;resize:vertical;font-family:inherit;}
+.filter-row{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
+.btn{padding:7px 14px;border-radius:6px;font-size:12px;cursor:pointer;border:none;}
+.btn-primary{background:var(--accent-blue);color:#fff;}
+.btn-secondary{background:var(--bg-card2);border:1px solid var(--border);color:var(--text-secondary);}
+.btn-danger{background:rgba(244,67,54,.15);border:1px solid var(--accent-red);color:var(--accent-red);}
+.btn-sm{padding:4px 10px;font-size:11px;}
+.form-group{margin-bottom:14px;}
+.form-label{font-size:12px;color:var(--text-secondary);margin-bottom:5px;display:block;}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+.kpi-card{background:var(--bg-card2);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;}
+.kpi-val{font-size:22px;font-weight:700;color:var(--accent-cyan);}
+.kpi-label{font-size:11px;color:var(--text-muted);margin-top:4px;}
+.detail-pane{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:16px;}
+.detail-field{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.detail-field:last-child{border-bottom:none;}
+.detail-label{color:var(--text-muted);}
+.detail-val{color:var(--text-primary);}
+.perm-matrix table{border-collapse:collapse;width:100%;}
+.perm-matrix th,.perm-matrix td{border:1px solid var(--border);padding:8px 10px;font-size:12px;text-align:center;}
+.perm-matrix th{background:var(--bg-card2);color:var(--text-secondary);}
+.perm-check{color:var(--accent-green);}
+.perm-x{color:var(--accent-red);}
+.perm-ro{color:var(--accent-orange);}
+.log-row{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:12px;align-items:flex-start;}
+.log-row:last-child{border-bottom:none;}
+.log-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+.log-create .log-icon{background:rgba(0,200,83,.15);color:var(--accent-green);}
+.log-update .log-icon{background:rgba(26,115,232,.15);color:var(--accent-blue);}
+.log-delete .log-icon{background:rgba(244,67,54,.15);color:var(--accent-red);}
+.log-login .log-icon{background:rgba(0,180,216,.15);color:var(--accent-cyan);}
+.log-warn .log-icon{background:rgba(255,152,0,.15);color:var(--accent-orange);}
+.log-info{flex:1;}
+.log-title{font-weight:600;color:var(--text-primary);}
+.log-detail{color:var(--text-muted);margin-top:2px;}
+.log-time{color:var(--text-muted);flex-shrink:0;}
+.switch-wrap{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);}
+.switch-label{flex:1;font-size:13px;color:var(--text-primary);}
+.switch-sub{font-size:11px;color:var(--text-muted);margin-top:2px;}
+.switch{position:relative;display:inline-block;width:40px;height:22px;}
+.switch input{opacity:0;width:0;height:0;}
+.slider{position:absolute;cursor:pointer;inset:0;background:var(--bg-card2);border-radius:22px;border:1px solid var(--border);transition:.3s;}
+.slider:before{position:absolute;content:"";height:16px;width:16px;left:2px;bottom:2px;background:var(--text-muted);border-radius:50%;transition:.3s;}
+input:checked+.slider{background:var(--accent-blue);border-color:var(--accent-blue);}
+input:checked+.slider:before{transform:translateX(18px);background:#fff;}
+.doc-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+.doc-item:last-child{border-bottom:none;}
+.doc-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.doc-info{flex:1;}
+.doc-name{font-size:13px;font-weight:500;}
+.doc-meta{font-size:11px;color:var(--text-muted);margin-top:2px;}
+.range-input{width:100%;accent-color:var(--accent-blue);}
+.section-title{font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+canvas{max-height:200px;}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="logo">꽃순이김치 MES <span>스마트공장 통합관리</span></div>
+  <div class="header-tabs">
+    <button class="htab">AI 대시보드</button>
+    <button class="htab">원재료관리</button>
+    <button class="htab">숙성발효</button>
+    <button class="htab">포장출하</button>
+    <button class="htab">공정관리</button>
+    <button class="htab">데이터관리</button>
+    <button class="htab">AI Agent</button>
+    <button class="htab active">기준정보</button>
+    <button class="htab">사용자/시스템</button>
+    <button class="htab">KPI</button>
+  </div>
+  <div class="header-right">
+    <i class="fa fa-bell" style="color:var(--text-secondary)"></i>
+    <span class="badge">2</span>
+    <div class="avatar"><i class="fa fa-user" style="font-size:14px"></i></div>
+    <span style="font-size:13px;color:var(--text-secondary)">김관리</span>
+  </div>
+</header>
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="sidebar-section">기준정보관리</div>
+  <div class="nav-item active" onclick="showTab(1)"><i class="fa fa-check-double"></i> 품질기준 관리</div>
+  <div class="nav-item" onclick="showTab(2)"><i class="fa fa-file-alt"></i> 작업표준(SOP) 관리</div>
+  <div class="nav-item" onclick="showTab(3)"><i class="fa fa-tags"></i> 코드관리</div>
+
+  <div class="sidebar-section" style="margin-top:12px">사용자/시스템관리</div>
+  <div class="nav-item" onclick="showTab(4)"><i class="fa fa-users"></i> 사용자 관리</div>
+  <div class="nav-item" onclick="showTab(5)"><i class="fa fa-shield-alt"></i> 권한 관리</div>
+  <div class="nav-item" onclick="showTab(6)"><i class="fa fa-clipboard-list"></i> 로그 관리</div>
+  <div class="nav-item" onclick="showTab(7)"><i class="fa fa-bell"></i> 알림 설정</div>
+  <div class="nav-item" onclick="showTab(8)"><i class="fa fa-cog"></i> 시스템 설정</div>
+
+  <div class="sidebar-section" style="margin-top:12px">전체 모듈</div>
+  <div class="nav-item"><i class="fa fa-tachometer-alt"></i> AI 대시보드</div>
+  <div class="nav-item"><i class="fa fa-box"></i> 원재료관리</div>
+  <div class="nav-item"><i class="fa fa-flask"></i> 숙성발효관리</div>
+  <div class="nav-item"><i class="fa fa-truck"></i> 포장출하관리</div>
+  <div class="nav-item"><i class="fa fa-industry"></i> 공정관리</div>
+  <div class="nav-item"><i class="fa fa-chart-line"></i> KPI관리</div>
+</nav>
+
+<!-- Content -->
+<div class="content">
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="showTab(1)">품질기준 관리</button>
+    <button class="tab-btn" onclick="showTab(2)">작업표준(SOP) 관리</button>
+    <button class="tab-btn" onclick="showTab(3)">코드관리</button>
+    <button class="tab-btn" onclick="showTab(4)">사용자 관리</button>
+    <button class="tab-btn" onclick="showTab(5)">권한 관리</button>
+    <button class="tab-btn" onclick="showTab(6)">로그 관리</button>
+    <button class="tab-btn" onclick="showTab(7)">알림 설정</button>
+    <button class="tab-btn" onclick="showTab(8)">시스템 설정</button>
+  </div>
+
+  <!-- Tab 1: 품질기준 관리 -->
+  <div class="tab-panel active" id="tab1">
+    <div class="row2">
+      <div>
+        <div class="card">
+          <div class="card-title"><i class="fa fa-check-double"></i> 품질기준 목록</div>
+          <div class="filter-row">
+            <select><option>전체 공정</option><option>절임</option><option>발효</option><option>포장</option><option>입고</option></select>
+            <select><option>전체 기준유형</option><option>CCP</option><option>QC</option><option>일반</option></select>
+            <button class="btn btn-primary btn-sm">+ 기준 추가</button>
+          </div>
+          <table class="tbl">
+            <thead><tr><th>코드</th><th>기준명</th><th>공정</th><th>유형</th><th>최종수정</th><th>상태</th><th>관리</th></tr></thead>
+            <tbody>
+              <tr style="background:rgba(26,115,232,.06)">
+                <td>QS-001</td><td>발효 pH 기준</td><td>발효</td><td><span class="badge-s badge-danger">CCP</span></td><td>2026-04-10</td><td><span class="badge-s badge-ok">적용중</span></td>
+                <td><button class="btn btn-sm btn-secondary">편집</button></td>
+              </tr>
+              <tr><td>QS-002</td><td>절임 염도 기준</td><td>절임</td><td><span class="badge-s badge-danger">CCP</span></td><td>2026-03-22</td><td><span class="badge-s badge-ok">적용중</span></td><td><button class="btn btn-sm btn-secondary">편집</button></td></tr>
+              <tr><td>QS-003</td><td>발효 온도 기준</td><td>발효</td><td><span class="badge-s badge-danger">CCP</span></td><td>2026-04-01</td><td><span class="badge-s badge-ok">적용중</span></td><td><button class="btn btn-sm btn-secondary">편집</button></td></tr>
+              <tr><td>QS-004</td><td>원재료 외관 등급</td><td>입고</td><td><span class="badge-s badge-info">QC</span></td><td>2026-02-15</td><td><span class="badge-s badge-ok">적용중</span></td><td><button class="btn btn-sm btn-secondary">편집</button></td></tr>
+              <tr><td>QS-005</td><td>완제품 관능검사</td><td>포장</td><td><span class="badge-s badge-info">QC</span></td><td>2026-01-30</td><td><span class="badge-s badge-ok">적용중</span></td><td><button class="btn btn-sm btn-secondary">편집</button></td></tr>
+              <tr><td>QS-006</td><td>금속검출 기준</td><td>포장</td><td><span class="badge-s badge-danger">CCP</span></td><td>2025-12-01</td><td><span class="badge-s badge-ok">적용중</span></td><td><button class="btn btn-sm btn-secondary">편집</button></td></tr>
+              <tr><td>QS-007</td><td>배추 함수율 기준</td><td>입고</td><td><span class="badge-s badge-warn">일반</span></td><td>2025-11-15</td><td><span class="badge-s badge-gray">검토중</span></td><td><button class="btn btn-sm btn-secondary">편집</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Detail Panel -->
+      <div>
+        <div class="card">
+          <div class="card-title"><i class="fa fa-edit"></i> 품질기준 상세 — QS-001 발효 pH 기준</div>
+          <div class="form-group"><label class="form-label">기준 코드</label><input type="text" value="QS-001" style="width:100%"></div>
+          <div class="form-group"><label class="form-label">기준명</label><input type="text" value="발효 pH 기준" style="width:100%"></div>
+          <div class="row2">
+            <div class="form-group"><label class="form-label">적용 공정</label><select style="width:100%"><option selected>발효</option><option>절임</option><option>포장</option></select></div>
+            <div class="form-group"><label class="form-label">기준 유형</label><select style="width:100%"><option selected>CCP (HACCP)</option><option>QC</option><option>일반</option></select></div>
+          </div>
+          <div class="row2">
+            <div class="form-group"><label class="form-label">하한값</label><input type="number" value="4.0" style="width:100%"></div>
+            <div class="form-group"><label class="form-label">상한값</label><input type="number" value="4.5" style="width:100%"></div>
+          </div>
+          <div class="row2">
+            <div class="form-group"><label class="form-label">경보 하한</label><input type="number" value="3.8" style="width:100%"></div>
+            <div class="form-group"><label class="form-label">경보 상한</label><input type="number" value="4.8" style="width:100%"></div>
+          </div>
+          <div class="form-group"><label class="form-label">단위</label><input type="text" value="pH" style="width:100%"></div>
+          <div class="form-group"><label class="form-label">측정 방법</label><input type="text" value="pH 미터 직접 측정 / 30분 간격" style="width:100%"></div>
+          <div class="form-group"><label class="form-label">이탈 시 조치</label><textarea rows="3">pH 4.5 초과: 온도 낮춤 + 모니터링 강화. pH 4.8 초과: 발효 중단 + 품질팀 보고. pH 5.0 초과: 격리 + 품질심사위원회 결정.</textarea></div>
+          <div style="display:flex;gap:8px;justify-content:flex-end">
+            <button class="btn btn-secondary">취소</button>
+            <button class="btn btn-primary">저장</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 2: SOP 관리 -->
+  <div class="tab-panel" id="tab2">
+    <div class="row2">
+      <div class="card">
+        <div class="card-title"><i class="fa fa-file-alt"></i> 작업표준서 (SOP) 목록</div>
+        <div class="filter-row">
+          <select><option>전체 분류</option><option>발효관리</option><option>원재료</option><option>HACCP</option><option>설비운영</option><option>품질검사</option></select>
+          <input type="text" placeholder="문서명 검색">
+          <button class="btn btn-primary btn-sm"><i class="fa fa-upload"></i> 문서 등록</button>
+        </div>
+
+        <div class="doc-item">
+          <div class="doc-icon" style="background:rgba(244,67,54,.15);color:var(--accent-red)"><i class="fa fa-shield-alt"></i></div>
+          <div class="doc-info"><div class="doc-name">HACCP 관리계획서 v3.1</div><div class="doc-meta">분류: HACCP · 등록: 2026-04-01 · pgvector 임베딩: ✓</div></div>
+          <span class="badge-s badge-danger">CCP</span>
+          <button class="btn btn-sm btn-secondary" style="margin-left:8px">보기</button>
+        </div>
+        <div class="doc-item">
+          <div class="doc-icon" style="background:rgba(0,180,216,.15);color:var(--accent-cyan)"><i class="fa fa-flask"></i></div>
+          <div class="doc-info"><div class="doc-name">발효관리기준서 v2.3</div><div class="doc-meta">분류: 발효관리 · 등록: 2026-03-15 · pgvector 임베딩: ✓</div></div>
+          <span class="badge-s badge-info">표준</span>
+          <button class="btn btn-sm btn-secondary" style="margin-left:8px">보기</button>
+        </div>
+        <div class="doc-item">
+          <div class="doc-icon" style="background:rgba(156,39,176,.15);color:var(--accent-purple)"><i class="fa fa-file-medical"></i></div>
+          <div class="doc-info"><div class="doc-name">품질기준서 v1.8</div><div class="doc-meta">분류: 품질검사 · 등록: 2026-02-20 · pgvector 임베딩: ✓</div></div>
+          <span class="badge-s badge-info">표준</span>
+          <button class="btn btn-sm btn-secondary" style="margin-left:8px">보기</button>
+        </div>
+        <div class="doc-item">
+          <div class="doc-icon" style="background:rgba(255,152,0,.15);color:var(--accent-orange)"><i class="fa fa-exclamation-triangle"></i></div>
+          <div class="doc-info"><div class="doc-name">이상발효 대응 매뉴얼 v1.2</div><div class="doc-meta">분류: 발효관리 · 등록: 2026-01-10 · pgvector 임베딩: ✓</div></div>
+          <span class="badge-s badge-warn">대응</span>
+          <button class="btn btn-sm btn-secondary" style="margin-left:8px">보기</button>
+        </div>
+        <div class="doc-item">
+          <div class="doc-icon" style="background:rgba(0,200,83,.15);color:var(--accent-green)"><i class="fa fa-boxes"></i></div>
+          <div class="doc-info"><div class="doc-name">원재료 입고 검사 표준 v2.0</div><div class="doc-meta">분류: 원재료 · 등록: 2025-12-05 · pgvector 임베딩: ✓</div></div>
+          <span class="badge-s badge-info">표준</span>
+          <button class="btn btn-sm btn-secondary" style="margin-left:8px">보기</button>
+        </div>
+        <div class="doc-item">
+          <div class="doc-icon" style="background:rgba(26,115,232,.15);color:var(--accent-blue)"><i class="fa fa-tools"></i></div>
+          <div class="doc-info"><div class="doc-name">설비 운영 매뉴얼 v1.5</div><div class="doc-meta">분류: 설비운영 · 등록: 2025-11-20 · pgvector 임베딩: ✓</div></div>
+          <span class="badge-s badge-info">표준</span>
+          <button class="btn btn-sm btn-secondary" style="margin-left:8px">보기</button>
+        </div>
+        <div class="doc-item">
+          <div class="doc-icon" style="background:rgba(244,67,54,.15);color:var(--accent-red)"><i class="fa fa-headset"></i></div>
+          <div class="doc-info"><div class="doc-name">클레임 대응 매뉴얼 v1.0</div><div class="doc-meta">분류: 품질검사 · 등록: 2025-10-01 · pgvector 임베딩: ✓</div></div>
+          <span class="badge-s badge-danger">대응</span>
+          <button class="btn btn-sm btn-secondary" style="margin-left:8px">보기</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title"><i class="fa fa-database"></i> Vector DB 임베딩 현황</div>
+          <div class="kpi-row" style="grid-template-columns:repeat(2,1fr);margin-bottom:0">
+            <div class="kpi-card"><div class="kpi-val" style="font-size:20px">7</div><div class="kpi-label">등록 문서</div></div>
+            <div class="kpi-card"><div class="kpi-val" style="font-size:20px;color:var(--accent-green)">7</div><div class="kpi-label">임베딩 완료</div></div>
+          </div>
+          <div style="margin-top:14px">
+            <canvas id="cSop"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><i class="fa fa-upload"></i> 문서 등록 / 임베딩</div>
+          <div class="form-group"><label class="form-label">문서명</label><input type="text" placeholder="예: 발효관리기준서 v2.4" style="width:100%"></div>
+          <div class="form-group"><label class="form-label">분류</label><select style="width:100%"><option>발효관리</option><option>원재료</option><option>HACCP</option><option>설비운영</option><option>품질검사</option></select></div>
+          <div class="form-group"><label class="form-label">파일 첨부</label>
+            <div style="border:2px dashed var(--border);border-radius:8px;padding:20px;text-align:center;color:var(--text-muted);font-size:12px">
+              <i class="fa fa-cloud-upload-alt" style="font-size:24px;margin-bottom:8px;display:block"></i>
+              PDF, DOCX 파일을 드래그하거나 클릭하여 업로드
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">자동 임베딩 (pgvector)</label>
+            <div style="display:flex;align-items:center;gap:8px">
+              <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+              <span style="font-size:12px;color:var(--text-secondary)">업로드 즉시 AI Agent용 벡터 변환</span>
+            </div>
+          </div>
+          <button class="btn btn-primary" style="width:100%"><i class="fa fa-upload"></i> 등록 및 임베딩 시작</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 3: 코드관리 -->
+  <div class="tab-panel" id="tab3">
+    <div class="row2">
+      <div class="card">
+        <div class="card-title"><i class="fa fa-tags"></i> 코드 그룹 목록</div>
+        <div class="filter-row">
+          <input type="text" placeholder="코드명 검색">
+          <button class="btn btn-primary btn-sm">+ 그룹 추가</button>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>그룹코드</th><th>그룹명</th><th>코드 수</th><th>설명</th><th>관리</th></tr></thead>
+          <tbody>
+            <tr style="background:rgba(26,115,232,.06)"><td>GRP-001</td><td>원재료 유형</td><td>8</td><td>배추, 무, 고추가루 등</td><td><button class="btn btn-sm btn-secondary">편집</button></td></tr>
+            <tr><td>GRP-002</td><td>품질 등급</td><td>4</td><td>A급~D급 분류</td><td><button class="btn btn-sm btn-secondary">편집</button></td></tr>
+            <tr><td>GRP-003</td><td>공정 유형</td><td>9</td><td>입고→출하 공정 전체</td><td><button class="btn btn-sm btn-secondary">편집</button></td></tr>
+            <tr><td>GRP-004</td><td>이상 유형</td><td>6</td><td>품질/설비/공정 이상 분류</td><td><button class="btn btn-sm btn-secondary">편집</button></td></tr>
+            <tr><td>GRP-005</td><td>포장 형태</td><td>5</td><td>500g/1kg/2kg/5kg/10kg</td><td><button class="btn btn-sm btn-secondary">편집</button></td></tr>
+            <tr><td>GRP-006</td><td>공급처 분류</td><td>3</td><td>국내/해외/계약재배</td><td><button class="btn btn-sm btn-secondary">편집</button></td></tr>
+            <tr><td>GRP-007</td><td>납품처 유형</td><td>4</td><td>대형마트/도매/직납/수출</td><td><button class="btn btn-sm btn-secondary">편집</button></td></tr>
+            <tr><td>GRP-008</td><td>알림 유형</td><td>4</td><td>위험/경고/정보/권장</td><td><button class="btn btn-sm btn-secondary">편집</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><i class="fa fa-list"></i> 코드 상세 — GRP-002 품질 등급</div>
+        <table class="tbl" style="margin-bottom:14px">
+          <thead><tr><th>코드값</th><th>코드명</th><th>설명</th><th>순서</th><th>관리</th></tr></thead>
+          <tbody>
+            <tr><td>A</td><td>A급 (우수)</td><td>모든 기준 충족, 전량 출하 가능</td><td>1</td><td><button class="btn btn-sm btn-secondary">편집</button></td></tr>
+            <tr><td>B</td><td>B급 (양호)</td><td>주요 기준 충족, 조건부 출하</td><td>2</td><td><button class="btn btn-sm btn-secondary">편집</button></td></tr>
+            <tr><td>C</td><td>C급 (보통)</td><td>일부 기준 미달, 재검사 필요</td><td>3</td><td><button class="btn btn-sm btn-secondary">편집</button></td></tr>
+            <tr><td>D</td><td>D급 (불량)</td><td>기준 미달, 출하 불가/폐기</td><td>4</td><td><button class="btn btn-sm btn-secondary">편집</button></td></tr>
+          </tbody>
+        </table>
+        <div class="card-title" style="font-size:13px"><i class="fa fa-plus"></i> 코드 추가</div>
+        <div class="row2">
+          <div class="form-group"><label class="form-label">코드값</label><input type="text" placeholder="예: E" style="width:100%"></div>
+          <div class="form-group"><label class="form-label">코드명</label><input type="text" placeholder="예: E급 (특수)" style="width:100%"></div>
+        </div>
+        <div class="form-group"><label class="form-label">설명</label><input type="text" placeholder="코드 설명" style="width:100%"></div>
+        <div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn btn-secondary">취소</button><button class="btn btn-primary">추가</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 4: 사용자 관리 -->
+  <div class="tab-panel" id="tab4">
+    <div class="row2">
+      <div class="card">
+        <div class="card-title"><i class="fa fa-users"></i> 사용자 목록</div>
+        <div class="filter-row">
+          <select><option>전체 역할</option><option>관리자</option><option>공장장</option><option>품질담당자</option><option>현장작업자</option></select>
+          <input type="text" placeholder="이름/ID 검색">
+          <button class="btn btn-primary btn-sm">+ 사용자 추가</button>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>사용자ID</th><th>이름</th><th>역할</th><th>부서</th><th>마지막 로그인</th><th>상태</th><th>관리</th></tr></thead>
+          <tbody>
+            <tr style="background:rgba(26,115,232,.06)">
+              <td>admin001</td><td>김관리</td><td><span class="badge-s badge-danger">관리자</span></td><td>관리팀</td><td>2026-05-23 09:00</td><td><span class="badge-s badge-ok">활성</span></td>
+              <td><button class="btn btn-sm btn-secondary">편집</button></td>
+            </tr>
+            <tr><td>factory001</td><td>박공장</td><td><span class="badge-s badge-warn">공장장</span></td><td>생산팀</td><td>2026-05-23 08:30</td><td><span class="badge-s badge-ok">활성</span></td><td><button class="btn btn-sm btn-secondary">편집</button></td></tr>
+            <tr><td>quality001</td><td>이품질</td><td><span class="badge-s badge-info">품질담당</span></td><td>품질팀</td><td>2026-05-23 08:45</td><td><span class="badge-s badge-ok">활성</span></td><td><button class="btn btn-sm btn-secondary">편집</button></td></tr>
+            <tr><td>worker001</td><td>최현장</td><td><span class="badge-s badge-gray">현장작업자</span></td><td>발효팀</td><td>2026-05-22 17:00</td><td><span class="badge-s badge-ok">활성</span></td><td><button class="btn btn-sm btn-secondary">편집</button></td></tr>
+            <tr><td>worker002</td><td>정작업</td><td><span class="badge-s badge-gray">현장작업자</span></td><td>포장팀</td><td>2026-05-22 16:30</td><td><span class="badge-s badge-ok">활성</span></td><td><button class="btn btn-sm btn-secondary">편집</button></td></tr>
+            <tr><td>quality002</td><td>한검사</td><td><span class="badge-s badge-info">품질담당</span></td><td>품질팀</td><td>2026-05-21 15:00</td><td><span class="badge-s badge-gray">비활성</span></td><td><button class="btn btn-sm btn-secondary">편집</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><i class="fa fa-user-edit"></i> 사용자 편집 — 박공장</div>
+        <div class="form-group"><label class="form-label">사용자 ID</label><input type="text" value="factory001" style="width:100%" readonly></div>
+        <div class="row2">
+          <div class="form-group"><label class="form-label">이름</label><input type="text" value="박공장" style="width:100%"></div>
+          <div class="form-group"><label class="form-label">역할</label><select style="width:100%"><option selected>공장장</option><option>관리자</option><option>품질담당자</option><option>현장작업자</option></select></div>
+        </div>
+        <div class="form-group"><label class="form-label">이메일</label><input type="email" value="park@kkotsooni.co.kr" style="width:100%"></div>
+        <div class="form-group"><label class="form-label">전화번호</label><input type="text" value="010-1234-5678" style="width:100%"></div>
+        <div class="form-group"><label class="form-label">부서</label><input type="text" value="생산팀" style="width:100%"></div>
+        <div class="form-group"><label class="form-label">스마트패드 접근</label>
+          <div style="display:flex;align-items:center;gap:8px">
+            <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+            <span style="font-size:12px;color:var(--text-secondary)">현장 스마트패드 사용 허용</span>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label">알림 수신</label>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:12px">
+            <label><input type="checkbox" checked style="accent-color:var(--accent-blue)"> SMS</label>
+            <label><input type="checkbox" checked style="accent-color:var(--accent-blue)"> 앱 푸시</label>
+            <label><input type="checkbox" style="accent-color:var(--accent-blue)"> 이메일</label>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn btn-danger btn-sm">비밀번호 초기화</button>
+          <button class="btn btn-secondary">취소</button>
+          <button class="btn btn-primary">저장</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 5: 권한 관리 -->
+  <div class="tab-panel" id="tab5">
+    <div class="card">
+      <div class="card-title"><i class="fa fa-shield-alt"></i> 역할별 메뉴 접근 권한 매트릭스</div>
+      <div style="margin-bottom:10px;font-size:12px;color:var(--text-muted)">
+        <span style="color:var(--accent-green);margin-right:12px">✓ 전체 권한</span>
+        <span style="color:var(--accent-orange);margin-right:12px">○ 읽기 전용</span>
+        <span style="color:var(--accent-red)">✗ 접근 불가</span>
+      </div>
+      <div class="perm-matrix">
+        <table>
+          <thead>
+            <tr><th>모듈/기능</th><th>관리자</th><th>공장장</th><th>품질담당자</th><th>현장작업자</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>AI 대시보드</strong></td><td class="perm-check">✓</td><td class="perm-check">✓</td><td class="perm-ro">○</td><td class="perm-ro">○</td></tr>
+            <tr style="background:rgba(255,255,255,.02)"><td>원재료관리 — 입고등록</td><td class="perm-check">✓</td><td class="perm-check">✓</td><td class="perm-ro">○</td><td class="perm-check">✓</td></tr>
+            <tr><td>원재료관리 — AI Agent</td><td class="perm-check">✓</td><td class="perm-check">✓</td><td class="perm-check">✓</td><td class="perm-x">✗</td></tr>
+            <tr style="background:rgba(255,255,255,.02)"><td>숙성발효관리 — 모니터링</td><td class="perm-check">✓</td><td class="perm-check">✓</td><td class="perm-check">✓</td><td class="perm-ro">○</td></tr>
+            <tr><td>숙성발효관리 — 이상경보</td><td class="perm-check">✓</td><td class="perm-check">✓</td><td class="perm-check">✓</td><td class="perm-ro">○</td></tr>
+            <tr style="background:rgba(255,255,255,.02)"><td>포장출하 — 출하승인</td><td class="perm-check">✓</td><td class="perm-check">✓</td><td class="perm-ro">○</td><td class="perm-x">✗</td></tr>
+            <tr><td>공정관리 — 레시피 편집</td><td class="perm-check">✓</td><td class="perm-check">✓</td><td class="perm-x">✗</td><td class="perm-x">✗</td></tr>
+            <tr style="background:rgba(255,255,255,.02)"><td>데이터관리 — 다운로드</td><td class="perm-check">✓</td><td class="perm-ro">○</td><td class="perm-ro">○</td><td class="perm-x">✗</td></tr>
+            <tr><td>AI Agent 통합관리</td><td class="perm-check">✓</td><td class="perm-check">✓</td><td class="perm-check">✓</td><td class="perm-x">✗</td></tr>
+            <tr style="background:rgba(255,255,255,.02)"><td>기준정보 — 품질기준 편집</td><td class="perm-check">✓</td><td class="perm-ro">○</td><td class="perm-check">✓</td><td class="perm-x">✗</td></tr>
+            <tr><td>사용자/시스템 관리</td><td class="perm-check">✓</td><td class="perm-x">✗</td><td class="perm-x">✗</td><td class="perm-x">✗</td></tr>
+            <tr style="background:rgba(255,255,255,.02)"><td>KPI 관리 — 설정 편집</td><td class="perm-check">✓</td><td class="perm-ro">○</td><td class="perm-ro">○</td><td class="perm-x">✗</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:14px;display:flex;justify-content:flex-end;gap:8px">
+        <button class="btn btn-secondary">변경 취소</button>
+        <button class="btn btn-primary">권한 저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 6: 로그 관리 -->
+  <div class="tab-panel" id="tab6">
+    <div class="card">
+      <div class="card-title"><i class="fa fa-clipboard-list"></i> 시스템 로그</div>
+      <div class="filter-row">
+        <select><option>전체 로그 유형</option><option>로그인/아웃</option><option>데이터 생성</option><option>데이터 수정</option><option>데이터 삭제</option><option>경고/이상</option></select>
+        <select><option>전체 사용자</option><option>김관리</option><option>박공장</option><option>이품질</option><option>시스템</option></select>
+        <input type="date" value="2026-05-23">
+        <span>~</span>
+        <input type="date" value="2026-05-23">
+        <button class="btn btn-primary">조회</button>
+        <button class="btn btn-secondary"><i class="fa fa-download"></i> 내보내기</button>
+      </div>
+      <div style="margin-bottom:6px;font-size:12px;color:var(--text-muted)">총 247건 조회됨</div>
+      <div class="log-row log-login">
+        <div class="log-icon"><i class="fa fa-sign-in-alt"></i></div>
+        <div class="log-info"><div class="log-title">로그인 성공 — 김관리</div><div class="log-detail">IP: 192.168.1.101 · 브라우저: Chrome 124</div></div>
+        <div class="log-time">09:00:12</div>
+      </div>
+      <div class="log-row log-warn">
+        <div class="log-icon"><i class="fa fa-exclamation-triangle"></i></div>
+        <div class="log-info"><div class="log-title">이상발효 경보 발생 — LOT-2026-0523-F03</div><div class="log-detail">pH 4.8 감지 · ML엔진 자동 경보 생성</div></div>
+        <div class="log-time">09:05:33</div>
+      </div>
+      <div class="log-row log-create">
+        <div class="log-icon"><i class="fa fa-plus"></i></div>
+        <div class="log-info"><div class="log-title">원재료 입고 등록 — LOT-2026-0523-B01</div><div class="log-detail">이품질 · 배추 500kg · 대왕농산</div></div>
+        <div class="log-time">08:50:21</div>
+      </div>
+      <div class="log-row log-update">
+        <div class="log-icon"><i class="fa fa-edit"></i></div>
+        <div class="log-info"><div class="log-title">발효 조건 수정 — LOT-0522-F07</div><div class="log-detail">박공장 · 온도 설정 12°C → 10°C 변경</div></div>
+        <div class="log-time">08:40:05</div>
+      </div>
+      <div class="log-row log-login">
+        <div class="log-icon"><i class="fa fa-sign-in-alt"></i></div>
+        <div class="log-info"><div class="log-title">로그인 성공 — 이품질</div><div class="log-detail">IP: 192.168.1.105 · 스마트패드 접속</div></div>
+        <div class="log-time">08:45:00</div>
+      </div>
+      <div class="log-row log-update">
+        <div class="log-icon"><i class="fa fa-edit"></i></div>
+        <div class="log-info"><div class="log-title">품질기준 수정 — QS-003 발효 온도 기준</div><div class="log-detail">김관리 · 상한값 12°C → 11°C 변경</div></div>
+        <div class="log-time">08:20:45</div>
+      </div>
+      <div class="log-row log-delete">
+        <div class="log-icon"><i class="fa fa-trash"></i></div>
+        <div class="log-info"><div class="log-title">임시 데이터 삭제 — 테스트 LOT 3건</div><div class="log-detail">시스템 자동 정리 · 보존기간 초과</div></div>
+        <div class="log-time">02:00:00</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 7: 알림 설정 -->
+  <div class="tab-panel" id="tab7">
+    <div class="row2">
+      <div class="card">
+        <div class="card-title"><i class="fa fa-bell"></i> 알림 채널 설정</div>
+        <div class="switch-wrap"><div><div class="switch-label">SMS 알림</div><div class="switch-sub">위험/경고 등급 이상 발생 시 즉시 발송</div></div><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+        <div class="switch-wrap"><div><div class="switch-label">앱 푸시 알림</div><div class="switch-sub">스마트패드 및 모바일 앱</div></div><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+        <div class="switch-wrap"><div><div class="switch-label">이메일 알림</div><div class="switch-sub">일간 요약 보고서 포함</div></div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+        <div class="switch-wrap"><div><div class="switch-label">현황판 표시</div><div class="switch-sub">공장 현황판 화면 알림</div></div><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+
+        <div class="card-title" style="font-size:13px;margin-top:16px"><i class="fa fa-sliders-h"></i> 알림 임계값 설정</div>
+        <table class="tbl" style="font-size:12px">
+          <thead><tr><th>알림 항목</th><th>경고</th><th>위험</th><th>활성</th></tr></thead>
+          <tbody>
+            <tr><td>발효 pH</td><td>> 4.5</td><td>> 4.8</td><td><label class="switch" style="transform:scale(.8)"><input type="checkbox" checked><span class="slider"></span></label></td></tr>
+            <tr><td>발효 온도</td><td>±1.5°C</td><td>±2.5°C</td><td><label class="switch" style="transform:scale(.8)"><input type="checkbox" checked><span class="slider"></span></label></td></tr>
+            <tr><td>절임 염도</td><td>±0.5%</td><td>±1.0%</td><td><label class="switch" style="transform:scale(.8)"><input type="checkbox" checked><span class="slider"></span></label></td></tr>
+            <tr><td>원재료 재고</td><td>3일분</td><td>1일분</td><td><label class="switch" style="transform:scale(.8)"><input type="checkbox" checked><span class="slider"></span></label></td></tr>
+            <tr><td>AI 예측 정확도</td><td>&lt; 80%</td><td>&lt; 70%</td><td><label class="switch" style="transform:scale(.8)"><input type="checkbox" checked><span class="slider"></span></label></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><i class="fa fa-user-bell"></i> 역할별 알림 수신 설정</div>
+        <table class="tbl" style="font-size:12px">
+          <thead><tr><th>역할</th><th>위험</th><th>경고</th><th>정보</th><th>일간요약</th></tr></thead>
+          <tbody>
+            <tr><td>관리자</td>
+              <td><label class="switch" style="transform:scale(.75)"><input type="checkbox" checked><span class="slider"></span></label></td>
+              <td><label class="switch" style="transform:scale(.75)"><input type="checkbox" checked><span class="slider"></span></label></td>
+              <td><label class="switch" style="transform:scale(.75)"><input type="checkbox" checked><span class="slider"></span></label></td>
+              <td><label class="switch" style="transform:scale(.75)"><input type="checkbox" checked><span class="slider"></span></label></td>
+            </tr>
+            <tr><td>공장장</td>
+              <td><label class="switch" style="transform:scale(.75)"><input type="checkbox" checked><span class="slider"></span></label></td>
+              <td><label class="switch" style="transform:scale(.75)"><input type="checkbox" checked><span class="slider"></span></label></td>
+              <td><label class="switch" style="transform:scale(.75)"><input type="checkbox"><span class="slider"></span></label></td>
+              <td><label class="switch" style="transform:scale(.75)"><input type="checkbox" checked><span class="slider"></span></label></td>
+            </tr>
+            <tr><td>품질담당자</td>
+              <td><label class="switch" style="transform:scale(.75)"><input type="checkbox" checked><span class="slider"></span></label></td>
+              <td><label class="switch" style="transform:scale(.75)"><input type="checkbox" checked><span class="slider"></span></label></td>
+              <td><label class="switch" style="transform:scale(.75)"><input type="checkbox" checked><span class="slider"></span></label></td>
+              <td><label class="switch" style="transform:scale(.75)"><input type="checkbox"><span class="slider"></span></label></td>
+            </tr>
+            <tr><td>현장작업자</td>
+              <td><label class="switch" style="transform:scale(.75)"><input type="checkbox" checked><span class="slider"></span></label></td>
+              <td><label class="switch" style="transform:scale(.75)"><input type="checkbox"><span class="slider"></span></label></td>
+              <td><label class="switch" style="transform:scale(.75)"><input type="checkbox"><span class="slider"></span></label></td>
+              <td><label class="switch" style="transform:scale(.75)"><input type="checkbox"><span class="slider"></span></label></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="card-title" style="font-size:13px;margin-top:16px"><i class="fa fa-clock"></i> 조용한 시간 (DND)</div>
+        <div class="row2">
+          <div class="form-group"><label class="form-label">시작 시간</label><input type="text" value="22:00" style="width:100%"></div>
+          <div class="form-group"><label class="form-label">종료 시간</label><input type="text" value="06:00" style="width:100%"></div>
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">* 위험 등급 알림은 DND 시간에도 발송됩니다</div>
+        <button class="btn btn-primary" style="width:100%">설정 저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 8: 시스템 설정 -->
+  <div class="tab-panel" id="tab8">
+    <div class="row2">
+      <div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title"><i class="fa fa-database"></i> 데이터 수집 설정</div>
+          <div class="form-group"><label class="form-label">센서 데이터 수집 주기</label>
+            <div style="display:flex;align-items:center;gap:10px">
+              <input type="range" class="range-input" min="5" max="60" value="10" style="flex:1">
+              <span style="color:var(--accent-cyan);font-size:13px;width:50px">10초</span>
+            </div>
+          </div>
+          <div class="form-group"><label class="form-label">DB 저장 주기</label>
+            <select style="width:100%"><option selected>1분</option><option>5분</option><option>10분</option><option>30분</option></select>
+          </div>
+          <div class="switch-wrap"><div><div class="switch-label">Edge 버퍼링 활성화</div><div class="switch-sub">네트워크 단절 시 로컬 저장</div></div><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+          <div class="switch-wrap"><div><div class="switch-label">Kafka 스트리밍</div><div class="switch-sub">실시간 데이터 파이프라인</div></div><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><i class="fa fa-robot"></i> AI 모델 설정</div>
+          <div class="form-group"><label class="form-label">ML 모델 재학습 주기</label>
+            <select style="width:100%"><option selected>주 1회 (일요일 02:00)</option><option>월 1회</option><option>수동</option></select>
+          </div>
+          <div class="form-group"><label class="form-label">최소 학습 데이터 (LOT 수)</label><input type="number" value="500" style="width:100%"></div>
+          <div class="form-group"><label class="form-label">LLM 모델</label>
+            <select style="width:100%"><option selected>claude-sonnet-4-6</option><option>claude-opus-4-7</option></select>
+          </div>
+          <div class="switch-wrap"><div><div class="switch-label">AI 추천 자동 실행</div><div class="switch-sub">비활성화 권장 — 시범운영 중 수동 승인</div></div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+          <div class="switch-wrap"><div><div class="switch-label">SHAP 설명 생성</div><div class="switch-sub">AI 예측 결과 근거 자동 생성</div></div><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title"><i class="fa fa-server"></i> 시스템 상태</div>
+          <table class="tbl" style="font-size:12px">
+            <thead><tr><th>서버</th><th>상태</th><th>CPU</th><th>메모리</th><th>디스크</th></tr></thead>
+            <tbody>
+              <tr><td>AP 서버</td><td><span class="badge-s badge-ok">정상</span></td><td>34%</td><td>5.2/8G</td><td>42/100G</td></tr>
+              <tr><td>DB 서버</td><td><span class="badge-s badge-ok">정상</span></td><td>28%</td><td>9.8/16G</td><td>180/300G</td></tr>
+              <tr><td>Vector DB</td><td><span class="badge-s badge-ok">정상</span></td><td>15%</td><td>6.2/16G</td><td>85/200G</td></tr>
+              <tr><td>AI 서버</td><td><span class="badge-s badge-warn">주의</span></td><td>72%</td><td>13.5/16G</td><td>120/200G</td></tr>
+              <tr><td>Edge Gateway</td><td><span class="badge-s badge-ok">정상</span></td><td>18%</td><td>2.1/4G</td><td>12/64G</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><i class="fa fa-archive"></i> 백업 및 보존 정책</div>
+          <div class="form-group"><label class="form-label">DB 자동 백업</label>
+            <select style="width:100%"><option selected>매일 03:00</option><option>6시간마다</option><option>주 1회</option></select>
+          </div>
+          <div class="form-group"><label class="form-label">센서 Raw 데이터 보존</label>
+            <select style="width:100%"><option selected>90일</option><option>180일</option><option>1년</option></select>
+          </div>
+          <div class="form-group"><label class="form-label">로그 보존 기간</label>
+            <select style="width:100%"><option>90일</option><option selected>180일</option><option>1년</option></select>
+          </div>
+          <div class="form-group"><label class="form-label">LOT 마스터 데이터 보존</label>
+            <select style="width:100%"><option>3년</option><option selected>5년 (법적 요구)</option><option>영구</option></select>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-secondary" style="flex:1"><i class="fa fa-download"></i> 즉시 백업</button>
+            <button class="btn btn-primary" style="flex:1">설정 저장</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const navItems = document.querySelectorAll('.nav-item');
+const tabs = document.querySelectorAll('.tab-panel');
+const tabBtns = document.querySelectorAll('.tab-btn');
+let sopDone = false;
+
+function showTab(n) {
+  tabs.forEach((t,i) => t.classList.toggle('active', i===n-1));
+  tabBtns.forEach((b,i) => b.classList.toggle('active', i===n-1));
+  navItems.forEach((ni,i) => ni.classList.toggle('active', i===n-1));
+  if (n === 2 && !sopDone) { initSopChart(); sopDone = true; }
+}
+
+function initSopChart() {
+  new Chart(document.getElementById('cSop'), {
+    type: 'doughnut',
+    data: {
+      labels: ['발효관리(2)','원재료(1)','HACCP(1)','설비운영(1)','품질검사(2)'],
+      datasets: [{ data:[2,1,1,1,2], backgroundColor:['#00b4d8','#00c853','#f44336','#ff9800','#9c27b0'], borderWidth:0 }]
+    },
+    options: { responsive:true, plugins:{ legend:{labels:{color:'#8899bb',font:{size:11}}} } }
+  });
+}
+</script>
+</body>
+</html>

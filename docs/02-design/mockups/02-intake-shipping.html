@@ -1,0 +1,1894 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>꽃순이김치 MES — 원재료관리 / 포장출하관리</title>
+  <!-- Font Awesome 아이콘 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <!-- Google Fonts: Noto Sans KR -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    /* ===== 디자인 토큰 ===== */
+    :root {
+      --bg-main:       #0a1628;
+      --bg-sidebar:    #0f2044;
+      --bg-card:       #162035;
+      --bg-card-hover: #1c2d4a;
+      --bg-input:      #0d1d38;
+      --border:        #1e3a5f;
+      --border-light:  #2a4a70;
+
+      --accent-blue:   #1a73e8;
+      --accent-blue-h: #2d82f5;
+      --accent-warn:   #f59e0b;
+      --accent-err:    #ef4444;
+      --accent-ok:     #22c55e;
+      --accent-info:   #38bdf8;
+
+      --text-primary:  #e2e8f0;
+      --text-secondary:#94a3b8;
+      --text-muted:    #64748b;
+
+      --chat-ai:       #1a3a5c;
+      --chat-user:     #1a73e8;
+
+      --radius-sm: 6px;
+      --radius:    10px;
+      --radius-lg: 16px;
+
+      --shadow: 0 4px 24px rgba(0,0,0,0.4);
+    }
+
+    /* ===== 리셋 & 기본 ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 14px;
+      background: var(--bg-main);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ===== 상단 헤더 ===== */
+    .top-header {
+      background: var(--bg-sidebar);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .top-header .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--text-primary);
+    }
+    .top-header .logo .dot {
+      width: 8px; height: 8px;
+      background: var(--accent-blue);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity:1; transform:scale(1); }
+      50%      { opacity:.5; transform:scale(1.4); }
+    }
+    .top-header .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+    .top-header .header-right .badge-live {
+      background: rgba(34,197,94,.15);
+      color: var(--accent-ok);
+      border: 1px solid rgba(34,197,94,.3);
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    /* ===== 탭 네비게이션 ===== */
+    .tab-nav {
+      background: var(--bg-sidebar);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: flex;
+      gap: 0;
+    }
+    .tab-btn {
+      padding: 14px 22px;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+    .tab-btn:hover { color: var(--text-primary); background: rgba(255,255,255,.03); }
+    .tab-btn.active {
+      color: var(--accent-blue);
+      border-bottom-color: var(--accent-blue);
+      background: rgba(26,115,232,.06);
+    }
+    .tab-btn .tab-icon { font-size: 14px; }
+
+    /* ===== 메인 컨텐츠 영역 ===== */
+    .main-content {
+      flex: 1;
+      padding: 20px 24px;
+      overflow-y: auto;
+    }
+
+    /* ===== 섹션 (각 탭 화면) ===== */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* ===== 페이지 타이틀 ===== */
+    .page-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .page-title h2 {
+      font-size: 18px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .page-title h2 i { color: var(--accent-blue); }
+    .page-title .subtitle {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 3px;
+    }
+    .page-title .actions { display: flex; gap: 8px; }
+
+    /* ===== 버튼 ===== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: var(--radius-sm);
+      border: none;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .18s;
+    }
+    .btn-primary { background: var(--accent-blue); color: #fff; }
+    .btn-primary:hover { background: var(--accent-blue-h); }
+    .btn-secondary { background: rgba(255,255,255,.07); color: var(--text-primary); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: rgba(255,255,255,.12); }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+    .btn-danger { background: rgba(239,68,68,.15); color: var(--accent-err); border: 1px solid rgba(239,68,68,.3); }
+
+    /* ===== 카드 ===== */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ===== 그리드 레이아웃 ===== */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+
+    /* ===== KPI 카드 ===== */
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .kpi-card .kpi-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing:.05em; }
+    .kpi-card .kpi-value { font-size: 24px; font-weight: 700; line-height: 1; }
+    .kpi-card .kpi-sub { font-size: 11px; color: var(--text-muted); }
+    .kpi-card .kpi-trend { font-size: 11px; }
+    .kpi-card .kpi-trend.up { color: var(--accent-ok); }
+    .kpi-card .kpi-trend.down { color: var(--accent-err); }
+    .kpi-card .kpi-icon {
+      width: 36px; height: 36px;
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    /* ===== 배지 ===== */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-ok      { background: rgba(34,197,94,.15);  color: var(--accent-ok);   border: 1px solid rgba(34,197,94,.3); }
+    .badge-warn    { background: rgba(245,158,11,.15); color: var(--accent-warn); border: 1px solid rgba(245,158,11,.3); }
+    .badge-err     { background: rgba(239,68,68,.15);  color: var(--accent-err);  border: 1px solid rgba(239,68,68,.3); }
+    .badge-info    { background: rgba(56,189,248,.15); color: var(--accent-info); border: 1px solid rgba(56,189,248,.3); }
+    .badge-neutral { background: rgba(148,163,184,.1); color: var(--text-secondary); border: 1px solid rgba(148,163,184,.2); }
+    .badge-ai      { background: rgba(26,115,232,.18); color: #7eb8ff; border: 1px solid rgba(26,115,232,.4); }
+
+    /* ===== 폼 요소 ===== */
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-label { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
+    .form-control {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 13px;
+      transition: border-color .18s;
+      width: 100%;
+    }
+    .form-control:focus { outline: none; border-color: var(--accent-blue); }
+    .form-control::placeholder { color: var(--text-muted); }
+    select.form-control { cursor: pointer; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .form-row-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
+
+    /* ===== 테이블 ===== */
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    thead th {
+      background: rgba(255,255,255,.04);
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    tbody td {
+      padding: 11px 14px;
+      border-bottom: 1px solid rgba(30,58,95,.5);
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: rgba(255,255,255,.03); }
+    .lot-code { font-family: monospace; font-size: 12px; color: var(--accent-info); }
+
+    /* ===== 입고 등록 폼 ===== */
+    .intake-form-section {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    /* ===== AI 채팅 레이아웃 ===== */
+    .chat-layout {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 16px;
+      height: calc(100vh - 200px);
+      min-height: 600px;
+    }
+    .chat-panel {
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .chat-header {
+      padding: 14px 16px;
+      background: rgba(26,115,232,.12);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .chat-header .ai-avatar {
+      width: 32px; height: 32px;
+      background: var(--accent-blue);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .chat-header .ai-name { font-weight: 600; font-size: 13px; }
+    .chat-header .ai-status { font-size: 11px; color: var(--accent-ok); display: flex; align-items: center; gap: 4px; }
+    .chat-header .ai-status::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: var(--accent-ok);
+      border-radius: 50%;
+    }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .chat-messages::-webkit-scrollbar { width: 4px; }
+    .chat-messages::-webkit-scrollbar-track { background: transparent; }
+    .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    .msg { display: flex; gap: 8px; max-width: 90%; }
+    .msg.ai { align-self: flex-start; }
+    .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+    .msg-avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+    .msg.ai .msg-avatar { background: var(--accent-blue); color: #fff; }
+    .msg.user .msg-avatar { background: rgba(255,255,255,.1); color: var(--text-secondary); }
+    .msg-bubble {
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .msg.ai .msg-bubble {
+      background: var(--chat-ai);
+      border: 1px solid rgba(26,115,232,.25);
+      border-top-left-radius: 4px;
+    }
+    .msg.user .msg-bubble {
+      background: var(--chat-user);
+      color: #fff;
+      border-top-right-radius: 4px;
+    }
+    .msg-bubble .msg-time { font-size: 10px; color: var(--text-muted); margin-top: 6px; }
+    .msg.user .msg-bubble .msg-time { color: rgba(255,255,255,.6); }
+
+    /* AI 응답 내 문서 참조 */
+    .doc-ref {
+      margin-top: 10px;
+      padding: 8px 10px;
+      background: rgba(56,189,248,.08);
+      border: 1px solid rgba(56,189,248,.2);
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      color: var(--accent-info);
+    }
+    .doc-ref .doc-ref-title { font-weight: 600; margin-bottom: 4px; }
+    .doc-ref .doc-ref-item { display: flex; align-items: center; gap: 5px; margin-top: 3px; }
+
+    /* AI 추천 질문 버튼 */
+    .quick-questions {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .quick-questions .qs-label { font-size: 11px; color: var(--text-muted); margin-bottom: 2px; }
+    .quick-btn {
+      background: rgba(26,115,232,.1);
+      border: 1px solid rgba(26,115,232,.25);
+      border-radius: var(--radius-sm);
+      color: #7eb8ff;
+      font-family: inherit;
+      font-size: 12px;
+      padding: 6px 10px;
+      text-align: left;
+      cursor: pointer;
+      transition: all .18s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .quick-btn:hover { background: rgba(26,115,232,.2); border-color: rgba(26,115,232,.4); }
+
+    /* 채팅 입력창 */
+    .chat-input-area {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+    }
+    .chat-input {
+      flex: 1;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 9px 12px;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 13px;
+      resize: none;
+    }
+    .chat-input:focus { outline: none; border-color: var(--accent-blue); }
+    .chat-send-btn {
+      background: var(--accent-blue);
+      border: none;
+      border-radius: var(--radius-sm);
+      width: 38px; height: 38px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background .18s;
+      flex-shrink: 0;
+    }
+    .chat-send-btn:hover { background: var(--accent-blue-h); }
+
+    /* ===== 좌측 컨텍스트 패널 ===== */
+    .context-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .context-panel-header {
+      padding: 12px 14px;
+      background: rgba(255,255,255,.03);
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    .context-panel-body { padding: 14px; flex: 1; overflow-y: auto; }
+    .ctx-item {
+      padding: 10px 12px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+    }
+    .ctx-item .ctx-lot { font-family: monospace; font-size: 11px; color: var(--accent-info); }
+    .ctx-item .ctx-name { font-size: 13px; font-weight: 600; margin: 3px 0; }
+    .ctx-item .ctx-detail { font-size: 11px; color: var(--text-secondary); }
+    .ctx-item.selected { border-color: var(--accent-blue); background: rgba(26,115,232,.08); }
+
+    /* ===== LOT 추적 타임라인 ===== */
+    .traceability-layout {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 16px;
+    }
+    .lot-search-panel { display: flex; flex-direction: column; gap: 12px; }
+    .timeline-container { position: relative; }
+    .timeline-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+    }
+    .timeline-steps::before {
+      content: '';
+      position: absolute;
+      left: 20px;
+      top: 28px;
+      bottom: 28px;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--accent-blue), var(--accent-ok));
+    }
+    .tl-step {
+      display: flex;
+      gap: 16px;
+      padding: 0 0 20px 0;
+      position: relative;
+    }
+    .tl-step:last-child { padding-bottom: 0; }
+    .tl-dot {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+      z-index: 1;
+      position: relative;
+    }
+    .tl-dot.ok   { background: rgba(34,197,94,.2);  border: 2px solid var(--accent-ok);  color: var(--accent-ok); }
+    .tl-dot.warn { background: rgba(245,158,11,.2); border: 2px solid var(--accent-warn); color: var(--accent-warn); }
+    .tl-dot.err  { background: rgba(239,68,68,.2);  border: 2px solid var(--accent-err);  color: var(--accent-err); }
+    .tl-dot.info { background: rgba(56,189,248,.2); border: 2px solid var(--accent-info); color: var(--accent-info); }
+    .tl-content {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      margin-top: 6px;
+    }
+    .tl-content.highlight { border-color: var(--accent-err); background: rgba(239,68,68,.06); }
+    .tl-step-title { font-weight: 700; font-size: 14px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; }
+    .tl-step-data { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; }
+    .tl-data-item { font-size: 12px; }
+    .tl-data-item .tl-data-label { color: var(--text-muted); margin-bottom: 1px; }
+    .tl-data-item .tl-data-value { color: var(--text-primary); font-weight: 500; }
+
+    /* LOT 검색 이력 */
+    .lot-recent-list { display: flex; flex-direction: column; gap: 6px; }
+    .lot-recent-item {
+      padding: 8px 12px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all .18s;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .lot-recent-item:hover { border-color: var(--accent-blue); background: rgba(26,115,232,.06); }
+    .lot-recent-item .lot-id { font-family: monospace; font-size: 12px; color: var(--accent-info); }
+    .lot-recent-item .lot-product { font-size: 12px; color: var(--text-secondary); }
+
+    /* ===== 출하관리 레이아웃 ===== */
+    .shipping-layout {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 16px;
+      height: calc(100vh - 200px);
+      min-height: 600px;
+    }
+    .shipping-main { overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+    .shipping-chat { display: flex; flex-direction: column; height: 100%; }
+
+    /* AI 판단 배지 */
+    .ai-judge { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; }
+    .ai-judge-ok   { color: var(--accent-ok); }
+    .ai-judge-warn { color: var(--accent-warn); }
+    .ai-judge-err  { color: var(--accent-err); }
+
+    /* 승인 버튼 그룹 */
+    .approve-group { display: flex; gap: 5px; }
+
+    /* ===== 구분선 ===== */
+    .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+    /* ===== 타이핑 애니메이션 ===== */
+    .typing-indicator {
+      display: flex; gap: 4px; align-items: center; padding: 4px 0;
+    }
+    .typing-indicator span {
+      width: 6px; height: 6px;
+      background: var(--text-muted);
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+    .typing-indicator span:nth-child(2) { animation-delay: .2s; }
+    .typing-indicator span:nth-child(3) { animation-delay: .4s; }
+    @keyframes bounce {
+      0%,60%,100% { transform: translateY(0); }
+      30%          { transform: translateY(-6px); }
+    }
+
+    /* ===== 스크롤바 공통 ===== */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ===== 반응형 조정 ===== */
+    @media (max-width: 1200px) {
+      .intake-form-section { grid-template-columns: 1fr; }
+      .chat-layout { grid-template-columns: 260px 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== 상단 헤더 ===== -->
+<header class="top-header">
+  <div class="logo">
+    <div class="dot"></div>
+    <i class="fa-solid fa-seedling" style="color:var(--accent-blue)"></i>
+    꽃순이김치 제조AI MES
+    <span style="font-size:11px;color:var(--text-muted);font-weight:400;margin-left:4px">v1.0</span>
+  </div>
+  <div class="header-right">
+    <span class="badge-live">● LIVE</span>
+    <span><i class="fa-regular fa-clock"></i> 2026-05-23 14:37:22</span>
+    <span><i class="fa-solid fa-user"></i> 김관리 (공장장)</span>
+    <span style="color:var(--accent-ok)"><i class="fa-solid fa-circle"></i> AI 정상</span>
+  </div>
+</header>
+
+<!-- ===== 탭 네비게이션 ===== -->
+<nav class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('intake')" id="tab-intake">
+    <i class="fa-solid fa-truck-ramp-box tab-icon"></i>
+    원재료 입고관리
+  </button>
+  <button class="tab-btn" onclick="switchTab('agent-intake')" id="tab-agent-intake">
+    <i class="fa-solid fa-robot tab-icon"></i>
+    입고 AI Agent
+  </button>
+  <button class="tab-btn" onclick="switchTab('traceability')" id="tab-traceability">
+    <i class="fa-solid fa-route tab-icon"></i>
+    LOT 추적
+  </button>
+  <button class="tab-btn" onclick="switchTab('shipping')" id="tab-shipping">
+    <i class="fa-solid fa-box-open tab-icon"></i>
+    출하관리 + AI Agent
+  </button>
+</nav>
+
+<!-- ===== 메인 컨텐츠 ===== -->
+<main class="main-content">
+
+  <!-- ========================================================
+       섹션 1: 원재료 입고관리
+       ======================================================== -->
+  <section class="section active" id="section-intake">
+    <div class="page-title">
+      <div>
+        <h2><i class="fa-solid fa-truck-ramp-box"></i> 원재료 입고관리</h2>
+        <div class="subtitle">2026-05-23 기준 — 배추 원재료 LOT 등록 및 검사 관리</div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-secondary btn-sm"><i class="fa-solid fa-file-excel"></i> 엑셀 다운로드</button>
+        <button class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> 신규 입고 등록</button>
+      </div>
+    </div>
+
+    <!-- KPI 요약 -->
+    <div class="grid-4" style="margin-bottom:16px">
+      <div class="kpi-card">
+        <div class="kpi-icon" style="background:rgba(26,115,232,.15);color:var(--accent-blue)"><i class="fa-solid fa-boxes-stacked"></i></div>
+        <div class="kpi-label">오늘 입고 건수</div>
+        <div class="kpi-value" style="color:var(--accent-blue)">7</div>
+        <div class="kpi-trend up"><i class="fa-solid fa-arrow-up"></i> 전일 대비 +2건</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon" style="background:rgba(34,197,94,.12);color:var(--accent-ok)"><i class="fa-solid fa-weight-scale"></i></div>
+        <div class="kpi-label">오늘 입고 중량</div>
+        <div class="kpi-value" style="color:var(--accent-ok)">12,450<span style="font-size:14px;font-weight:400"> kg</span></div>
+        <div class="kpi-trend up"><i class="fa-solid fa-arrow-up"></i> 목표 대비 102%</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon" style="background:rgba(245,158,11,.12);color:var(--accent-warn)"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div class="kpi-label">기준 미달 LOT</div>
+        <div class="kpi-value" style="color:var(--accent-warn)">1</div>
+        <div class="kpi-sub">검토 필요</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon" style="background:rgba(56,189,248,.12);color:var(--accent-info)"><i class="fa-solid fa-store"></i></div>
+        <div class="kpi-label">공급처</div>
+        <div class="kpi-value" style="color:var(--accent-info)">4<span style="font-size:14px;font-weight:400">개소</span></div>
+        <div class="kpi-sub">A급 공급처 3곳 포함</div>
+      </div>
+    </div>
+
+    <!-- 입고 등록 폼 + 오늘 입고 현황 -->
+    <div class="intake-form-section">
+
+      <!-- 입고 등록 폼 -->
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-pen-to-square" style="color:var(--accent-blue)"></i> 입고 등록</div>
+
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">LOT 번호 <span style="color:var(--accent-err)">*</span></label>
+              <input type="text" class="form-control" value="LOT-2026-0523-008" readonly
+                style="color:var(--accent-info);font-family:monospace;background:rgba(56,189,248,.05)">
+            </div>
+            <div class="form-group">
+              <label class="form-label">입고 일시</label>
+              <input type="datetime-local" class="form-control" value="2026-05-23T14:30">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">공급처 <span style="color:var(--accent-err)">*</span></label>
+              <select class="form-control">
+                <option>선택하세요</option>
+                <option selected>평창 A농장 (주)</option>
+                <option>강원 B영농조합</option>
+                <option>정선 C농산</option>
+                <option>횡성 D농장</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">원산지</label>
+              <select class="form-control">
+                <option selected>강원도 평창군 대화면</option>
+                <option>강원도 정선군</option>
+                <option>강원도 횡성군</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row-3">
+            <div class="form-group">
+              <label class="form-label">중량 (kg) <span style="color:var(--accent-err)">*</span></label>
+              <input type="number" class="form-control" placeholder="예: 2000" value="1800">
+            </div>
+            <div class="form-group">
+              <label class="form-label">외관등급</label>
+              <select class="form-control">
+                <option>A급 (최상)</option>
+                <option selected>A급 (상)</option>
+                <option>B급 (중)</option>
+                <option>C급 (하)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">함수율 (%)</label>
+              <input type="number" class="form-control" placeholder="예: 92.5" value="91.8" step="0.1">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">배추 크기 평균 (cm)</label>
+              <input type="number" class="form-control" placeholder="예: 38" value="40" step="0.5">
+            </div>
+            <div class="form-group">
+              <label class="form-label">평균 중량 (kg/개)</label>
+              <input type="number" class="form-control" placeholder="예: 2.8" value="3.1" step="0.1">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">검사 결과</label>
+            <select class="form-control" id="inspection-result">
+              <option value="pass" selected>적합 — 입고 승인</option>
+              <option value="cond">조건부 적합 — 검토 후 승인</option>
+              <option value="fail">부적합 — 반려</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">비고</label>
+            <input type="text" class="form-control" placeholder="특이사항 입력">
+          </div>
+
+          <!-- 적합 배지 표시 -->
+          <div style="padding:10px 14px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);border-radius:var(--radius-sm);display:flex;align-items:center;gap:10px">
+            <span class="badge badge-ok"><i class="fa-solid fa-circle-check"></i> 입고 기준 적합</span>
+            <span style="font-size:12px;color:var(--text-secondary)">AI 자동 판별 — 함수율·외관등급·중량 기준 충족</span>
+          </div>
+
+          <div style="display:flex;gap:8px;margin-top:4px">
+            <button class="btn btn-primary" style="flex:1"><i class="fa-solid fa-save"></i> 입고 등록 저장</button>
+            <button class="btn btn-secondary"><i class="fa-solid fa-rotate"></i> 초기화</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 오늘 입고 현황 -->
+      <div class="card">
+        <div class="card-title" style="justify-content:space-between">
+          <span><i class="fa-solid fa-list-check" style="color:var(--accent-blue)"></i> 오늘 입고 현황 (2026-05-23)</span>
+          <span style="color:var(--text-secondary);font-size:12px;font-weight:400">총 7건 / 12,450 kg</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>LOT 번호</th>
+                <th>공급처</th>
+                <th>원산지</th>
+                <th>중량(kg)</th>
+                <th>등급</th>
+                <th>함수율(%)</th>
+                <th>상태</th>
+                <th>담당자</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="lot-code">LOT-2026-0523-001</span></td>
+                <td>평창 A농장(주)</td>
+                <td>평창 대화면</td>
+                <td>2,100</td>
+                <td>A급</td>
+                <td>92.3</td>
+                <td><span class="badge badge-ok"><i class="fa-solid fa-check"></i> 적합</span></td>
+                <td>이현장</td>
+              </tr>
+              <tr>
+                <td><span class="lot-code">LOT-2026-0523-002</span></td>
+                <td>강원 B영농조합</td>
+                <td>정선군</td>
+                <td>1,850</td>
+                <td>A급</td>
+                <td>91.1</td>
+                <td><span class="badge badge-ok"><i class="fa-solid fa-check"></i> 적합</span></td>
+                <td>박입고</td>
+              </tr>
+              <tr>
+                <td><span class="lot-code">LOT-2026-0523-003</span></td>
+                <td>평창 A농장(주)</td>
+                <td>평창 대화면</td>
+                <td>2,200</td>
+                <td>A급</td>
+                <td>93.0</td>
+                <td><span class="badge badge-ok"><i class="fa-solid fa-check"></i> 적합</span></td>
+                <td>이현장</td>
+              </tr>
+              <tr>
+                <td><span class="lot-code">LOT-2026-0523-004</span></td>
+                <td>정선 C농산</td>
+                <td>정선군</td>
+                <td>1,650</td>
+                <td>B급</td>
+                <td>88.7</td>
+                <td><span class="badge badge-warn"><i class="fa-solid fa-triangle-exclamation"></i> 검토중</span></td>
+                <td>박입고</td>
+              </tr>
+              <tr>
+                <td><span class="lot-code">LOT-2026-0523-005</span></td>
+                <td>횡성 D농장</td>
+                <td>횡성군</td>
+                <td>1,950</td>
+                <td>A급</td>
+                <td>91.8</td>
+                <td><span class="badge badge-ok"><i class="fa-solid fa-check"></i> 적합</span></td>
+                <td>이현장</td>
+              </tr>
+              <tr>
+                <td><span class="lot-code">LOT-2026-0523-006</span></td>
+                <td>강원 B영농조합</td>
+                <td>평창 용평면</td>
+                <td>1,700</td>
+                <td>A급</td>
+                <td>90.5</td>
+                <td><span class="badge badge-ok"><i class="fa-solid fa-check"></i> 적합</span></td>
+                <td>최품질</td>
+              </tr>
+              <tr>
+                <td><span class="lot-code">LOT-2026-0523-007</span></td>
+                <td>평창 A농장(주)</td>
+                <td>평창 대화면</td>
+                <td>1,000</td>
+                <td>A급</td>
+                <td>92.1</td>
+                <td><span class="badge badge-info"><i class="fa-solid fa-hourglass-half"></i> 검사중</span></td>
+                <td>박입고</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ========================================================
+       섹션 2: 원재료 입고 AI Agent
+       ======================================================== -->
+  <section class="section" id="section-agent-intake">
+    <div class="page-title">
+      <div>
+        <h2><i class="fa-solid fa-robot"></i> 입고 AI Agent</h2>
+        <div class="subtitle">RAG 기반 자연어 질의 — 입고 기준서 · 품질 이력 · 절임 조건 추천</div>
+      </div>
+      <div class="actions">
+        <span class="badge badge-ai"><i class="fa-solid fa-brain"></i> LangChain + pgvector</span>
+      </div>
+    </div>
+
+    <div class="chat-layout">
+      <!-- 좌측: 현재 입고 현황 컨텍스트 패널 -->
+      <div class="context-panel">
+        <div class="context-panel-header"><i class="fa-solid fa-clipboard-list"></i> 오늘 입고 현황</div>
+        <div class="context-panel-body">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">클릭하면 해당 LOT 컨텍스트로 질의</div>
+
+          <div class="ctx-item selected" onclick="selectLot(this, 'LOT-2026-0523-001')">
+            <div class="ctx-lot">LOT-2026-0523-001</div>
+            <div class="ctx-name">평창 A농장(주) 배추</div>
+            <div class="ctx-detail">2,100 kg · A급 · 함수율 92.3%</div>
+            <div style="margin-top:6px"><span class="badge badge-ok" style="font-size:10px">적합</span></div>
+          </div>
+
+          <div class="ctx-item" onclick="selectLot(this, 'LOT-2026-0523-004')">
+            <div class="ctx-lot">LOT-2026-0523-004</div>
+            <div class="ctx-name">정선 C농산 배추</div>
+            <div class="ctx-detail">1,650 kg · B급 · 함수율 88.7%</div>
+            <div style="margin-top:6px"><span class="badge badge-warn" style="font-size:10px">검토중</span></div>
+          </div>
+
+          <div class="ctx-item" onclick="selectLot(this, 'LOT-2026-0523-007')">
+            <div class="ctx-lot">LOT-2026-0523-007</div>
+            <div class="ctx-name">평창 A농장(주) 배추</div>
+            <div class="ctx-detail">1,000 kg · A급 · 검사중</div>
+            <div style="margin-top:6px"><span class="badge badge-info" style="font-size:10px">검사중</span></div>
+          </div>
+
+          <div class="divider"></div>
+          <div class="card-title"><i class="fa-solid fa-book"></i> 참조 가능 문서</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="padding:7px 10px;background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.15);border-radius:var(--radius-sm);font-size:11px;color:var(--accent-info);display:flex;align-items:center;gap:6px">
+              <i class="fa-solid fa-file-lines"></i> 원재료 입고 기준서 v3.2
+            </div>
+            <div style="padding:7px 10px;background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.15);border-radius:var(--radius-sm);font-size:11px;color:var(--accent-info);display:flex;align-items:center;gap:6px">
+              <i class="fa-solid fa-file-lines"></i> 배추 절임 작업표준서 SOP-02
+            </div>
+            <div style="padding:7px 10px;background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.15);border-radius:var(--radius-sm);font-size:11px;color:var(--accent-info);display:flex;align-items:center;gap:6px">
+              <i class="fa-solid fa-file-lines"></i> 공급처 품질 평가 이력 DB
+            </div>
+            <div style="padding:7px 10px;background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.15);border-radius:var(--radius-sm);font-size:11px;color:var(--accent-info);display:flex;align-items:center;gap:6px">
+              <i class="fa-solid fa-file-lines"></i> 계절별 배추 특성 가이드
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 우측: AI 채팅 패널 -->
+      <div class="chat-panel" id="intake-chat-panel">
+        <div class="chat-header">
+          <div class="ai-avatar"><i class="fa-solid fa-robot"></i></div>
+          <div>
+            <div class="ai-name">입고 AI Agent</div>
+            <div class="ai-status">온라인 — 응답 준비 완료</div>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:8px">
+            <button class="btn btn-secondary btn-sm"><i class="fa-solid fa-trash"></i> 대화 초기화</button>
+          </div>
+        </div>
+
+        <div class="chat-messages" id="intake-chat-messages">
+          <!-- AI 웰컴 메시지 -->
+          <div class="msg ai">
+            <div class="msg-avatar"><i class="fa-solid fa-robot"></i></div>
+            <div class="msg-bubble">
+              안녕하세요! 원재료 입고 AI Agent입니다.<br><br>
+              입고 기준 적합 여부, 공급처 품질 이력, LOT 조회, 최적 절임 조건 추천 등을 자연어로 질문하세요.<br><br>
+              현재 <strong style="color:var(--accent-info)">LOT-2026-0523-001 (평창 A농장)</strong> 컨텍스트가 로드되어 있습니다.
+              <div class="msg-time">14:30:00</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 추천 질문 버튼 -->
+        <div class="quick-questions" id="intake-quick-q">
+          <div class="qs-label"><i class="fa-solid fa-lightbulb"></i> 추천 질문</div>
+          <button class="quick-btn" onclick="sendIntakeQ(this, 0)">
+            <i class="fa-solid fa-circle-question"></i> 오늘 A농장 배추 입고 품질 기준 충족해?
+          </button>
+          <button class="quick-btn" onclick="sendIntakeQ(this, 1)">
+            <i class="fa-solid fa-circle-question"></i> LOT-2026-0523-004 검토 사항 알려줘
+          </button>
+          <button class="quick-btn" onclick="sendIntakeQ(this, 2)">
+            <i class="fa-solid fa-circle-question"></i> 현재 입고 배추 최적 절임 조건 추천해줘
+          </button>
+          <button class="quick-btn" onclick="sendIntakeQ(this, 3)">
+            <i class="fa-solid fa-circle-question"></i> 봄배추 계절 특성상 주의해야 할 절임 조건은?
+          </button>
+        </div>
+
+        <div class="chat-input-area">
+          <input type="text" class="chat-input" id="intake-chat-input"
+            placeholder="입고 기준, 품질 이력, 절임 조건 등 자유롭게 질문하세요..."
+            onkeydown="if(event.key==='Enter') sendIntakeMsg()">
+          <button class="chat-send-btn" onclick="sendIntakeMsg()">
+            <i class="fa-solid fa-paper-plane"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ========================================================
+       섹션 3: LOT 추적 (Traceability)
+       ======================================================== -->
+  <section class="section" id="section-traceability">
+    <div class="page-title">
+      <div>
+        <h2><i class="fa-solid fa-route"></i> LOT 추적 (Traceability)</h2>
+        <div class="subtitle">입고 → 절임 → 발효 → 포장 → 출하 전 구간 역추적</div>
+      </div>
+    </div>
+
+    <div class="traceability-layout">
+      <!-- 좌측: 검색 + 최근 조회 -->
+      <div class="lot-search-panel">
+        <div class="card">
+          <div class="card-title"><i class="fa-solid fa-magnifying-glass" style="color:var(--accent-blue)"></i> LOT 검색</div>
+          <div style="display:flex;gap:8px;margin-bottom:12px">
+            <input type="text" class="form-control" id="lot-search-input"
+              placeholder="LOT 번호 입력 (예: LOT-2026-0520-003)"
+              value="LOT-2026-0520-003">
+            <button class="btn btn-primary" onclick="searchLot()" style="white-space:nowrap">
+              <i class="fa-solid fa-search"></i> 조회
+            </button>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted)">
+            <i class="fa-solid fa-circle-info"></i> 입고LOT · 절임LOT · 발효LOT · 포장LOT · 출하LOT 모두 조회 가능
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><i class="fa-solid fa-clock-rotate-left" style="color:var(--accent-blue)"></i> 최근 조회 이력</div>
+          <div class="lot-recent-list">
+            <div class="lot-recent-item" onclick="loadTrace('LOT-2026-0520-003')">
+              <div>
+                <div class="lot-id">LOT-2026-0520-003</div>
+                <div class="lot-product">배추김치 2kg / 평창A농장</div>
+              </div>
+              <span class="badge badge-ok" style="font-size:10px">출하완료</span>
+            </div>
+            <div class="lot-recent-item" onclick="loadTrace('LOT-2026-0518-007')">
+              <div>
+                <div class="lot-id">LOT-2026-0518-007</div>
+                <div class="lot-product">총각김치 500g / 정선C농산</div>
+              </div>
+              <span class="badge badge-warn" style="font-size:10px">발효중</span>
+            </div>
+            <div class="lot-recent-item" onclick="loadTrace('LOT-2026-0515-012')">
+              <div>
+                <div class="lot-id">LOT-2026-0515-012</div>
+                <div class="lot-product">배추김치 2kg / 강원B영농</div>
+              </div>
+              <span class="badge badge-err" style="font-size:10px">클레임</span>
+            </div>
+            <div class="lot-recent-item" onclick="loadTrace('LOT-2026-0512-005')">
+              <div>
+                <div class="lot-id">LOT-2026-0512-005</div>
+                <div class="lot-product">깍두기 1kg / 횡성D농장</div>
+              </div>
+              <span class="badge badge-ok" style="font-size:10px">출하완료</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 클레임 역추적 안내 -->
+        <div class="card" style="border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.05)">
+          <div class="card-title" style="color:var(--accent-err)">
+            <i class="fa-solid fa-triangle-exclamation"></i> 클레임 역추적
+          </div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">
+            클레임 발생 LOT의 원재료부터 출하까지 전 구간을 강조 표시합니다.
+          </div>
+          <button class="btn btn-danger btn-sm" style="width:100%" onclick="loadTrace('LOT-2026-0515-012')">
+            <i class="fa-solid fa-bug"></i> LOT-2026-0515-012 클레임 역추적
+          </button>
+        </div>
+      </div>
+
+      <!-- 우측: 타임라인 -->
+      <div id="trace-result">
+        <div class="card" style="margin-bottom:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <div style="font-size:12px;color:var(--text-muted)">추적 대상 LOT</div>
+              <div style="font-size:18px;font-weight:700;font-family:monospace;color:var(--accent-info);margin-top:2px">
+                LOT-2026-0520-003
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+              <span class="badge badge-ok"><i class="fa-solid fa-check-circle"></i> 출하 완료</span>
+              <span style="font-size:11px;color:var(--text-muted)">조회: 2026-05-23 14:37</span>
+            </div>
+          </div>
+          <div class="divider" style="margin:12px 0"></div>
+          <div class="grid-4" style="gap:10px">
+            <div style="text-align:center">
+              <div style="font-size:11px;color:var(--text-muted)">제품명</div>
+              <div style="font-weight:600;font-size:13px">배추김치 2kg</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:11px;color:var(--text-muted)">공급처</div>
+              <div style="font-weight:600;font-size:13px">평창 A농장(주)</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:11px;color:var(--text-muted)">총 소요일</div>
+              <div style="font-weight:600;font-size:13px">18일</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:11px;color:var(--text-muted)">출하 수량</div>
+              <div style="font-weight:600;font-size:13px">840 박스</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 타임라인 -->
+        <div class="timeline-steps">
+          <!-- 1단계: 원재료 입고 -->
+          <div class="tl-step">
+            <div class="tl-dot ok"><i class="fa-solid fa-truck-ramp-box"></i></div>
+            <div class="tl-content">
+              <div class="tl-step-title">
+                <span><span style="color:var(--text-muted);font-size:12px;font-weight:400">STEP 01</span> 원재료 입고</span>
+                <span class="badge badge-ok" style="font-size:10px">적합</span>
+              </div>
+              <div class="tl-step-data">
+                <div class="tl-data-item">
+                  <div class="tl-data-label">입고 LOT</div>
+                  <div class="tl-data-value" style="font-family:monospace;color:var(--accent-info)">LOT-2026-0520-003</div>
+                </div>
+                <div class="tl-data-item">
+                  <div class="tl-data-label">입고 일시</div>
+                  <div class="tl-data-value">2026-05-02 08:20</div>
+                </div>
+                <div class="tl-data-item">
+                  <div class="tl-data-label">공급처</div>
+                  <div class="tl-data-value">평창 A농장(주)</div>
+                </div>
+                <div class="tl-data-item">
+                  <div class="tl-data-label">중량</div>
+                  <div class="tl-data-value">4,200 kg</div>
+                </div>
+                <div class="tl-data-item">
+                  <div class="tl-data-label">외관등급</div>
+                  <div class="tl-data-value">A급</div>
+                </div>
+                <div class="tl-data-item">
+                  <div class="tl-data-label">함수율</div>
+                  <div class="tl-data-value">92.1%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2단계: 절임 공정 -->
+          <div class="tl-step">
+            <div class="tl-dot ok"><i class="fa-solid fa-flask"></i></div>
+            <div class="tl-content">
+              <div class="tl-step-title">
+                <span><span style="color:var(--text-muted);font-size:12px;font-weight:400">STEP 02</span> 절임 공정</span>
+                <span class="badge badge-ok" style="font-size:10px">정상</span>
+              </div>
+              <div class="tl-step-data">
+                <div class="tl-data-item">
+                  <div class="tl-data-label">절임 LOT</div>
+                  <div class="tl-data-value" style="font-family:monospace;color:var(--accent-info)">SALT-2026-0502-003</div>
+                </div>
+                <div class="tl-data-item">
+                  <div class="tl-data-label">절임 시작</div>
+                  <div class="tl-data-value">2026-05-02 10:00</div>
+                </div>
+                <div class="tl-data-item">
+                  <div class="tl-data-label">소금 농도</div>
+                  <div class="tl-data-value">15.2%</div>
+                </div>
+                <div class="tl-data-item">
+                  <div class="tl-data-label">절임 시간</div>
+                  <div class="tl-data-value">14.5시간</div>
+                </div>
+                <div class="tl-data-item">
+                  <div class="tl-data-label">절임 온도</div>
+                  <div class="tl-data-value">12.3°C</div>
+                </div>
+                <div class="tl-data-item">
+                  <div class="tl-data-label">염도 결과</div>
+                  <div class="tl-data-value">2.1% (기준: 2.0~2.3%)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3단계: 발효 공정 -->
+          <div class="tl-step">
+            <div class="tl-dot ok"><i class="fa-solid fa-temperature-half"></i></div>
+            <div class="tl-content">
+              <div class="tl-step-title">
+                <span><span style="color:var(--text-muted);font-size:12px;font-weight:400">STEP 03</span> 숙성/발효</span>
+                <span class="badge badge-ok" style="font-size:10px">정상 완료</span>
+              </div>
+              <div class="tl-step-data">
+                <div class="tl-data-item">
+                  <div class="tl-data-label">발효 LOT</div>
+                  <div class="tl-data-value" style="font-family:monospace;color:var(--accent-info)">FERM-2026-0503-003</div>
+                </div>
+                <div class="tl-data-item">
+                  <div class="tl-data-label">발효 시작</div>
+                  <div class="tl-data-value">2026-05-03 09:00</div>
+                </div>
+                <div class="tl-data-item">
+                  <div class="tl-data-label">발효 온도</div>
+                  <div class="tl-data-value">4.2°C (목표: 4°C)</div>
+                </div>
+                <div class="tl-data-item">
+                  <div class="tl-data-label">숙성 기간</div>
+                  <div class="tl-data-value">14일</div>
+                </div>
+                <div class="tl-data-item">
+                  <div class="tl-data-label">최종 산도</div>
+                  <div class="tl-data-value">pH 4.3</div>
+                </div>
+                <div class="tl-data-item">
+                  <div class="tl-data-label">AI 품질 예측</div>
+                  <div class="tl-data-value" style="color:var(--accent-ok)">정상 (신뢰도 94.2%)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4단계: 포장 -->
+          <div class="tl-step">
+            <div class="tl-dot ok"><i class="fa-solid fa-box"></i></div>
+            <div class="tl-content">
+              <div class="tl-step-title">
+                <span><span style="color:var(--text-muted);font-size:12px;font-weight:400">STEP 04</span> 포장</span>
+                <span class="badge badge-ok" style="font-size:10px">완료</span>
+              </div>
+              <div class="tl-step-data">
+                <div class="tl-data-item">
+                  <div class="tl-data-label">포장 LOT</div>
+                  <div class="tl-data-value" style="font-family:monospace;color:var(--accent-info)">PACK-2026-0518-003</div>
+                </div>
+                <div class="tl-data-item">
+                  <div class="tl-data-label">포장 일시</div>
+                  <div class="tl-data-value">2026-05-18 13:20</div>
+                </div>
+                <div class="tl-data-item">
+                  <div class="tl-data-label">제품명</div>
+                  <div class="tl-data-value">배추김치 2kg</div>
+                </div>
+                <div class="tl-data-item">
+                  <div class="tl-data-label">포장 수량</div>
+                  <div class="tl-data-value">848 박스</div>
+                </div>
+                <div class="tl-data-item">
+                  <div class="tl-data-label">불량 수량</div>
+                  <div class="tl-data-value">8 박스 (0.94%)</div>
+                </div>
+                <div class="tl-data-item">
+                  <div class="tl-data-label">금속검출</div>
+                  <div class="tl-data-value" style="color:var(--accent-ok)">이상없음</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5단계: 출하 -->
+          <div class="tl-step">
+            <div class="tl-dot ok"><i class="fa-solid fa-truck"></i></div>
+            <div class="tl-content">
+              <div class="tl-step-title">
+                <span><span style="color:var(--text-muted);font-size:12px;font-weight:400">STEP 05</span> 출하</span>
+                <span class="badge badge-ok" style="font-size:10px">출하 완료</span>
+              </div>
+              <div class="tl-step-data">
+                <div class="tl-data-item">
+                  <div class="tl-data-label">출하 LOT</div>
+                  <div class="tl-data-value" style="font-family:monospace;color:var(--accent-info)">SHIP-2026-0520-003</div>
+                </div>
+                <div class="tl-data-item">
+                  <div class="tl-data-label">출하 일시</div>
+                  <div class="tl-data-value">2026-05-20 07:00</div>
+                </div>
+                <div class="tl-data-item">
+                  <div class="tl-data-label">출하 수량</div>
+                  <div class="tl-data-value">840 박스</div>
+                </div>
+                <div class="tl-data-item">
+                  <div class="tl-data-label">목적지</div>
+                  <div class="tl-data-value">서울 가락시장 A도매</div>
+                </div>
+                <div class="tl-data-item">
+                  <div class="tl-data-label">냉장 온도</div>
+                  <div class="tl-data-value">3.8°C (기준: ≤5°C)</div>
+                </div>
+                <div class="tl-data-item">
+                  <div class="tl-data-label">AI 출하 승인</div>
+                  <div class="tl-data-value" style="color:var(--accent-ok)">승인 (담당자 확인 완료)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ========================================================
+       섹션 4: 출하관리 + 출하 AI Agent
+       ======================================================== -->
+  <section class="section" id="section-shipping">
+    <div class="page-title">
+      <div>
+        <h2><i class="fa-solid fa-box-open"></i> 출하관리 + AI Agent</h2>
+        <div class="subtitle">출하 대기 LOT AI 승인 판별 · 클레임 분석 · 출하 AI 채팅</div>
+      </div>
+      <div class="actions">
+        <span class="badge badge-ai"><i class="fa-solid fa-brain"></i> AI 판별 실시간</span>
+        <button class="btn btn-secondary btn-sm"><i class="fa-solid fa-rotate"></i> 새로고침</button>
+      </div>
+    </div>
+
+    <div class="shipping-layout">
+      <!-- 좌측: 출하 대기 목록 + KPI -->
+      <div class="shipping-main">
+
+        <!-- KPI -->
+        <div class="grid-4" style="gap:12px">
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(26,115,232,.15);color:var(--accent-blue)"><i class="fa-solid fa-hourglass-half"></i></div>
+            <div class="kpi-label">출하 대기</div>
+            <div class="kpi-value" style="color:var(--accent-blue)">5</div>
+            <div class="kpi-sub">LOT</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(34,197,94,.12);color:var(--accent-ok)"><i class="fa-solid fa-circle-check"></i></div>
+            <div class="kpi-label">AI 승인</div>
+            <div class="kpi-value" style="color:var(--accent-ok)">3</div>
+            <div class="kpi-sub">즉시 출하 가능</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(245,158,11,.12);color:var(--accent-warn)"><i class="fa-solid fa-circle-pause"></i></div>
+            <div class="kpi-label">AI 보류</div>
+            <div class="kpi-value" style="color:var(--accent-warn)">1</div>
+            <div class="kpi-sub">검토 필요</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(239,68,68,.12);color:var(--accent-err)"><i class="fa-solid fa-circle-xmark"></i></div>
+            <div class="kpi-label">AI 반려</div>
+            <div class="kpi-value" style="color:var(--accent-err)">1</div>
+            <div class="kpi-sub">출하 불가</div>
+          </div>
+        </div>
+
+        <!-- 출하 대기 목록 -->
+        <div class="card">
+          <div class="card-title" style="justify-content:space-between">
+            <span><i class="fa-solid fa-list" style="color:var(--accent-blue)"></i> 출하 대기 LOT 목록</span>
+            <span style="font-size:12px;color:var(--text-secondary);font-weight:400">2026-05-23 기준</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>출하 LOT</th>
+                  <th>제품명</th>
+                  <th>수량(박스)</th>
+                  <th>목적지</th>
+                  <th>예정 출하</th>
+                  <th>냉장온도</th>
+                  <th>AI 판단</th>
+                  <th>담당자 승인</th>
+                  <th>작업</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="lot-code">SHIP-2026-0523-001</span></td>
+                  <td>배추김치 2kg</td>
+                  <td>1,200</td>
+                  <td>서울 가락 A도매</td>
+                  <td>05-23 17:00</td>
+                  <td>3.8°C</td>
+                  <td>
+                    <div class="ai-judge ai-judge-ok">
+                      <i class="fa-solid fa-circle-check"></i> 승인
+                    </div>
+                  </td>
+                  <td><span class="badge badge-ok">승인완료</span></td>
+                  <td><button class="btn btn-sm btn-secondary" onclick="selectShipLot('SHIP-2026-0523-001')"><i class="fa-solid fa-robot"></i> AI 질의</button></td>
+                </tr>
+                <tr>
+                  <td><span class="lot-code">SHIP-2026-0523-002</span></td>
+                  <td>총각김치 500g</td>
+                  <td>860</td>
+                  <td>인천 연수 B마트</td>
+                  <td>05-23 19:00</td>
+                  <td>4.1°C</td>
+                  <td>
+                    <div class="ai-judge ai-judge-ok">
+                      <i class="fa-solid fa-circle-check"></i> 승인
+                    </div>
+                  </td>
+                  <td><span class="badge badge-neutral">미승인</span></td>
+                  <td><button class="btn btn-sm btn-secondary" onclick="selectShipLot('SHIP-2026-0523-002')"><i class="fa-solid fa-robot"></i> AI 질의</button></td>
+                </tr>
+                <tr style="background:rgba(245,158,11,.04)">
+                  <td><span class="lot-code">SHIP-2026-0523-003</span></td>
+                  <td>깍두기 1kg</td>
+                  <td>450</td>
+                  <td>대전 대덕 C유통</td>
+                  <td>05-23 20:00</td>
+                  <td>4.8°C</td>
+                  <td>
+                    <div class="ai-judge ai-judge-warn">
+                      <i class="fa-solid fa-circle-pause"></i> 보류
+                    </div>
+                  </td>
+                  <td><span class="badge badge-warn">검토중</span></td>
+                  <td><button class="btn btn-sm btn-secondary" onclick="selectShipLot('SHIP-2026-0523-003')"><i class="fa-solid fa-robot"></i> AI 질의</button></td>
+                </tr>
+                <tr>
+                  <td><span class="lot-code">SHIP-2026-0523-004</span></td>
+                  <td>배추김치 1kg</td>
+                  <td>720</td>
+                  <td>수원 영통 D슈퍼</td>
+                  <td>05-24 08:00</td>
+                  <td>3.5°C</td>
+                  <td>
+                    <div class="ai-judge ai-judge-ok">
+                      <i class="fa-solid fa-circle-check"></i> 승인
+                    </div>
+                  </td>
+                  <td><span class="badge badge-neutral">미승인</span></td>
+                  <td><button class="btn btn-sm btn-secondary" onclick="selectShipLot('SHIP-2026-0523-004')"><i class="fa-solid fa-robot"></i> AI 질의</button></td>
+                </tr>
+                <tr style="background:rgba(239,68,68,.04)">
+                  <td><span class="lot-code">SHIP-2026-0523-005</span></td>
+                  <td>백김치 2kg</td>
+                  <td>340</td>
+                  <td>부산 해운대 E백화점</td>
+                  <td>05-24 06:00</td>
+                  <td>5.7°C</td>
+                  <td>
+                    <div class="ai-judge ai-judge-err">
+                      <i class="fa-solid fa-circle-xmark"></i> 반려
+                    </div>
+                  </td>
+                  <td><span class="badge badge-err">반려</span></td>
+                  <td><button class="btn btn-sm btn-secondary" onclick="selectShipLot('SHIP-2026-0523-005')"><i class="fa-solid fa-robot"></i> AI 질의</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 클레임 이력 -->
+        <div class="card">
+          <div class="card-title"><i class="fa-solid fa-file-circle-exclamation" style="color:var(--accent-err)"></i> 최근 클레임 현황</div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>클레임 번호</th>
+                  <th>출하 LOT</th>
+                  <th>거래처</th>
+                  <th>클레임 내용</th>
+                  <th>AI 원인 분석</th>
+                  <th>처리 상태</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="lot-code">CLM-2026-0518</span></td>
+                  <td><span class="lot-code">SHIP-2026-0515-012</span></td>
+                  <td>서울 송파 F마트</td>
+                  <td>과발효 이취 발생</td>
+                  <td>
+                    <span style="font-size:11px;color:var(--text-secondary)">발효온도 이탈 (6.1°C / 기준 4°C)</span>
+                  </td>
+                  <td><span class="badge badge-warn">처리중</span></td>
+                </tr>
+                <tr>
+                  <td><span class="lot-code">CLM-2026-0510</span></td>
+                  <td><span class="lot-code">SHIP-2026-0508-007</span></td>
+                  <td>인천 부평 G유통</td>
+                  <td>포장 파손 5박스</td>
+                  <td>
+                    <span style="font-size:11px;color:var(--text-secondary)">운송 중 충격 — 포장 라인 이상 아님</span>
+                  </td>
+                  <td><span class="badge badge-ok">처리완료</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 우측: 출하 AI Agent 채팅 -->
+      <div class="shipping-chat">
+        <div class="chat-panel" style="height:100%">
+          <div class="chat-header">
+            <div class="ai-avatar" style="background:rgba(239,68,68,.7)"><i class="fa-solid fa-robot"></i></div>
+            <div>
+              <div class="ai-name">출하 AI Agent</div>
+              <div class="ai-status" id="ship-ctx-label">LOT 선택 대기중</div>
+            </div>
+          </div>
+
+          <div class="chat-messages" id="ship-chat-messages">
+            <div class="msg ai">
+              <div class="msg-avatar"><i class="fa-solid fa-robot"></i></div>
+              <div class="msg-bubble">
+                출하 AI Agent입니다. 출하 대기 목록에서 LOT를 선택하거나, 아래 추천 질문을 클릭하거나, 직접 질문을 입력하세요.<br><br>
+                출하 승인 기준, 냉장 온도 기준, 클레임 대응 가이드를 안내합니다.
+                <div class="msg-time">14:37:00</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="quick-questions" id="ship-quick-q">
+            <div class="qs-label"><i class="fa-solid fa-lightbulb"></i> 추천 질문</div>
+            <button class="quick-btn" onclick="sendShipQ(this, 0)">
+              <i class="fa-solid fa-circle-question"></i> SHIP-2026-0523-005 반려 이유 설명해줘
+            </button>
+            <button class="quick-btn" onclick="sendShipQ(this, 1)">
+              <i class="fa-solid fa-circle-question"></i> 오늘 출하 예정 중 지연 가능 LOT 있어?
+            </button>
+            <button class="quick-btn" onclick="sendShipQ(this, 2)">
+              <i class="fa-solid fa-circle-question"></i> 냉장 온도 기준 이탈 시 대응 방법은?
+            </button>
+            <button class="quick-btn" onclick="sendShipQ(this, 3)">
+              <i class="fa-solid fa-circle-question"></i> 지난주 클레임 원인 분석해줘
+            </button>
+          </div>
+
+          <div class="chat-input-area">
+            <input type="text" class="chat-input" id="ship-chat-input"
+              placeholder="출하 승인, 클레임 대응, LOT 이상 질문..."
+              onkeydown="if(event.key==='Enter') sendShipMsg()">
+            <button class="chat-send-btn" onclick="sendShipMsg()">
+              <i class="fa-solid fa-paper-plane"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+
+<script>
+/* ===== 탭 전환 ===== */
+function switchTab(name) {
+  /* 모든 섹션 숨기기 */
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  /* 선택된 섹션/탭 활성화 */
+  document.getElementById('section-' + name).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+/* ===== LOT 선택 (입고 컨텍스트 패널) ===== */
+function selectLot(el, lotId) {
+  document.querySelectorAll('.ctx-item').forEach(i => i.classList.remove('selected'));
+  el.classList.add('selected');
+  addIntakeMsg('ai',
+    `<strong style="color:var(--accent-info)">${lotId}</strong> 컨텍스트를 로드했습니다. ` +
+    `이 LOT에 대해 자유롭게 질문하세요.`,
+    getCurrentTime()
+  );
+}
+
+/* ===== 입고 AI Agent — 미리 작성된 응답 ===== */
+const intakeAnswers = [
+  /* Q0: A농장 입고 품질 기준 */
+  {
+    text: `<strong>LOT-2026-0523-001 (평창 A농장)</strong> 입고 품질 검토 결과입니다.<br><br>
+      ✅ <strong>외관등급</strong>: A급 — 기준 충족 (기준: B급 이상)<br>
+      ✅ <strong>함수율</strong>: 92.3% — 기준 충족 (기준: 88~95%)<br>
+      ✅ <strong>배추 크기</strong>: 평균 41cm — 기준 충족 (기준: 35~50cm)<br>
+      ✅ <strong>개당 중량</strong>: 3.2kg — 기준 충족 (기준: 2.5~4.0kg)<br><br>
+      <strong>종합 판정: 입고 기준 적합</strong> — 즉시 절임 공정 투입 가능합니다.`,
+    docs: ['원재료 입고 기준서 v3.2 (§3.2 배추 등급 기준)', '공급처 품질 평가 이력 (평창 A농장 최근 6개월)']
+  },
+  /* Q1: LOT-004 검토 사항 */
+  {
+    text: `<strong>LOT-2026-0523-004 (정선 C농산)</strong> 검토 사항입니다.<br><br>
+      ⚠️ <strong>함수율 88.7%</strong> — 하한 경계값 (기준: 88~95%)<br>
+      &nbsp;&nbsp;&nbsp;→ 함수율이 낮으면 절임 시 염분 흡수율이 낮아질 수 있습니다.<br>
+      ⚠️ <strong>외관등급 B급</strong> — 기준 내이나 A급 대비 손상도 높음<br><br>
+      <strong>권고 조치:</strong><br>
+      1. 절임 시 소금 농도를 0.5% 상향 조정 (15% → 15.5%)<br>
+      2. 절임 시간 1시간 연장 검토<br>
+      3. 선별 단계에서 손상 개체 추가 제거<br><br>
+      담당자 확인 후 조건부 승인을 권장합니다.`,
+    docs: ['배추 절임 작업표준서 SOP-02 (§4.1 함수율별 절임 조건)', '정선 C농산 품질 평가 이력 (최근 3개월)']
+  },
+  /* Q2: 최적 절임 조건 */
+  {
+    text: `오늘 입고 배추 데이터를 분석한 <strong>최적 절임 조건 추천</strong>입니다.<br><br>
+      📊 <strong>평균 입고 특성</strong><br>
+      &nbsp;&nbsp;· 평균 함수율: 91.4% | 평균 등급: A급<br>
+      &nbsp;&nbsp;· 평균 배추 크기: 40.2cm<br><br>
+      🧂 <strong>권장 절임 조건</strong><br>
+      &nbsp;&nbsp;· 소금 농도: <strong>15.0~15.3%</strong><br>
+      &nbsp;&nbsp;· 절임 온도: <strong>12~14°C</strong><br>
+      &nbsp;&nbsp;· 절임 시간: <strong>13~15시간</strong><br>
+      &nbsp;&nbsp;· 목표 절임 후 염도: <strong>2.0~2.3%</strong><br><br>
+      <em>단, LOT-0523-004 (B급, 함수율 88.7%)는 별도 조건 적용 권장</em>`,
+    docs: ['배추 절임 작업표준서 SOP-02', '계절별 배추 특성 가이드 (봄배추 절임 조건)']
+  },
+  /* Q3: 봄배추 주의사항 */
+  {
+    text: `<strong>봄배추 (4~6월)</strong> 절임 시 주의 사항입니다.<br><br>
+      🌿 <strong>봄배추 특성</strong><br>
+      &nbsp;&nbsp;· 수분 함량이 고랭지 배추보다 높음 (평균 +2~3%)<br>
+      &nbsp;&nbsp;· 조직이 연하여 과절임 위험↑<br>
+      &nbsp;&nbsp;· 잔존 냉기로 인한 초기 온도 편차 발생 가능<br><br>
+      ⚠️ <strong>주요 주의 사항</strong><br>
+      1. <strong>절임 시간 단축</strong>: 표준 대비 1~2시간 단축 (과절임 방지)<br>
+      2. <strong>소금 농도 하향</strong>: 0.3~0.5% 낮게 적용<br>
+      3. <strong>중간 염도 체크</strong>: 6~8시간 시점에 염도 확인 필수<br>
+      4. <strong>탈수 시간 주의</strong>: 수분 과다 시 탈수 시간 단축<br><br>
+      현재 입고 LOT 기준 절임 온도 <strong>11~13°C 유지</strong>를 권장합니다.`,
+    docs: ['계절별 배추 특성 가이드 (봄배추 절임 조건)', '배추 절임 작업표준서 SOP-02 §5.3']
+  }
+];
+
+/* ===== 입고 추천 질문 전송 ===== */
+function sendIntakeQ(btn, idx) {
+  const questionText = btn.innerText.replace(/\s+/g, ' ').trim().replace(/^[^\w가-힣]+/, '');
+  addIntakeMsg('user', questionText, getCurrentTime());
+  showTyping('intake-chat-messages', () => {
+    const ans = intakeAnswers[idx];
+    addIntakeMsgWithDocs('ai', ans.text, ans.docs, getCurrentTime());
+  });
+}
+
+/* ===== 입고 직접 입력 전송 ===== */
+function sendIntakeMsg() {
+  const inp = document.getElementById('intake-chat-input');
+  const text = inp.value.trim();
+  if (!text) return;
+  addIntakeMsg('user', text, getCurrentTime());
+  inp.value = '';
+  showTyping('intake-chat-messages', () => {
+    addIntakeMsg('ai',
+      `<strong>"${text}"</strong>에 대해 분석 중입니다.<br><br>` +
+      `관련 문서를 검색하여 답변을 생성하고 있습니다. 잠시 후 결과를 확인하세요.<br><br>` +
+      `더 정확한 답변을 위해 LOT 번호나 날짜를 함께 입력하시면 도움이 됩니다.`,
+      getCurrentTime()
+    );
+  });
+}
+
+/* ===== 입고 AI 메시지 추가 ===== */
+function addIntakeMsg(role, html, time) {
+  const container = document.getElementById('intake-chat-messages');
+  const isAi = role === 'ai';
+  const el = document.createElement('div');
+  el.className = `msg ${role}`;
+  el.innerHTML = `
+    <div class="msg-avatar">${isAi ? '<i class="fa-solid fa-robot"></i>' : '<i class="fa-solid fa-user"></i>'}</div>
+    <div class="msg-bubble">
+      ${html}
+      <div class="msg-time">${time}</div>
+    </div>`;
+  container.appendChild(el);
+  container.scrollTop = container.scrollHeight;
+}
+
+/* ===== 입고 AI — 문서 참조 포함 메시지 ===== */
+function addIntakeMsgWithDocs(role, html, docs, time) {
+  const container = document.getElementById('intake-chat-messages');
+  const docItems = docs.map(d => `<div class="doc-ref-item"><i class="fa-solid fa-file-lines"></i> ${d}</div>`).join('');
+  const el = document.createElement('div');
+  el.className = `msg ${role}`;
+  el.innerHTML = `
+    <div class="msg-avatar"><i class="fa-solid fa-robot"></i></div>
+    <div class="msg-bubble">
+      ${html}
+      <div class="doc-ref">
+        <div class="doc-ref-title"><i class="fa-solid fa-book"></i> 참조 문서</div>
+        ${docItems}
+      </div>
+      <div class="msg-time">${time}</div>
+    </div>`;
+  container.appendChild(el);
+  container.scrollTop = container.scrollHeight;
+}
+
+/* ===== 출하 AI Agent — 미리 작성된 응답 ===== */
+const shipAnswers = [
+  /* Q0: 반려 이유 */
+  {
+    text: `<strong>SHIP-2026-0523-005 (백김치 2kg)</strong> 출하 반려 사유입니다.<br><br>
+      🚫 <strong>반려 원인 — 냉장 온도 기준 이탈</strong><br>
+      &nbsp;&nbsp;· 측정 온도: <strong>5.7°C</strong><br>
+      &nbsp;&nbsp;· 출하 기준: <strong>≤ 5.0°C</strong><br>
+      &nbsp;&nbsp;· 이탈 정도: +0.7°C<br><br>
+      <strong>권고 조치:</strong><br>
+      1. 냉장고 설정 온도 재확인 및 조정<br>
+      2. 온도 안정화 후 (최소 2시간) 재측정<br>
+      3. 냉장 온도 4.5°C 이하 확인 후 재승인 요청<br><br>
+      출하 예정 시각(05-24 06:00)까지 여유가 있으므로 오늘 자정까지 조치 완료를 권고합니다.`,
+    docs: ['출하 품질 기준서 §2.4 냉장 온도 관리 기준', 'HACCP CCP 관리 문서 CCP-03 냉장 관리']
+  },
+  /* Q1: 지연 가능 LOT */
+  {
+    text: `오늘 출하 예정 LOT 중 <strong>지연 위험</strong>이 있는 건입니다.<br><br>
+      ⚠️ <strong>SHIP-2026-0523-003 (깍두기 1kg)</strong> — AI 보류<br>
+      &nbsp;&nbsp;· 발효 산도 pH 4.6 (기준: pH 4.2~4.8 — 상한 근접)<br>
+      &nbsp;&nbsp;· 담당자 확인 후 최종 판단 필요<br>
+      &nbsp;&nbsp;· 출하 예정: 오늘 20:00 → <strong>지연 가능성 있음</strong><br><br>
+      🚫 <strong>SHIP-2026-0523-005 (백김치 2kg)</strong> — 반려<br>
+      &nbsp;&nbsp;· 냉장 온도 이탈로 출하 불가<br>
+      &nbsp;&nbsp;· 출하 예정: 내일 06:00 → <strong>조치 후 재검토 필요</strong><br><br>
+      나머지 LOT(001, 002, 004)는 정상 출하 가능합니다.`,
+    docs: ['출하 품질 기준서', '발효 품질 기준서 §3.1 산도 기준']
+  },
+  /* Q2: 냉장 온도 이탈 대응 */
+  {
+    text: `<strong>냉장 온도 기준 이탈 발생 시 대응 절차</strong>입니다.<br><br>
+      📋 <strong>즉시 조치 (15분 이내)</strong><br>
+      1. 냉장 설비 이상 여부 확인<br>
+      2. 온도 계측기 이중 확인 (오류 배제)<br>
+      3. 이탈 정도에 따라 구분 대응<br><br>
+      🌡️ <strong>이탈 정도별 조치</strong><br>
+      &nbsp;&nbsp;· <strong>+0.5°C 이하</strong>: 설정 조정 후 재측정, 30분 이내 복귀 시 출하 가능<br>
+      &nbsp;&nbsp;· <strong>+0.5~1.0°C</strong>: 품질관리 담당자 승인 필요 (현재 SHIP-005 해당)<br>
+      &nbsp;&nbsp;· <strong>+1.0°C 초과</strong>: 제품 품질 검사 후 출하 여부 결정<br><br>
+      📞 <strong>보고 라인</strong>: 현장 → 품질관리 담당자 → 공장장<br><br>
+      <em>HACCP CCP-03에 따라 모든 이탈 사항은 일지에 기록해야 합니다.</em>`,
+    docs: ['HACCP CCP 관리 문서 CCP-03', '냉장 설비 운영 매뉴얼 §4.2', '출하 품질 기준서 §2.4']
+  },
+  /* Q3: 클레임 원인 분석 */
+  {
+    text: `<strong>최근 클레임 원인 분석 결과</strong>입니다.<br><br>
+      📌 <strong>CLM-2026-0518 — 과발효 이취 (서울 송파 F마트)</strong><br>
+      &nbsp;&nbsp;· LOT: SHIP-2026-0515-012<br>
+      &nbsp;&nbsp;· 원인: 발효 탱크 #3 온도 센서 오류 → 실제 온도 6.1°C 유지<br>
+      &nbsp;&nbsp;· 기준: ≤ 4.5°C — 1.6°C 초과 유지 (약 18시간)<br>
+      &nbsp;&nbsp;· 영향: 과발효로 인한 이취 및 산도 과다 (pH 3.8)<br>
+      &nbsp;&nbsp;· 조치: 온도 센서 교체 완료, 해당 LOT 회수 처리 중<br><br>
+      📌 <strong>CLM-2026-0510 — 포장 파손 (인천 부평 G유통)</strong><br>
+      &nbsp;&nbsp;· 원인: 운송 업체 취급 불량 (포장 자체 이상 없음)<br>
+      &nbsp;&nbsp;· 조치: 운송사 교체 및 포장 내충격성 강화 검토 중<br><br>
+      <strong>권고:</strong> 발효 탱크 온도 센서 정기 점검 주기 단축 (월 1회 → 2주 1회)`,
+    docs: ['클레임 대응 매뉴얼 §3.2 과발효 클레임 처리', '발효 설비 운영 매뉴얼', '출하 품질 기준서']
+  }
+];
+
+/* ===== 출하 LOT 선택 ===== */
+function selectShipLot(lotId) {
+  document.getElementById('ship-ctx-label').textContent = `컨텍스트: ${lotId}`;
+  addShipMsg('ai',
+    `<strong style="color:var(--accent-info)">${lotId}</strong> 컨텍스트를 로드했습니다.<br>` +
+    `해당 LOT에 대해 자유롭게 질문하세요.`,
+    getCurrentTime()
+  );
+}
+
+/* ===== 출하 추천 질문 전송 ===== */
+function sendShipQ(btn, idx) {
+  const questionText = btn.innerText.replace(/\s+/g, ' ').trim().replace(/^[^\w가-힣]+/, '');
+  addShipMsg('user', questionText, getCurrentTime());
+  showTyping('ship-chat-messages', () => {
+    const ans = shipAnswers[idx];
+    addShipMsgWithDocs('ai', ans.text, ans.docs, getCurrentTime());
+  });
+}
+
+/* ===== 출하 직접 입력 전송 ===== */
+function sendShipMsg() {
+  const inp = document.getElementById('ship-chat-input');
+  const text = inp.value.trim();
+  if (!text) return;
+  addShipMsg('user', text, getCurrentTime());
+  inp.value = '';
+  showTyping('ship-chat-messages', () => {
+    addShipMsg('ai',
+      `<strong>"${text}"</strong> 관련 정보를 검색하고 있습니다.<br><br>` +
+      `출하 기준서 및 관련 문서를 참조하여 답변을 생성합니다.`,
+      getCurrentTime()
+    );
+  });
+}
+
+/* ===== 출하 메시지 추가 ===== */
+function addShipMsg(role, html, time) {
+  const container = document.getElementById('ship-chat-messages');
+  const isAi = role === 'ai';
+  const el = document.createElement('div');
+  el.className = `msg ${role}`;
+  el.innerHTML = `
+    <div class="msg-avatar">${isAi ? '<i class="fa-solid fa-robot"></i>' : '<i class="fa-solid fa-user"></i>'}</div>
+    <div class="msg-bubble">
+      ${html}
+      <div class="msg-time">${time}</div>
+    </div>`;
+  container.appendChild(el);
+  container.scrollTop = container.scrollHeight;
+}
+
+function addShipMsgWithDocs(role, html, docs, time) {
+  const container = document.getElementById('ship-chat-messages');
+  const docItems = docs.map(d => `<div class="doc-ref-item"><i class="fa-solid fa-file-lines"></i> ${d}</div>`).join('');
+  const el = document.createElement('div');
+  el.className = `msg ${role}`;
+  el.innerHTML = `
+    <div class="msg-avatar"><i class="fa-solid fa-robot"></i></div>
+    <div class="msg-bubble">
+      ${html}
+      <div class="doc-ref">
+        <div class="doc-ref-title"><i class="fa-solid fa-book"></i> 참조 문서</div>
+        ${docItems}
+      </div>
+      <div class="msg-time">${time}</div>
+    </div>`;
+  container.appendChild(el);
+  container.scrollTop = container.scrollHeight;
+}
+
+/* ===== 타이핑 인디케이터 ===== */
+function showTyping(containerId, callback) {
+  const container = document.getElementById(containerId);
+  const el = document.createElement('div');
+  el.className = 'msg ai';
+  el.id = 'typing-' + containerId;
+  el.innerHTML = `
+    <div class="msg-avatar"><i class="fa-solid fa-robot"></i></div>
+    <div class="msg-bubble">
+      <div class="typing-indicator">
+        <span></span><span></span><span></span>
+      </div>
+    </div>`;
+  container.appendChild(el);
+  container.scrollTop = container.scrollHeight;
+  /* 1.5초 후 실제 응답으로 교체 */
+  setTimeout(() => {
+    el.remove();
+    callback();
+  }, 1500);
+}
+
+/* ===== LOT 추적 검색 ===== */
+function searchLot() {
+  const val = document.getElementById('lot-search-input').value.trim();
+  if (!val) return;
+  /* 목업에서는 기본 데이터 그대로 유지 */
+  alert(`LOT "${val}" 추적 결과를 불러옵니다.\n(목업 — 실제 구현 시 API 연동)`);
+}
+
+function loadTrace(lotId) {
+  document.getElementById('lot-search-input').value = lotId;
+  switchTab('traceability');
+}
+
+/* ===== 현재 시각 ===== */
+function getCurrentTime() {
+  const now = new Date();
+  return now.getHours().toString().padStart(2,'0') + ':' +
+         now.getMinutes().toString().padStart(2,'0') + ':' +
+         now.getSeconds().toString().padStart(2,'0');
+}
+</script>
+</body>
+</html>
