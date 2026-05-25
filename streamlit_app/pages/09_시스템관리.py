@@ -23,6 +23,8 @@ import streamlit as st
 
 from utils.auth_helper import check_login, get_auth_headers
 from components.nav import activate_tab
+from components.styles import apply_styles
+from components.sidebar import render_sidebar
 
 # ---------------------------------------------------------------------
 # API 클라이언트 (utils.api_client.get_client 와 호환)
@@ -74,6 +76,8 @@ def api_send(method: str, path: str, json: dict | None = None):
 
 # ---------------------------------------------------------------------
 st.set_page_config(page_title="사용자/시스템관리", layout="wide")
+apply_styles()
+render_sidebar(current="system")
 check_login()
 st.title("사용자 / 시스템관리")
 st.caption("권한·로그·알림·시스템 설정 (관리자 전용)")

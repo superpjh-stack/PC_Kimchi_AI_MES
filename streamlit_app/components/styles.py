@@ -45,17 +45,15 @@ COLORWAY = ["#C53D2E", "#3F8C9C", "#4C9B52", "#D97A2B", "#7A8C3C", "#9A2A1F"]
 
 BASE_CSS = """
 <style>
-/* ===== 전역 폰트 — 한국어 시스템 폰트 우선, CDN 없이 안정적 렌더링 ===== */
-/* ⚠ * 셀렉터에 !important를 쓰면 Streamlit Material Symbols 아이콘 폰트가 깨짐
-   → html, body 상속으로 처리하고, 아이콘 폰트 클래스는 명시적으로 복원 */
+/* ===== 전역 폰트 — html/body 상속 방식 (전역 * !important 금지) ===== */
+/* ⚠ 규칙: * { font-family !important } 는 Material Symbols 아이콘 폰트를 파괴함 → 절대 사용 금지 */
 html, body {
     font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', '맑은 고딕',
                  -apple-system, BlinkMacSystemFont, 'Segoe UI',
                  system-ui, sans-serif !important;
 }
-/* Streamlit 주요 콘텐츠 요소에 한국어 폰트 적용 */
+/* 메인 콘텐츠 텍스트 요소에 한국어 폰트 (data-testid 제외 — 사이드바 오염 방지) */
 p, h1, h2, h3, h4, h5, h6, label, li, td, th,
-div[data-testid], section[data-testid],
 .stMarkdown, .stText, .stAlert,
 .stButton > button, .stTextInput input,
 .stSelectbox, .stNumberInput input, .stTextArea textarea {
@@ -63,14 +61,13 @@ div[data-testid], section[data-testid],
                  -apple-system, BlinkMacSystemFont, 'Segoe UI',
                  system-ui, sans-serif !important;
 }
-/* Material Symbols / Material Icons 아이콘 폰트 복원 — 절대 덮어쓰지 않음 */
+/* 전역 Material Symbols 복원 */
 .material-symbols-rounded,
 .material-symbols-outlined,
 .material-symbols-sharp,
 .material-icons,
 [class^="material-symbols"],
-[class*=" material-symbols"],
-[class*="material-icon"] {
+[class*=" material-symbols"] {
     font-family: 'Material Symbols Rounded', 'Material Symbols Outlined',
                  'Material Icons', sans-serif !important;
 }
@@ -87,8 +84,9 @@ section.main > div { background: transparent !important; }
 [data-testid="stSidebarNavItems"] { display: none !important; }
 [data-testid="stSidebarNavLink"] { display: none !important; }
 
-/* ===== 사이드바 — 배경/글자 색을 CSS로 직접 강제 (config.toml 재시작과 무관) ===== */
-/* 사이드바 배경: 외부 컨테이너와 알려진 내부 컨테이너 전부 #181410으로 고정 */
+/* ===== 사이드바 — 완전 다크 테마 (config.toml 재시작 여부 무관) ===== */
+
+/* ① 배경: 외부 + 내부 컨테이너 전부 #181410 강제 */
 [data-testid="stSidebar"],
 [data-testid="stSidebar"] > div,
 [data-testid="stSidebar"] > div > div,
@@ -101,36 +99,48 @@ section.main > div { background: transparent !important; }
 }
 [data-testid="stSidebar"] { border-right: 1px solid rgba(255,255,255,.08) !important; }
 
-/* 사이드바 내 모든 글자를 밝게 — 배경이 다크(#181410)이므로 안전 */
-[data-testid="stSidebar"] p     { color: #C9C3BC !important; }
-[data-testid="stSidebar"] span  { color: #C9C3BC !important; }
-[data-testid="stSidebar"] label { color: #C9C3BC !important; }
-[data-testid="stSidebar"] div   { color: #C9C3BC !important; }
-[data-testid="stSidebar"] a     { color: #C9C3BC !important; }
-[data-testid="stSidebar"] summary { color: #C9C3BC !important; }
+/* ② 사이드바 모든 자식 요소에 한글 폰트 강제 → 텍스트 가시성 보장
+   ⚠ 이것이 핵심: 사이드바 내부 텍스트가 Streamlit 기본 폰트(한글 글리프 없음)로
+     렌더링되는 것을 방지한다. 전역 *에 쓰면 아이콘이 깨지므로 반드시 스코프 한정. */
+[data-testid="stSidebar"] * {
+    font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', '맑은 고딕',
+                 -apple-system, BlinkMacSystemFont, 'Segoe UI',
+                 system-ui, sans-serif !important;
+}
+/* ③ 사이드바 내 Material Symbols 아이콘 폰트 복원 (expander 화살표 ▶ 등) */
+[data-testid="stSidebar"] .material-symbols-rounded,
+[data-testid="stSidebar"] .material-symbols-outlined,
+[data-testid="stSidebar"] .material-symbols-sharp,
+[data-testid="stSidebar"] .material-icons,
+[data-testid="stSidebar"] [class^="material-symbols"],
+[data-testid="stSidebar"] [class*=" material-symbols"] {
+    font-family: 'Material Symbols Rounded', 'Material Symbols Outlined',
+                 'Material Icons', sans-serif !important;
+}
 
-/* ===== 메인 콘텐츠 영역 expander: secondaryBgColor=#181410 이라 어두워짐 → 흰색 복원 ===== */
-.main [data-testid="stExpander"] > div,
-[data-testid="stMain"] [data-testid="stExpander"] > div,
-section.main [data-testid="stExpander"] > div {
-    background: #FFFFFF !important;
+/* ④ 사이드바 텍스트 색: 다크 배경 위에 크림색 */
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] span,
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] div,
+[data-testid="stSidebar"] a,
+[data-testid="stSidebar"] summary {
+    color: #C9C3BC !important;
 }
-.main details,
-[data-testid="stMain"] details,
-section.main details {
-    background: #FFFFFF !important;
-    border-radius: 8px !important;
-    border: 1px solid rgba(0,0,0,.09) !important;
+
+/* ===== 메인 콘텐츠 expander: secondaryBgColor=#181410으로 어두워짐 → 흰색 복원 ===== */
+[data-testid="stMain"] [data-testid="stExpander"],
+[data-testid="stMain"] [data-testid="stExpanderDetails"],
+[data-testid="stMain"] details {
+    background-color: #FFFFFF !important;
 }
-.main details > summary,
-[data-testid="stMain"] details > summary,
-section.main details > summary {
+[data-testid="stMain"] details > summary {
     color: #29261b !important;
-    background: #F9F7F4 !important;
+    background-color: #F9F7F4 !important;
+    border-radius: 4px !important;
 }
-.main details > summary:hover,
 [data-testid="stMain"] details > summary:hover {
-    background: #F4EFE6 !important;
+    background-color: #F4EFE6 !important;
 }
 
 /* ── 사이드바 브랜드 마크 ── */

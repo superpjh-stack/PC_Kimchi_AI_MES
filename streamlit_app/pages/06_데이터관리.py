@@ -29,11 +29,14 @@ except ImportError:  # 데모 환경 폴백
 
 from utils.auth_helper import check_login, get_auth_headers
 from components.nav import activate_tab
-from components.styles import style_plotly, COLORWAY, COLORS
+from components.styles import apply_styles, style_plotly, COLORWAY, COLORS
+from components.sidebar import render_sidebar
 
 API_BASE = "http://localhost:8000/api/v1/data"
 
 st.set_page_config(page_title="데이터관리 — 꽃순이김치 MES", layout="wide")
+apply_styles()
+render_sidebar(current="data")
 check_login()
 
 # 조회/다운로드 가능 테이블 (api ALLOWED_TABLES와 일치)

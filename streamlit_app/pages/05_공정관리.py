@@ -22,9 +22,12 @@ import streamlit as st
 
 from utils.auth_helper import check_login, get_auth_headers
 from components.nav import activate_tab
-from components.styles import style_plotly, COLORWAY, COLORS
+from components.styles import apply_styles, style_plotly, COLORWAY, COLORS
+from components.sidebar import render_sidebar
 
 st.set_page_config(page_title="공정관리 | 꽃순이김치 MES", page_icon="⚙️", layout="wide")
+apply_styles()
+render_sidebar(current="process")
 check_login()
 
 BASE_URL = "http://localhost:8000/api/v1/process"

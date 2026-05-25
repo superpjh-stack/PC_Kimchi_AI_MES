@@ -19,9 +19,12 @@ from datetime import date, timedelta
 from utils.api_client import get_client
 from utils.auth_helper import check_login
 from components.nav import activate_tab
-from components.styles import style_plotly, COLORWAY, COLORS
+from components.styles import apply_styles, style_plotly, COLORWAY, COLORS
+from components.sidebar import render_sidebar
 
 st.set_page_config(page_title="KPI관리", layout="wide")
+apply_styles()
+render_sidebar(current="kpi")
 check_login()
 st.title("KPI관리")
 

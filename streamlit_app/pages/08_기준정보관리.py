@@ -20,12 +20,19 @@ import streamlit as st
 
 from utils.auth_helper import check_login, get_auth_headers, has_role
 from components.nav import activate_tab
+from components.styles import apply_styles
+from components.sidebar import render_sidebar
 
 # =============================================================================
 # 설정 / API 클라이언트
 # =============================================================================
 st.set_page_config(page_title="기준정보관리", layout="wide")
+apply_styles()
+render_sidebar(current="master")
 check_login()
+
+# 현재 사용자 역할 (페이지 전체에서 사용)
+CURRENT_ROLE = st.session_state.get("user_role", "OPERATOR")
 
 BASE_URL = "http://localhost:8000/api/v1/master"
 
