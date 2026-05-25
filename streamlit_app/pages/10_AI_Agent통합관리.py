@@ -6,6 +6,7 @@ from components.styles import (
 )
 from components.sidebar import render_sidebar
 from components.nav import activate_tab
+from utils.auth_helper import check_login
 import streamlit as st
 import plotly.graph_objects as go
 import plotly.express as px
@@ -16,6 +17,7 @@ from datetime import datetime, timedelta
 st.set_page_config(page_title="AI Agent 통합관리 | 꽃순이김치 MES", page_icon="🤖", layout="wide")
 apply_styles()
 render_sidebar(current="agent")
+check_login()
 
 np.random.seed(42)
 
